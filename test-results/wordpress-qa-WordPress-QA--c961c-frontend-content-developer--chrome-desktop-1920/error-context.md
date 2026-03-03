@@ -1,0 +1,380 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - heading "We value your privacy" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - paragraph [ref=e8]: We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.
+      - generic [ref=e9]:
+        - button "Customize" [ref=e10] [cursor=pointer]
+        - button "Accept All" [ref=e11] [cursor=pointer]
+  - link "Skip to content" [ref=e12] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e16]:
+        - link "MLT Digital" [ref=e18] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk
+          - img "MLT Digital" [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e22] [cursor=pointer]:
+            - img "Avatar" [ref=e23]
+            - generic [ref=e24]: Hi there! Have a question? Chat with us here.
+            - button [ref=e25]:
+              - img [ref=e26]
+          - button "Select to open the chat widget" [ref=e28] [cursor=pointer]:
+            - img [ref=e30]
+      - generic [ref=e32]:
+        - text:  
+        - generic [ref=e34]:
+          - navigation "Menu" [ref=e35]:
+            - list [ref=e36]:
+              - listitem [ref=e37]:
+                - link "Home" [ref=e38] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/
+              - listitem [ref=e39]:
+                - link "About us" [ref=e40] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/about-us/
+                  - text: About us
+                  - generic [ref=e41]:
+                    - generic: 
+                  - text: 
+                - text: 
+              - listitem [ref=e42]:
+                - link "What do you need?" [ref=e43] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What do you need?
+                  - generic [ref=e44]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e45]:
+                - link "What we do" [ref=e46] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What we do
+                  - generic [ref=e47]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e48]:
+                - link "Resources" [ref=e49] [cursor=pointer]:
+                  - /url: "#"
+                  - text: Resources
+                  - generic [ref=e50]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e51]:
+                - link "ReceptIO" [ref=e52] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/receptio/
+          - text:       
+      - paragraph [ref=e56]:
+        - link "0808 501 5369" [ref=e57] [cursor=pointer]:
+          - /url: tel:+448085015369
+      - link "Contact us" [ref=e62] [cursor=pointer]:
+        - /url: /contact-us/
+        - generic [ref=e64]: Contact us
+  - generic [ref=e66]:
+    - generic [ref=e69]:
+      - heading "Lead Frontend & Content Developer" [level=1] [ref=e72]
+      - link "Apply Now" [ref=e76] [cursor=pointer]:
+        - /url: "#cv-careers"
+        - generic [ref=e78]: Apply Now
+    - generic [ref=e88]:
+      - paragraph [ref=e91]:
+        - generic [ref=e92]:
+          - link "Home" [ref=e94] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/
+          - text: »
+          - link "Careers" [ref=e96] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/careers/
+          - text: » Lead Frontend & Content Developer
+      - heading "About us" [level=2] [ref=e99]
+      - generic [ref=e101]:
+        - paragraph [ref=e102]: MLT Digital combines 20+ years of legal marketing expertise with advanced AI-powered marketing solutions that are results-focused and deliver exceptional ROI and sustainable growth for law firms.
+        - paragraph [ref=e103]: We are passionate about delivering excellence in digital marketing, helping law firms elevate their brand by driving credible online visibility and lead generation. Our collaborative team pro-actively embraces the benefits of AI and tech innovation throughout the digital world to drive quality, efficiencies and autonomy. We thrive on being at the front of the curve and the fulfilment that brings to the team and our clients, continually setting new standards in everything we do.
+      - heading "Job Description" [level=2] [ref=e106]
+      - paragraph [ref=e109]:
+        - text: We’re looking for a Technical Lead/Front End Developer/Content Creator to become the very first in-house hire in this niche, marketing-leading agency. We believe this is a pivotal time, and at MLT Digital, you have a unique chance to build something from the ground up and shape how design, internal/external build, content and front-end development evolve in this changing digital landscape.
+        - text: If you love crafting great digital experiences, are hands-on and have the passion to embrace new AI tools and techniques, this role is for you.
+        - text: We want someone excited by change, inspired by innovation, and ready to put their skills to work in a place where creativity and AI meet to set new standards.
+      - paragraph [ref=e112]: "About the job:"
+      - paragraph [ref=e115]:
+        - text: "Location: Hybrid – Work from home (Monday & Friday); Office-based in Glasgow (Tuesday, Wednesday & Thursday)"
+        - text: "Salary: from £45,000, depending on experience"
+        - text: "Reporting to: Operations Director"
+      - paragraph [ref=e118]: "Things you need to know:"
+      - paragraph [ref=e121]:
+        - emphasis [ref=e122]: We value diversity and always treat all employees and job applicants based on merit, qualifications, competence, and talent. We do not discriminate on the basis of race, religion, colour, national origin, gender, sexual orientation, age, marital status, veteran status, or disability status.
+      - paragraph [ref=e125]: "Key responsibilities:"
+      - list [ref=e128]:
+        - listitem [ref=e129]: Design and develop responsive, accessible WordPress websites, using modern custom themes and plugins
+        - listitem [ref=e130]: Design innovative digital and social media content tailored for various platforms (LinkedIn, Meta, Instagram, X, etc.) to support client visibility and social engagement
+        - listitem [ref=e131]: Collaborate on UI/UX design for legal sector clients, producing wireframes, mock-ups, and interactive prototypes for both desktop and mobile experiences
+        - listitem [ref=e132]: Manage website content updates, maintenance, QA/browser testing, and performance optimisation
+        - listitem [ref=e133]: Leadership of the core systems development process, ensuring robust governance is in place throughout
+        - listitem [ref=e134]: Manage and deliver all internal/external development projects
+        - listitem [ref=e135]: Lead or participate in migration projects (e.g., Joomla/Weblium to WordPress)
+        - listitem [ref=e136]: Apply best practice in SEO, web performance, and security
+        - listitem [ref=e137]: Share new front-end and creative approaches with the wider team; drive digital quality and brand consistency for clients
+        - listitem [ref=e138]: Stay ahead of digital trends, particularly in the legal sector
+      - paragraph [ref=e141]: "About you:"
+      - list [ref=e144]:
+        - listitem [ref=e145]: A clear desire to innovate and to bring new ideas to the table, having already embraced AI in a personal and work capacity
+        - listitem [ref=e146]: Expert in WordPress (theme/plugin development, modern workflows)
+        - listitem [ref=e147]: Highly proficient in HTML, CSS, JavaScript, and PHP (for WordPress)
+        - listitem [ref=e148]: Strong UX/UI design skills; able to produce visually engaging, conversion-optimised web assets
+        - listitem [ref=e149]: Experience with social media content creation (video, imagery, copy) for brand campaigns
+        - listitem [ref=e150]: Skilled at responsive and mobile-first website development and testing
+        - listitem [ref=e151]: Excellent communication and collaboration skills; comfortable discussing solutions with colleagues and clients
+        - listitem [ref=e152]: Proactive, self-driven, with a can-do attitude; able to work independently and as part of a team
+        - listitem [ref=e153]: Well-organised, with strong attention to detail
+      - paragraph [ref=e156]: "Hands on experience:"
+      - list [ref=e159]:
+        - listitem [ref=e160]: Evidence of developing successful technology functions supporting real-time business environments
+        - listitem [ref=e161]: Proven track record in IT project management and delivery across full project life cycles
+        - listitem [ref=e162]: Experience in fast-paced, AI dynamic environments
+        - listitem [ref=e163]: Strong background in managing third-party relationships and service delivery
+      - paragraph [ref=e166]: Skills & attributes
+      - list [ref=e169]:
+        - listitem [ref=e170]: Strong leadership and communication skills
+        - listitem [ref=e171]: Financial and commercial acumen
+        - listitem [ref=e172]: Advanced influencing and change management capabilities
+        - listitem [ref=e173]: Proactive, adaptable, and results-driven
+        - listitem [ref=e174]: Excellent planning, organisation, and problem-solving skills
+      - paragraph [ref=e177]: "Benefits:"
+      - list [ref=e180]:
+        - listitem [ref=e181]: Hybrid and flexible working (Monday & Friday WFH, Tues, Wed, Thurs in our Glasgow office – must be able to attend in person)
+        - listitem [ref=e182]: 4-day work week
+        - listitem [ref=e183]: Quarterly team events and socials
+        - listitem [ref=e184]: Personal development budget; access to training, courses, and certifications
+        - listitem [ref=e185]: 25 days holiday + (UK bank holidays)
+        - listitem [ref=e186]: Pension
+        - listitem [ref=e187]: Clear career progression pathways
+      - paragraph [ref=e190]: "What we offer:"
+      - list [ref=e193]:
+        - listitem [ref=e194]: Salary from £45,000 per annum
+        - listitem [ref=e195]: Hybrid and flexible working (Monday & Friday WFH, Tues, Wed, Thurs in our Glasgow office – must be able to attend in person
+        - listitem [ref=e196]: Quarterly team events and socials
+        - listitem [ref=e197]: Personal development budget; access to training, courses, and certifications
+        - listitem [ref=e198]: 25 days holiday + (UK bank holidays)
+        - listitem [ref=e199]: Pension
+        - listitem [ref=e200]: Clear career progression pathways
+      - paragraph [ref=e203]: "To apply:"
+      - generic [ref=e205]:
+        - paragraph [ref=e206]: If you’re a creative, technically accomplished frontend developer/designer with a track record in WordPress and a flair for digital storytelling, please send your CV, portfolio, and/or links to recent work to lorna@mltdigital.co.uk.
+        - paragraph [ref=e207]: At least 2 work references will be required prior to any offer of employment. Salary expectation is also required.
+        - paragraph [ref=e208]: Applications from those with experience creating content within regulated sectors (law, finance, health) are particularly welcomed.
+      - paragraph [ref=e211]: "**Closing date - Wednesday 27th August**"
+    - generic [ref=e217]:
+      - heading "Connect today for future opportunities" [level=2] [ref=e221]
+      - generic [ref=e222]:
+        - form "New Form" [ref=e225]:
+          - generic [ref=e226]:
+            - generic [ref=e227]:
+              - generic [ref=e228] [cursor=pointer]: Name *
+              - textbox "Name *" [ref=e229]:
+                - /placeholder: Name
+                - text: Alex Tester
+            - generic [ref=e230]:
+              - generic [ref=e231] [cursor=pointer]: Email *
+              - textbox "Email *" [ref=e232]:
+                - /placeholder: Email
+                - text: qa+launchguard@example.com
+            - generic [ref=e233]:
+              - generic [ref=e234] [cursor=pointer]: Where did you hear about us? *
+              - generic [ref=e235]:
+                - generic:
+                  - generic: 
+                - combobox "Where did you hear about us? *" [ref=e236]:
+                  - option "*Please choose from dropdown*"
+                  - option "LinkedIn" [selected]
+                  - option "Indeed"
+                  - option "Facebook"
+                  - option "Instagram"
+                  - option "Search engine"
+                  - option "Other"
+            - generic [ref=e237]:
+              - generic [ref=e238] [cursor=pointer]: Please upload your CV and cover letter *
+              - button "Please upload your CV and cover letter *" [active] [ref=e239]
+            - button "Apply now" [ref=e241] [cursor=pointer]:
+              - generic [ref=e243]: Apply now
+        - generic [ref=e245]:
+          - paragraph [ref=e246]: As MLT Digital gears up for a substantial expansion over the next three years, we’re on the lookout for forward-thinking professionals who are as passionate about legal marketing as we are.
+          - paragraph [ref=e247]: We value diversity and always treat all employees and job applicants based on merit, qualifications, competence, and talent. We do not discriminate on the basis of race, religion, colour, national origin, gender, sexual orientation, age, marital status, veteran status, or disability status.
+          - paragraph [ref=e248]: Submit your CV and let’s forge a connection that could pave the way for collaborative success in the world of global legal digital marketing.
+  - contentinfo [ref=e249]:
+    - generic [ref=e252]:
+      - generic [ref=e253]:
+        - img "MLT Digital" [ref=e256]
+        - paragraph [ref=e259]:
+          - link "0808 501 5369" [ref=e260] [cursor=pointer]:
+            - /url: "tel:+448085015369 "
+            - strong [ref=e261]: 0808 501 5369
+        - paragraph [ref=e264]:
+          - link "enquiries@mltdigital.co.uk" [ref=e265] [cursor=pointer]:
+            - /url: mailto:enquiries@mltdigital.co.uk
+        - paragraph [ref=e268]:
+          - text: Unit 104
+          - text: South Block
+          - text: 60-64 Osborne St
+          - text: Glasgow
+          - text: G1 5QH
+      - generic [ref=e269]:
+        - heading "Services" [level=4] [ref=e272]
+        - paragraph [ref=e275]:
+          - link "SEO for law firms" [ref=e276] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-seo/
+          - link "PPC for law firms" [ref=e277] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-ppc/
+          - link "Content" [ref=e278] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/content/
+          - link "Web design" [ref=e279] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-web-design/
+          - link "Lead generation" [ref=e280] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/lead-generation/
+          - link "Marketing" [ref=e281] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/marketing/
+          - link "Branding" [ref=e282] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/branding/
+      - generic [ref=e283]:
+        - heading "Sectors" [level=4] [ref=e286]
+        - paragraph [ref=e289]:
+          - link "Medium sized law firms" [ref=e290] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/medium-sized-law-firms/
+          - link "Commercial law firms" [ref=e291] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/commercial-law-firms/
+          - link "Criminal law firms" [ref=e292] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/criminal-law-firms/
+          - link "Employment law firms" [ref=e293] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/employment-law-firms/
+          - link "Small law firms" [ref=e294] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/small-law-firms/
+          - link "Personal injury law firms" [ref=e295] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/personal-injury-law-firms/
+          - link "Private client law firms" [ref=e296] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/private-client-law-firms/
+          - link "Family law firms" [ref=e297] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/family-law-firms/
+    - generic [ref=e299]:
+      - img "Scottish Legal Rewards 2024" [ref=e303]
+      - img "2025 microsoft partner badge" [ref=e307]
+      - img "google-partner" [ref=e311]
+      - generic [ref=e321] [cursor=pointer]:
+        - img [ref=e326]
+        - generic [ref=e336]:
+          - 'img "Rating: 4.6 out of 5" [ref=e337]':
+            - generic [ref=e338]: "4.6"
+            - generic [ref=e339]:
+              - generic [ref=e340]:
+                - img [ref=e342]
+                - img [ref=e346]
+              - generic [ref=e349]:
+                - img [ref=e351]
+                - img [ref=e355]
+              - generic [ref=e358]:
+                - img [ref=e360]
+                - img [ref=e364]
+              - generic [ref=e367]:
+                - img [ref=e369]
+                - img [ref=e373]
+              - generic [ref=e376]:
+                - img [ref=e378]
+                - img [ref=e382]
+          - generic [ref=e385]: 23 reviews
+      - img "NLA_banner" [ref=e389]
+    - heading "As featured in" [level=2] [ref=e395]
+    - generic [ref=e397]:
+      - img "LEGAL-FUTURES-logo" [ref=e401]
+      - img "MLM" [ref=e405]
+    - generic [ref=e407]:
+      - generic [ref=e410]:
+        - paragraph [ref=e411]: © 2003 – 2025
+        - paragraph [ref=e412]: MLT Digital
+      - navigation "Menu" [ref=e420]:
+        - list [ref=e421]:
+          - listitem [ref=e422]:
+            - link "Privacy policy" [ref=e423] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/privacy-policy/
+          - listitem [ref=e424]:
+            - link "Cookies policy" [ref=e425] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/cookies-policy/
+          - listitem [ref=e426]:
+            - link "Terms of use" [ref=e427] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/terms-of-use/
+          - listitem [ref=e428]:
+            - link "Support" [ref=e429] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/support/
+      - list [ref=e433]:
+        - listitem [ref=e434]:
+          - link "Facebook-f" [ref=e435] [cursor=pointer]:
+            - /url: https://www.facebook.com/mltdigitalmarketing/
+            - generic [ref=e436]: Facebook-f
+            - generic [ref=e437]: 
+        - listitem [ref=e438]:
+          - link "X-twitter" [ref=e439] [cursor=pointer]:
+            - /url: https://twitter.com/mlt_digital
+            - generic [ref=e440]: X-twitter
+            - generic [ref=e441]: 
+        - listitem [ref=e442]:
+          - link "Linkedin-in" [ref=e443] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/mltdigital/
+            - generic [ref=e444]: Linkedin-in
+            - generic [ref=e445]: 
+        - listitem [ref=e446]:
+          - link "Instagram" [ref=e447] [cursor=pointer]:
+            - /url: https://www.instagram.com/mltdigital_/
+            - generic [ref=e448]: Instagram
+            - generic [ref=e449]: 
+        - listitem [ref=e450]:
+          - link "Youtube" [ref=e451] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCi6ROO4wTZPSJrT1GW6AGwg
+            - generic [ref=e452]: Youtube
+            - generic [ref=e453]: 
+        - listitem [ref=e454]:
+          - link "Tiktok" [ref=e455] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@yourlawfirmsuccess
+            - generic [ref=e456]: Tiktok
+            - generic [ref=e457]: 
+  - generic [ref=e459]: desktop
+  - iframe [ref=e464]:
+    - generic [ref=f1e2]:
+      - generic [ref=f1e5]:
+        - link "Privacy" [ref=f1e6] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/privacy/
+        - text: "-"
+        - link "Terms" [ref=f1e7] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/terms/
+      - generic [ref=f1e8]:
+        - generic [ref=f1e9]:
+          - text: protected by
+          - strong [ref=f1e10]: reCAPTCHA
+        - generic [ref=f1e11]: "-"
+  - generic:
+    - dialog "Reviews badge":
+      - generic [ref=e469]:
+        - generic [ref=e470] [cursor=pointer]:
+          - img [ref=e475]
+          - generic [ref=e486]: Our Google Reviews
+          - generic [ref=e487]:
+            - 'img "Rating: 4.6 out of 5" [ref=e488]':
+              - generic [ref=e489]: "4.6"
+              - generic [ref=e490]:
+                - generic [ref=e491]:
+                  - img [ref=e493]
+                  - img [ref=e497]
+                - generic [ref=e500]:
+                  - img [ref=e502]
+                  - img [ref=e506]
+                - generic [ref=e509]:
+                  - img [ref=e511]
+                  - img [ref=e515]
+                - generic [ref=e518]:
+                  - img [ref=e520]
+                  - img [ref=e524]
+                - generic [ref=e527]:
+                  - img [ref=e529]
+                  - img [ref=e533]
+            - generic [ref=e536]: 23 reviews
+        - button "Close Badge" [ref=e538] [cursor=pointer]:
+          - img [ref=e539]
+  - img [ref=e541]
+```

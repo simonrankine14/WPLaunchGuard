@@ -1,0 +1,311 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]:
+        - link "MLT Digital" [ref=e8] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk
+          - img "MLT Digital" [ref=e9]
+        - generic [ref=e10]:
+          - generic [ref=e12] [cursor=pointer]:
+            - img "Avatar" [ref=e13]
+            - generic [ref=e14]: Hi there! Have a question? Chat with us here.
+            - button [ref=e15]:
+              - img [ref=e16]
+          - button "Select to open the chat widget" [ref=e18] [cursor=pointer]:
+            - img [ref=e20]
+      - generic [ref=e22]:
+        - text:  
+        - generic [ref=e24]:
+          - navigation "Menu" [ref=e25]:
+            - list [ref=e26]:
+              - listitem [ref=e27]:
+                - link "Home" [ref=e28] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/
+              - listitem [ref=e29]:
+                - link "About us" [ref=e30] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/about-us/
+                  - text: About us
+                  - generic [ref=e31]:
+                    - generic: 
+                  - text: 
+                - text: 
+              - listitem [ref=e32]:
+                - link "What do you need?" [ref=e33] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What do you need?
+                  - generic [ref=e34]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e35]:
+                - link "What we do" [ref=e36] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What we do
+                  - generic [ref=e37]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e38]:
+                - link "Resources" [ref=e39] [cursor=pointer]:
+                  - /url: "#"
+                  - text: Resources
+                  - generic [ref=e40]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e41]:
+                - link "ReceptIO" [ref=e42] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/receptio/
+          - text:       
+      - paragraph [ref=e46]:
+        - link "0808 164 9368" [ref=e47] [cursor=pointer]:
+          - /url: tel:+448081649368
+      - link "Contact us" [ref=e52] [cursor=pointer]:
+        - /url: /contact-us/
+        - generic [ref=e54]: Contact us
+  - main [ref=e56]:
+    - generic [ref=e58]:
+      - generic [ref=e61]:
+        - heading "DEDICATED TO YOUR LAW FIRM'S SUCCESS" [level=5] [ref=e64]
+        - heading "Our team" [level=1] [ref=e67]
+        - paragraph [ref=e70]:
+          - text: We’re always on the lookout for fun, hardworking team members who are keen to progress and work in a friendly environment. If this is you, please
+          - link "get in touch" [ref=e71] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/contact-us/
+          - text: .
+      - paragraph [ref=e83]:
+        - generic [ref=e84]:
+          - link "Home" [ref=e86] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/
+          - text: » Our team
+      - generic [ref=e94]:
+        - img "Scottish Legal Rewards 2024" [ref=e98]
+        - img "google-partner" [ref=e102]
+        - img "2025 microsoft partner badge" [ref=e106]
+        - generic [ref=e116] [cursor=pointer]:
+          - img [ref=e121]
+          - generic [ref=e131]:
+            - 'img "Rating: 4.6 out of 5" [ref=e132]':
+              - generic [ref=e133]: "4.6"
+              - generic [ref=e134]:
+                - generic [ref=e135]:
+                  - img [ref=e137]
+                  - img [ref=e141]
+                - generic [ref=e144]:
+                  - img [ref=e146]
+                  - img [ref=e150]
+                - generic [ref=e153]:
+                  - img [ref=e155]
+                  - img [ref=e159]
+                - generic [ref=e162]:
+                  - img [ref=e164]
+                  - img [ref=e168]
+                - generic [ref=e171]:
+                  - img [ref=e173]
+                  - img [ref=e177]
+            - generic [ref=e180]: 23 reviews
+        - img "NLA_banner" [ref=e184]
+      - generic [ref=e186]:
+        - link "Anna palmstierna Anna Palmstierna Data Manager/ SEO Executive" [ref=e190] [cursor=pointer]:
+          - /url: /our-team/anna-palmstierna/
+          - img "Anna palmstierna" [ref=e192]
+          - generic [ref=e194]:
+            - heading "Anna Palmstierna" [level=2] [ref=e195]
+            - generic [ref=e196]: Data Manager/ SEO Executive
+        - link "Caroline-weir Caroline Weir Website Helpdesk Coordinator" [ref=e200] [cursor=pointer]:
+          - /url: /our-team/caroline-weir/
+          - img "Caroline-weir" [ref=e202]
+          - generic [ref=e204]:
+            - heading "Caroline Weir" [level=2] [ref=e205]
+            - generic [ref=e206]: Website Helpdesk Coordinator
+        - link "chris davidson Chris Davidson Business Development Director" [ref=e210] [cursor=pointer]:
+          - /url: /our-team/chris-davidson/
+          - img "chris davidson" [ref=e212]
+          - generic [ref=e214]:
+            - heading "Chris Davidson" [level=2] [ref=e215]
+            - generic [ref=e216]: Business Development Director
+        - link "Dave-lyall Dave Lyall SEO Manager" [ref=e220] [cursor=pointer]:
+          - /url: /our-team/dave-lyall/
+          - img "Dave-lyall" [ref=e222]
+          - generic [ref=e224]:
+            - heading "Dave Lyall" [level=2] [ref=e225]
+            - generic [ref=e226]: SEO Manager
+  - contentinfo [ref=e227]:
+    - generic [ref=e230]:
+      - generic [ref=e231]:
+        - img "MLT Digital" [ref=e234]
+        - paragraph [ref=e237]:
+          - link "0808 164 9368" [ref=e238] [cursor=pointer]:
+            - /url: "tel:+448081649368 "
+            - strong [ref=e239]: 0808 164 9368
+        - paragraph [ref=e242]:
+          - link "enquiries@mltdigital.co.uk" [ref=e243] [cursor=pointer]:
+            - /url: mailto:enquiries@mltdigital.co.uk
+        - paragraph [ref=e246]:
+          - text: Unit 104
+          - text: South Block
+          - text: 60-64 Osborne St
+          - text: Glasgow
+          - text: G1 5QH
+      - generic [ref=e247]:
+        - heading "Services" [level=4] [ref=e250]
+        - paragraph [ref=e253]:
+          - link "SEO for law firms" [ref=e254] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-seo/
+          - link "PPC for law firms" [ref=e255] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-ppc/
+          - link "Content" [ref=e256] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/content/
+          - link "Web design" [ref=e257] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-web-design/
+          - link "Lead generation" [ref=e258] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/lead-generation/
+          - link "Marketing" [ref=e259] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/marketing/
+          - link "Branding" [ref=e260] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/branding/
+      - generic [ref=e261]:
+        - heading "Sectors" [level=4] [ref=e264]
+        - paragraph [ref=e267]:
+          - link "Medium sized law firms" [ref=e268] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/medium-sized-law-firms/
+          - link "Commercial law firms" [ref=e269] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/commercial-law-firms/
+          - link "Criminal law firms" [ref=e270] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/criminal-law-firms/
+          - link "Employment law firms" [ref=e271] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/employment-law-firms/
+          - link "Small law firms" [ref=e272] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/small-law-firms/
+          - link "Personal injury law firms" [ref=e273] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/personal-injury-law-firms/
+          - link "Private client law firms" [ref=e274] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/private-client-law-firms/
+          - link "Family law firms" [ref=e275] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/family-law-firms/
+    - generic [ref=e277]:
+      - img "Scottish Legal Rewards 2024" [ref=e281]
+      - img "2025 microsoft partner badge" [ref=e285]
+      - img "google-partner" [ref=e289]
+      - generic [ref=e299] [cursor=pointer]:
+        - img [ref=e304]
+        - generic [ref=e314]:
+          - 'img "Rating: 4.6 out of 5" [ref=e315]':
+            - generic [ref=e316]: "4.6"
+            - generic [ref=e317]:
+              - generic [ref=e318]:
+                - img [ref=e320]
+                - img [ref=e324]
+              - generic [ref=e327]:
+                - img [ref=e329]
+                - img [ref=e333]
+              - generic [ref=e336]:
+                - img [ref=e338]
+                - img [ref=e342]
+              - generic [ref=e345]:
+                - img [ref=e347]
+                - img [ref=e351]
+              - generic [ref=e354]:
+                - img [ref=e356]
+                - img [ref=e360]
+          - generic [ref=e363]: 23 reviews
+      - img "NLA_banner" [ref=e367]
+    - heading "As featured in" [level=2] [ref=e373]
+    - generic [ref=e375]:
+      - img "LEGAL-FUTURES-logo" [ref=e379]
+      - img "MLM" [ref=e383]
+    - generic [ref=e385]:
+      - generic [ref=e388]:
+        - paragraph [ref=e389]: © 2003 – 2025
+        - paragraph [ref=e390]: MLT Digital
+      - navigation "Menu" [ref=e398]:
+        - list [ref=e399]:
+          - listitem [ref=e400]:
+            - link "Privacy policy" [ref=e401] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/privacy-policy/
+          - listitem [ref=e402]:
+            - link "Cookies policy" [ref=e403] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/cookies-policy/
+          - listitem [ref=e404]:
+            - link "Terms of use" [ref=e405] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/terms-of-use/
+          - listitem [ref=e406]:
+            - link "Support" [ref=e407] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/support/
+      - list [ref=e411]:
+        - listitem [ref=e412]:
+          - link "Facebook-f" [ref=e413] [cursor=pointer]:
+            - /url: https://www.facebook.com/mltdigitalmarketing/
+            - generic [ref=e414]: Facebook-f
+            - generic [ref=e415]: 
+        - listitem [ref=e416]:
+          - link "X-twitter" [ref=e417] [cursor=pointer]:
+            - /url: https://twitter.com/mlt_digital
+            - generic [ref=e418]: X-twitter
+            - generic [ref=e419]: 
+        - listitem [ref=e420]:
+          - link "Linkedin-in" [ref=e421] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/mltdigital/
+            - generic [ref=e422]: Linkedin-in
+            - generic [ref=e423]: 
+        - listitem [ref=e424]:
+          - link "Instagram" [ref=e425] [cursor=pointer]:
+            - /url: https://www.instagram.com/mltdigital_/
+            - generic [ref=e426]: Instagram
+            - generic [ref=e427]: 
+        - listitem [ref=e428]:
+          - link "Youtube" [ref=e429] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCi6ROO4wTZPSJrT1GW6AGwg
+            - generic [ref=e430]: Youtube
+            - generic [ref=e431]: 
+        - listitem [ref=e432]:
+          - link "Tiktok" [ref=e433] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@yourlawfirmsuccess
+            - generic [ref=e434]: Tiktok
+            - generic [ref=e435]: 
+  - generic [ref=e437]: desktop
+  - iframe [ref=e442]:
+    - generic [ref=f1e2]:
+      - generic [ref=f1e5]:
+        - link "Privacy" [ref=f1e6] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/privacy/
+        - text: "-"
+        - link "Terms" [ref=f1e7] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/terms/
+      - generic [ref=f1e8]:
+        - generic [ref=f1e9]:
+          - text: protected by
+          - strong [ref=f1e10]: reCAPTCHA
+        - generic [ref=f1e11]: "-"
+  - generic:
+    - dialog "Reviews badge":
+      - generic [ref=e447]:
+        - generic [ref=e448] [cursor=pointer]:
+          - img [ref=e453]
+          - generic [ref=e464]: Our Google Reviews
+          - generic [ref=e465]:
+            - 'img "Rating: 4.6 out of 5" [ref=e466]':
+              - generic [ref=e467]: "4.6"
+              - generic [ref=e468]:
+                - generic [ref=e469]:
+                  - img [ref=e471]
+                  - img [ref=e475]
+                - generic [ref=e478]:
+                  - img [ref=e480]
+                  - img [ref=e484]
+                - generic [ref=e487]:
+                  - img [ref=e489]
+                  - img [ref=e493]
+                - generic [ref=e496]:
+                  - img [ref=e498]
+                  - img [ref=e502]
+                - generic [ref=e505]:
+                  - img [ref=e507]
+                  - img [ref=e511]
+            - generic [ref=e514]: 23 reviews
+        - button "Close Badge" [ref=e516] [cursor=pointer]:
+          - img [ref=e517]
+  - img [ref=e519]
+```

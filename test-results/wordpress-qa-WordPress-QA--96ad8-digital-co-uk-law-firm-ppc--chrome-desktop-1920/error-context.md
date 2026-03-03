@@ -1,0 +1,544 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - heading "We value your privacy" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - paragraph [ref=e8]: We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.
+      - generic [ref=e9]:
+        - button "Customize" [ref=e10] [cursor=pointer]
+        - button "Accept All" [ref=e11] [cursor=pointer]
+  - link "Skip to content" [ref=e12] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e16]:
+        - link "MLT Digital" [ref=e18] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk
+          - img "MLT Digital" [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e22] [cursor=pointer]:
+            - img "Avatar" [ref=e23]
+            - generic [ref=e24]: Hi there! Have a question? Chat with us here.
+            - button [ref=e25]:
+              - img [ref=e26]
+          - button "Select to open the chat widget" [ref=e28] [cursor=pointer]:
+            - img [ref=e30]
+      - generic [ref=e32]:
+        - text:  
+        - generic [ref=e34]:
+          - navigation "Menu" [ref=e35]:
+            - list [ref=e36]:
+              - listitem [ref=e37]:
+                - link "Home" [ref=e38] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/
+              - listitem [ref=e39]:
+                - link "About us" [ref=e40] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/about-us/
+                  - text: About us
+                  - generic [ref=e41]:
+                    - generic: 
+                  - text: 
+                - text: 
+              - listitem [ref=e42]:
+                - link "What do you need?" [ref=e43] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What do you need?
+                  - generic [ref=e44]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e45]:
+                - link "What we do" [ref=e46] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What we do
+                  - generic [ref=e47]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e48]:
+                - link "Resources" [ref=e49] [cursor=pointer]:
+                  - /url: "#"
+                  - text: Resources
+                  - generic [ref=e50]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e51]:
+                - link "ReceptIO" [ref=e52] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/receptio/
+          - text:       
+      - paragraph [ref=e56]:
+        - link "0808 169 7083" [ref=e57] [cursor=pointer]:
+          - /url: tel:+448081697083
+      - link "Contact us" [ref=e62] [cursor=pointer]:
+        - /url: /contact-us/
+        - generic [ref=e64]: Contact us
+  - main [ref=e66]:
+    - generic [ref=e68]:
+      - generic [ref=e71]:
+        - heading "DEDICATED TO YOUR LAW FIRM'S SUCCESS" [level=5] [ref=e74]
+        - heading "Paid advertising (PPC) for law firms" [level=1] [ref=e77]
+        - paragraph [ref=e80]: Generate results quickly and cost effectively with online paid advertising managed for you by our experts.
+        - link "Find out more" [ref=e84] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk/contact-us/
+          - generic [ref=e86]: Find out more
+      - paragraph [ref=e92]:
+        - generic [ref=e93]:
+          - link "Home" [ref=e95] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/
+          - text: » PPC
+      - region "Image Carousel" [ref=e100]:
+        - generic [ref=e101]:
+          - group [ref=e102]:
+            - figure [ref=e103]:
+              - img [ref=e104]
+          - group [ref=e105]:
+            - figure [ref=e106]:
+              - img [ref=e107]
+          - group [ref=e108]:
+            - figure [ref=e109]:
+              - img [ref=e110]
+          - group "1 / 3" [ref=e111]:
+            - figure [ref=e112]:
+              - img "google-ads" [ref=e113]
+          - group "2 / 3" [ref=e114]:
+            - figure [ref=e115]:
+              - img "google-partner" [ref=e116]
+          - group "3 / 3" [ref=e117]:
+            - figure [ref=e118]:
+              - img "microsoft-partner" [ref=e119]
+          - group [ref=e120]:
+            - figure [ref=e121]:
+              - img [ref=e122]
+          - group [ref=e123]:
+            - figure [ref=e124]:
+              - img [ref=e125]
+          - group [ref=e126]:
+            - figure [ref=e127]:
+              - img [ref=e128]
+      - generic [ref=e130]:
+        - heading "Discover your firm's growth potential with PPC ads" [level=2] [ref=e134]
+        - generic [ref=e135]:
+          - paragraph [ref=e138]: Paid search, or ‘pay-per-click’ (PPC), is a quick way of connecting prospective clients with your firm through online advertising.
+          - generic [ref=e140]:
+            - paragraph [ref=e141]:
+              - text: Offered by search engines like Google and Bing, as well as social media channels, PPC advertising enables law firms to secure prime positions at the top of search results for their legal services, appearing ahead of any organic
+              - link "SEO-driven results" [ref=e142] [cursor=pointer]:
+                - /url: https://www.mltdigital.co.uk/law-firm-seo/
+              - text: .
+            - paragraph [ref=e143]: For small to medium-sized law firms, PPC advertising can be an excellent channel to attract new clients and enhance your firm’s growth strategy instantly.
+            - paragraph [ref=e144]: Specialising in law firm marketing for over two decades, MLT Digital is highly experienced in creating data-driven, results-oriented PPC ad campaigns to drive your law firm’s success.
+            - paragraph [ref=e145]:
+              - text: As your marketing partner, we can help you turn your online advertising into an important source of
+              - link "lead generation." [ref=e146] [cursor=pointer]:
+                - /url: https://www.mltdigital.co.uk/lead-generation/
+          - link "Get started" [ref=e150] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/contact-us/
+            - generic [ref=e151]:
+              - generic [ref=e153]: 
+              - generic [ref=e154]: Get started
+      - generic [ref=e157]:
+        - heading "Get more qualified leads through your website with PPC campaigns for lawyers." [level=2] [ref=e160]
+        - link "Let's talk" [ref=e164] [cursor=pointer]:
+          - /url: "#contact"
+          - generic [ref=e166]: Let's talk
+      - generic [ref=e168]:
+        - heading "HOW WE HELP" [level=5] [ref=e171]
+        - heading "Instant results are just one click away" [level=2] [ref=e174]
+        - paragraph [ref=e177]: Our deep understanding of the legal industry and of digital marketing best practices allows us to craft customised PPC campaigns that speak directly to potential clients about your specific legal practice areas. By leveraging cutting-edge technology and advanced analytics, we ensure that your law firm’s PPC ads reach the right people, at the right moment, with the right message.
+      - generic [ref=e179]:
+        - generic [ref=e180]:
+          - paragraph [ref=e183]: "01"
+          - heading "Growth-focused PPC" [level=2] [ref=e186]
+          - generic [ref=e188]:
+            - paragraph [ref=e189]: It’s crucial to have a bespoke PPC strategy that aligns with your goals, target audience, and ad spend.
+            - paragraph [ref=e190]: With 20+ years of experience, our tried-and-tested approach combines comprehensive keyword research, ad copy creation, and ongoing optimisation.
+            - paragraph [ref=e191]: We understand that each law firm is unique and will ensure your PPC ad campaigns are always performing at their peak and delivering maximum ROI for your law firm.
+        - generic [ref=e192]:
+          - paragraph [ref=e195]: "02"
+          - heading "Turn visitors into clients" [level=2] [ref=e198]
+          - generic [ref=e200]:
+            - paragraph [ref=e201]: An effective law firm PPC campaign does more than just put you at the top of Google search.
+            - paragraph [ref=e202]: We create conversion-optimised ad copy and landing pages using specific keywords that are designed to convert visitors into clients.
+            - paragraph [ref=e203]:
+              - text: Our team of UX and legal copywriting experts will craft
+              - link "compelling ad copy" [ref=e204] [cursor=pointer]:
+                - /url: https://www.mltdigital.co.uk/content/
+              - text: that speaks to your target audience and inspires them to take action, resulting in increased lead generation for your law firm.
+        - generic [ref=e205]:
+          - paragraph [ref=e208]: "03"
+          - heading "Informed reporting" [level=2] [ref=e211]
+          - generic [ref=e213]:
+            - paragraph [ref=e214]: We believe in empowering our clients through complete transparency about our marketing efforts.
+            - paragraph [ref=e215]: Our detailed reporting and analytics provide you with a clear view of your law firm’s PPC campaigns performance.
+            - paragraph [ref=e216]: Whether you are looking to track key metrics, monitor ROI, or make data-driven decisions, MLT Digital will work with your to achieve your law firm’s growth objectives.
+      - generic [ref=e218]:
+        - heading "Read what our clients have to say about our service" [level=2] [ref=e222]
+        - region "Slides" [ref=e228]:
+          - generic [ref=e229]:
+            - group "2 / 2" [ref=e230]:
+              - generic [ref=e231]:
+                - generic [ref=e233]: "\"In launching a new employment law firm, I was in no doubt that a highly professional website combined with a comprehensive online marketing strategy would be essential to business success. MLT have delivered a stunning website and have got the marketing campaign off to a flying start. With MLT as our marketing partner the firm looks forward to a long and prosperous future.\""
+                - generic [ref=e236]: Principal Solicitor
+            - group "1 / 2" [ref=e237]:
+              - generic [ref=e238]:
+                - generic [ref=e240]: “Not only does our online presence now epitomise the quality and professionalism we display offline, we have seen increased levels of organic traffic to the website, rankings have increased for targeted areas of practice – in many cases leapfrogging competitor firms - and locations, while paid search campaigns have delivered excellent results.”
+                - generic [ref=e243]: Marketing Manager
+            - group "2 / 2" [ref=e244]:
+              - generic [ref=e245]:
+                - generic [ref=e247]: "\"In launching a new employment law firm, I was in no doubt that a highly professional website combined with a comprehensive online marketing strategy would be essential to business success. MLT have delivered a stunning website and have got the marketing campaign off to a flying start. With MLT as our marketing partner the firm looks forward to a long and prosperous future.\""
+                - generic [ref=e250]: Principal Solicitor
+            - group "1 / 2" [ref=e251]:
+              - generic [ref=e252]:
+                - generic [ref=e254]: “Not only does our online presence now epitomise the quality and professionalism we display offline, we have seen increased levels of organic traffic to the website, rankings have increased for targeted areas of practice – in many cases leapfrogging competitor firms - and locations, while paid search campaigns have delivered excellent results.”
+                - generic [ref=e257]: Marketing Manager
+          - button "Previous slide" [ref=e258] [cursor=pointer]:
+            - generic [ref=e259]: 
+          - button "Next slide" [ref=e260] [cursor=pointer]:
+            - generic [ref=e261]: 
+          - generic [ref=e262]:
+            - button "Go to slide 1" [ref=e263] [cursor=pointer]
+            - button "Go to slide 2" [ref=e264] [cursor=pointer]
+      - generic [ref=e268]:
+        - heading "THE PROCESS" [level=5] [ref=e271]
+        - heading "What's included in our PPC services for law firms?" [level=2] [ref=e274]
+        - paragraph [ref=e277]:
+          - text: At MLT Digital, we will help you turn prospects into paying clients with a winning PPC campaign that delivers your target keywords, all while watching your
+          - link "ad spend." [ref=e278] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/i-need-to-maximise-return-on-ad-spend/
+      - generic [ref=e281]:
+        - heading "Keyword strategy" [level=2] [ref=e284]
+        - heading "Boost your client pipeline with powerful keywords" [level=4] [ref=e287]
+        - generic [ref=e289]:
+          - paragraph [ref=e290]: Our goal is to ensure a steady stream of qualified leads coming through to your firm.
+          - paragraph [ref=e291]:
+            - text: MLT Digital will conduct in-depth keyword research to uncover the most relevant and high-converting search terms for the practice areas you’re looking to target. Our targeted keyword strategies for PPC campaigns focus on
+            - link "attracting high-quality leads" [ref=e292] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/i-need-more-leads/
+            - text: that are more likely to convert.
+          - paragraph [ref=e293]: Using our tried-and-tested method developed over 20+ years, we utilise a mix of short-tail and long-tail keywords that attract both immediate and long-term traffic.
+      - generic [ref=e298]:
+        - heading "Compelling ad copy" [level=2] [ref=e301]
+        - heading "Ads that inspire prospects to take action" [level=4] [ref=e304]
+        - generic [ref=e306]:
+          - paragraph [ref=e307]: Having a successful PPC campaign is more than just appearing at the very top of search. You must capture the attention of potential clients with engaging ad copy that makes the user want to know more.
+          - paragraph [ref=e308]:
+            - text: Our skilled team will create ads that resonate with your target audience and encourage click-through. At MLT, we also tailor your PPC ad campaigns to align with your
+            - link "law firm’s marketing strategy" [ref=e309] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/marketing/
+            - text: and showcase your law firm’s unique voice.
+          - paragraph [ref=e310]: As an experienced PPC agency for law firms, we will ensure that prospective clients can see your brand identity in every marketing campaign.
+      - generic [ref=e313]:
+        - heading "PPC bidding" [level=2] [ref=e316]
+        - heading "Bid smart, win big" [level=4] [ref=e319]
+        - generic [ref=e321]:
+          - paragraph [ref=e322]: We know how important return on investment is to your law firm’s success. That is why our PPC ads service has been designed to maximise your visibility while keeping your ad spend low.
+          - paragraph [ref=e323]: Our bid management strategy involves continually monitoring and adjusting bids to ensure optimal ad placement and cost-efficiency for your PPC budget. By leveraging advanced tools and legal sector industry insights, we help you find the perfect balance.
+      - generic [ref=e328]:
+        - heading "Campaign monitoring" [level=2] [ref=e331]
+        - heading "Unleash peak performance and stay ahead of the curve" [level=4] [ref=e334]
+        - generic [ref=e336]:
+          - paragraph [ref=e337]: Once your PPC campaign is live, the work does not stop there for our team. In order for your law firm to achieve long-term success with paid ads, we offer an ongoing service that involves monitoring and optimising your campaign.
+          - paragraph [ref=e338]: After we identify specific keywords tailored to your law firm’s practice areas, our team strategically implements negative keywords to filter out irrelevant traffic – improving your campaign’s overall performance and staying in control of your ad spend.
+          - paragraph [ref=e339]: Our proactive approach means we regularly assess and analyse your PPC ad campaigns performance data to identify areas of improvement, making data-driven adjustments to ad targeting, bidding strategies, and ad creatives for your law firm.
+      - generic [ref=e341]:
+        - generic [ref=e342]:
+          - heading "Interested in learning more? Check out our free resources" [level=2] [ref=e345]
+          - link "Blog" [ref=e349] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/blog/
+            - generic [ref=e351]: Blog
+          - link "Guides" [ref=e355] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/guides/
+            - generic [ref=e357]: Guides
+        - generic [ref=e362]:
+          - figure [ref=e363]:
+            - link "law-firm-PPC-pay-per-click-campaigns-marketing-strategy" [ref=e364] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/should-i-dedicate-a-substantial-budget-to-our-law-firms-ppc-campaigns/
+              - img "law-firm-PPC-pay-per-click-campaigns-marketing-strategy" [ref=e365]
+          - generic [ref=e366]:
+            - heading "Should I dedicate a substantial budget to PPC campaigns?" [level=3] [ref=e367]:
+              - link "Should I dedicate a substantial budget to PPC campaigns?" [ref=e368] [cursor=pointer]:
+                - /url: https://www.mltdigital.co.uk/should-i-dedicate-a-substantial-budget-to-our-law-firms-ppc-campaigns/
+            - paragraph [ref=e369]: BLOG
+        - generic [ref=e373]:
+          - figure [ref=e374]:
+            - link "law-firm-ppc" [ref=e375] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/guides/ppc-for-law-firms/
+              - img "law-firm-ppc" [ref=e376]
+          - heading "PPC guide for law firms" [level=3] [ref=e378]:
+            - link "PPC guide for law firms" [ref=e379] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/guides/ppc-for-law-firms/
+      - generic [ref=e382]:
+        - heading "YOUR QUESTIONS ANSWERED" [level=5] [ref=e385]
+        - heading "PPC FAQs" [level=2] [ref=e388]
+        - generic [ref=e391]:
+          - generic [ref=e392]:
+            - button "How much should my law firm invest in PPC advertising?" [expanded] [ref=e393] [cursor=pointer]:
+              - generic [ref=e394]:
+                - text: 
+                - generic [ref=e396]: 
+              - text: How much should my law firm invest in PPC advertising?
+            - region "How much should my law firm invest in PPC advertising?" [ref=e397]:
+              - paragraph [ref=e398]: The ideal PPC budget varies depending on factors like your firm’s size, practice areas, and growth objectives. During our free consultation, we’ll work closely with you to understand your ppc campaign and craft a tailored strategy with an ad spend that balances your desired outcomes with cost efficiency.
+          - button "How soon can I expect to see results from my law firm's PPC campaign?" [ref=e400] [cursor=pointer]:
+            - generic [ref=e401]:
+              - generic [ref=e403]: 
+              - text: 
+            - text: How soon can I expect to see results from my law firm's PPC campaign?
+          - button "Can I target specific geographic locations with my PPC campaign?" [ref=e405] [cursor=pointer]:
+            - generic [ref=e406]:
+              - generic [ref=e408]: 
+              - text: 
+            - text: Can I target specific geographic locations with my PPC campaign?
+          - button "Where can I run my law firm's PPC campaign?" [ref=e410] [cursor=pointer]:
+            - generic [ref=e411]:
+              - generic [ref=e413]: 
+              - text: 
+            - text: Where can I run my law firm's PPC campaign?
+          - button "What are some of the PPC mistakes law firms make?" [ref=e415] [cursor=pointer]:
+            - generic [ref=e416]:
+              - generic [ref=e418]: 
+              - text: 
+            - text: What are some of the PPC mistakes law firms make?
+      - generic [ref=e422]:
+        - heading "OUR RESULTS" [level=5] [ref=e425]
+        - heading "Explore some of our case studies" [level=2] [ref=e428]
+      - generic [ref=e433]:
+        - heading "Calio Claims" [level=4] [ref=e437]:
+          - link "Calio Claims" [ref=e438] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/case-studies/calio-claims/
+        - generic [ref=e439]:
+          - paragraph [ref=e442]: Paid search average conversion rate of 20%
+          - link "Read case study" [ref=e446] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/case-studies/calio-claims/
+            - generic [ref=e447]:
+              - generic [ref=e449]: 
+              - generic [ref=e450]: Read case study
+      - generic [ref=e453]:
+        - heading "Are your law firm's PPC campaigns not performing or generating enough leads?" [level=2] [ref=e456]
+        - paragraph [ref=e459]: Pay-per-click advertising is constantly evolving, but when you partner with a specialist legal marketing agency like MLT, you can be sure your legal services will take pride of place in Google search results.
+        - link "Get in touch" [ref=e463] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk/contact-us/
+          - generic [ref=e465]: Get in touch
+      - generic [ref=e467]:
+        - heading "Or fill in our form and we'll get back to you" [level=2] [ref=e471]
+        - generic [ref=e477]:
+          - generic [ref=e478]:
+            - status
+            - list
+          - form "Contact form" [ref=e479]:
+            - paragraph [ref=e480]:
+              - generic [ref=e481]: Your name
+              - textbox [ref=e483]: Alex Tester
+            - paragraph [ref=e484]:
+              - generic [ref=e485]: Your telephone number
+              - textbox [ref=e487]: "+447700900123"
+            - paragraph [ref=e488]:
+              - generic [ref=e489]: Your email address
+              - textbox [ref=e491]: qa+launchguard@example.com
+            - paragraph [ref=e492]:
+              - generic [ref=e493]: Your website URL
+              - textbox [ref=e495]: https://example.com
+            - paragraph [ref=e496]:
+              - generic [ref=e497]: Message (optional)
+              - textbox [ref=e499]: Automated QA form submission verification.
+            - paragraph [ref=e500]:
+              - generic [ref=e501]: How did you find us?
+              - combobox [ref=e503]:
+                - option "---"
+                - option "Search engine" [selected]
+                - option "Online ads"
+                - option "Social media"
+                - option "Email campaign"
+                - option "Referral"
+                - option "Email"
+                - option "Event/conference"
+                - option "AI platform"
+                - option "Other (please specify)"
+            - paragraph
+            - paragraph [ref=e504]:
+              - generic [ref=e509]:
+                - checkbox "You agree to our Privacy Policy" [checked] [ref=e510]
+                - generic [ref=e511]:
+                  - text: You agree to our
+                  - link "Privacy Policy" [ref=e512] [cursor=pointer]:
+                    - /url: https://www.mltdigital.co.uk/privacy-policy/
+            - paragraph [ref=e513]:
+              - button "Submit" [ref=e514] [cursor=pointer]
+  - contentinfo [ref=e516]:
+    - generic [ref=e519]:
+      - generic [ref=e520]:
+        - img "MLT Digital" [ref=e523]
+        - paragraph [ref=e526]:
+          - link "0808 169 7083" [ref=e527] [cursor=pointer]:
+            - /url: "tel:+448081697083 "
+            - strong [ref=e528]: 0808 169 7083
+        - paragraph [ref=e531]:
+          - link "enquiries@mltdigital.co.uk" [ref=e532] [cursor=pointer]:
+            - /url: mailto:enquiries@mltdigital.co.uk
+        - paragraph [ref=e535]:
+          - text: Unit 104
+          - text: South Block
+          - text: 60-64 Osborne St
+          - text: Glasgow
+          - text: G1 5QH
+      - generic [ref=e536]:
+        - heading "Services" [level=4] [ref=e539]
+        - paragraph [ref=e542]:
+          - link "SEO for law firms" [ref=e543] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-seo/
+          - link "PPC for law firms" [ref=e544] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-ppc/
+          - link "Content" [ref=e545] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/content/
+          - link "Web design" [ref=e546] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-web-design/
+          - link "Lead generation" [ref=e547] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/lead-generation/
+          - link "Marketing" [ref=e548] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/marketing/
+          - link "Branding" [ref=e549] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/branding/
+      - generic [ref=e550]:
+        - heading "Sectors" [level=4] [ref=e553]
+        - paragraph [ref=e556]:
+          - link "Medium sized law firms" [ref=e557] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/medium-sized-law-firms/
+          - link "Commercial law firms" [ref=e558] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/commercial-law-firms/
+          - link "Criminal law firms" [ref=e559] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/criminal-law-firms/
+          - link "Employment law firms" [ref=e560] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/employment-law-firms/
+          - link "Small law firms" [ref=e561] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/small-law-firms/
+          - link "Personal injury law firms" [ref=e562] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/personal-injury-law-firms/
+          - link "Private client law firms" [ref=e563] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/private-client-law-firms/
+          - link "Family law firms" [ref=e564] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/family-law-firms/
+    - generic [ref=e566]:
+      - img "Scottish Legal Rewards 2024" [ref=e570]
+      - img "2025 microsoft partner badge" [ref=e574]
+      - img "google-partner" [ref=e578]
+      - generic [ref=e588] [cursor=pointer]:
+        - img [ref=e593]
+        - generic [ref=e603]:
+          - 'img "Rating: 4.6 out of 5" [ref=e604]':
+            - generic [ref=e605]: "4.6"
+            - generic [ref=e606]:
+              - generic [ref=e607]:
+                - img [ref=e609]
+                - img [ref=e613]
+              - generic [ref=e616]:
+                - img [ref=e618]
+                - img [ref=e622]
+              - generic [ref=e625]:
+                - img [ref=e627]
+                - img [ref=e631]
+              - generic [ref=e634]:
+                - img [ref=e636]
+                - img [ref=e640]
+              - generic [ref=e643]:
+                - img [ref=e645]
+                - img [ref=e649]
+          - generic [ref=e652]: 23 reviews
+      - img "NLA_banner" [ref=e656]
+    - heading "As featured in" [level=2] [ref=e662]
+    - generic [ref=e664]:
+      - img "LEGAL-FUTURES-logo" [ref=e668]
+      - img "MLM" [ref=e672]
+    - generic [ref=e674]:
+      - generic [ref=e677]:
+        - paragraph [ref=e678]: © 2003 – 2025
+        - paragraph [ref=e679]: MLT Digital
+      - navigation "Menu" [ref=e687]:
+        - list [ref=e688]:
+          - listitem [ref=e689]:
+            - link "Privacy policy" [ref=e690] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/privacy-policy/
+          - listitem [ref=e691]:
+            - link "Cookies policy" [ref=e692] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/cookies-policy/
+          - listitem [ref=e693]:
+            - link "Terms of use" [ref=e694] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/terms-of-use/
+          - listitem [ref=e695]:
+            - link "Support" [ref=e696] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/support/
+      - list [ref=e700]:
+        - listitem [ref=e701]:
+          - link "Facebook-f" [ref=e702] [cursor=pointer]:
+            - /url: https://www.facebook.com/mltdigitalmarketing/
+            - generic [ref=e703]: Facebook-f
+            - generic [ref=e704]: 
+        - listitem [ref=e705]:
+          - link "X-twitter" [ref=e706] [cursor=pointer]:
+            - /url: https://twitter.com/mlt_digital
+            - generic [ref=e707]: X-twitter
+            - generic [ref=e708]: 
+        - listitem [ref=e709]:
+          - link "Linkedin-in" [ref=e710] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/mltdigital/
+            - generic [ref=e711]: Linkedin-in
+            - generic [ref=e712]: 
+        - listitem [ref=e713]:
+          - link "Instagram" [ref=e714] [cursor=pointer]:
+            - /url: https://www.instagram.com/mltdigital_/
+            - generic [ref=e715]: Instagram
+            - generic [ref=e716]: 
+        - listitem [ref=e717]:
+          - link "Youtube" [ref=e718] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCi6ROO4wTZPSJrT1GW6AGwg
+            - generic [ref=e719]: Youtube
+            - generic [ref=e720]: 
+        - listitem [ref=e721]:
+          - link "Tiktok" [ref=e722] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@yourlawfirmsuccess
+            - generic [ref=e723]: Tiktok
+            - generic [ref=e724]: 
+  - generic [ref=e726]: desktop
+  - iframe [ref=e731]:
+    - generic [ref=f1e2]:
+      - generic [ref=f1e5]:
+        - link "Privacy" [ref=f1e6] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/privacy/
+        - text: "-"
+        - link "Terms" [ref=f1e7] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/terms/
+      - generic [ref=f1e8]:
+        - generic [ref=f1e9]:
+          - text: protected by
+          - strong [ref=f1e10]: reCAPTCHA
+        - generic [ref=f1e11]: "-"
+  - generic:
+    - dialog "Reviews badge":
+      - generic [ref=e736]:
+        - generic [ref=e737] [cursor=pointer]:
+          - img [ref=e742]
+          - generic [ref=e753]: Our Google Reviews
+          - generic [ref=e754]:
+            - 'img "Rating: 4.6 out of 5" [ref=e755]':
+              - generic [ref=e756]: "4.6"
+              - generic [ref=e757]:
+                - generic [ref=e758]:
+                  - img [ref=e760]
+                  - img [ref=e764]
+                - generic [ref=e767]:
+                  - img [ref=e769]
+                  - img [ref=e773]
+                - generic [ref=e776]:
+                  - img [ref=e778]
+                  - img [ref=e782]
+                - generic [ref=e785]:
+                  - img [ref=e787]
+                  - img [ref=e791]
+                - generic [ref=e794]:
+                  - img [ref=e796]
+                  - img [ref=e800]
+            - generic [ref=e803]: 23 reviews
+        - button "Close Badge" [ref=e805] [cursor=pointer]:
+          - img [ref=e806]
+  - img [ref=e808]
+  - img [ref=e809]
+```

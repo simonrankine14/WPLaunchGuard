@@ -1,0 +1,305 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - heading "We value your privacy" [level=1] [ref=e5]
+    - generic [ref=e6]:
+      - paragraph [ref=e8]: We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.
+      - generic [ref=e9]:
+        - button "Customize" [ref=e10] [cursor=pointer]
+        - button "Accept All" [ref=e11] [cursor=pointer]
+  - link "Skip to content" [ref=e12] [cursor=pointer]:
+    - /url: "#content"
+  - banner [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e16]:
+        - link "MLT Digital" [ref=e18] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk
+          - img "MLT Digital" [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e22] [cursor=pointer]:
+            - img "Avatar" [ref=e23]
+            - generic [ref=e24]: Hi there! Have a question? Chat with us here.
+            - button [ref=e25]:
+              - img [ref=e26]
+          - button "Select to open the chat widget" [ref=e28] [cursor=pointer]:
+            - img [ref=e30]
+      - generic [ref=e32]:
+        - text:  
+        - generic [ref=e34]:
+          - navigation "Menu" [ref=e35]:
+            - list [ref=e36]:
+              - listitem [ref=e37]:
+                - link "Home" [ref=e38] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/
+              - listitem [ref=e39]:
+                - link "About us" [ref=e40] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/about-us/
+                  - text: About us
+                  - generic [ref=e41]:
+                    - generic: 
+                  - text: 
+                - text: 
+              - listitem [ref=e42]:
+                - link "What do you need?" [ref=e43] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What do you need?
+                  - generic [ref=e44]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e45]:
+                - link "What we do" [ref=e46] [cursor=pointer]:
+                  - /url: "#"
+                  - text: What we do
+                  - generic [ref=e47]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e48]:
+                - link "Resources" [ref=e49] [cursor=pointer]:
+                  - /url: "#"
+                  - text: Resources
+                  - generic [ref=e50]:
+                    - generic: 
+                  - text: 
+              - listitem [ref=e51]:
+                - link "ReceptIO" [ref=e52] [cursor=pointer]:
+                  - /url: https://www.mltdigital.co.uk/receptio/
+          - text:       
+      - paragraph [ref=e56]:
+        - link "0808 164 3932" [ref=e57] [cursor=pointer]:
+          - /url: tel:+448081643932
+      - link "Contact us" [ref=e62] [cursor=pointer]:
+        - /url: /contact-us/
+        - generic [ref=e64]: Contact us
+  - main [ref=e66]:
+    - generic [ref=e68]:
+      - generic [ref=e71]:
+        - heading "DEDICATED TO YOUR LAW FIRM'S SUCCESS" [level=5] [ref=e74]
+        - heading "Google review email template for law firms" [level=1] [ref=e77]
+        - link "Get in touch" [ref=e81] [cursor=pointer]:
+          - /url: https://www.mltdigital.co.uk/contact-us/
+          - generic [ref=e83]: Get in touch
+      - paragraph [ref=e95]:
+        - generic [ref=e96]:
+          - link "Home" [ref=e98] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/
+          - text: » Google review email template for law firms
+      - generic [ref=e100]:
+        - generic [ref=e102]:
+          - paragraph [ref=e103]: Google reviews are a strong factor in a user’s decision to engage with a company. We’d recommend you send something like the below template to happy clients any time positive feedback is received.
+          - paragraph [ref=e104]: Aim to acquire at least five 5-star reviews if possible – if you can achieve this, the effects on your traffic and conversions will be significant.
+          - paragraph [ref=e105]: Remember, a 5-star rating boosts search click-through by over 25%, and 56% of consumers will choose a firm with positive ratings/reviews (in addition to the ranking improvements that come with such reviews) so we highly recommend this approach.
+        - heading "How do I get more Google reviews for my law firm?" [level=2] [ref=e108]
+        - generic [ref=e110]:
+          - paragraph [ref=e111]: We’ve spoken with many lawyers and inhouse legal marketers about building the perfect process for putting your Google reviews acquisition strategy on auto-pilot.
+          - paragraph [ref=e112]: There are always slight nuances and tailored approaches per firm, but one of the most effective approaches we’ve seen is as follows:-
+          - list [ref=e113]:
+            - listitem [level=1] [ref=e114]: At the end of each matter, ask for client feedback via an online questionnaire form.
+            - listitem [level=1] [ref=e115]: If the client feedback is negative, have an email sent automatically to the client care partner or other manager in the firm to deal with.
+            - listitem [level=1] [ref=e116]: Choose which clients to ask for an online review following such feedback – again this could be automated depending on their feedback from the online questionnaire form. For smaller firms, a more selective process can work better.
+            - listitem [level=1] [ref=e117]: Send such selected clients our template Google review email below that has been adapted over the years.
+        - heading "Free email template for Google reviews request" [level=2] [ref=e120]
+        - generic [ref=e122]:
+          - paragraph [ref=e123]:
+            - strong [ref=e124]:
+              - emphasis [ref=e125]: "Subject Line:"
+            - strong [ref=e126]: Please provide a review on Google for us
+          - paragraph [ref=e127]:
+            - emphasis [ref=e128]:
+              - strong [ref=e129]: "Email Copy:"
+          - paragraph [ref=e130]: Hi _____,
+          - paragraph [ref=e131]: I hope you’re well.
+          - paragraph [ref=e132]: We would really appreciate if you could please write a short review of our services on our Google profile. This helps to explain to future clients the ways in which we have helped others and to show that we aim to provide an excellent level of service for all clients. This should only take a few minutes of your time.
+          - paragraph [ref=e133]: Your review should please reference the lawyer(s) who helped you and the type of legal service you required, including the location of this service (if relevant).
+          - paragraph [ref=e134]: "To provide a review of our services on Google, please:"
+          - list [ref=e135]:
+            - listitem [level=1] [ref=e136]:
+              - paragraph [ref=e137]: Search for our firm name on Google and then click ‘Write a review’ (located on the right hand on desktop and near the top of search results on mobile).
+            - listitem [level=1] [ref=e138]:
+              - paragraph [ref=e139]:
+                - text: You’ll then be asked to sign in to your Google account (if you don’t have a Google account,
+                - link "click here to get one" [ref=e140] [cursor=pointer]:
+                  - /url: https://support.google.com/accounts/answer/27441?hl=en
+                - text: – it only takes two minutes).
+            - listitem [level=1] [ref=e141]:
+              - paragraph [ref=e142]: Please provide a rating out of 5 stars (5 being the best) and a short review. To complete the review, click ‘publish’.
+          - paragraph [ref=e143]: If you have any queries about this, please do not hesitate to contact us.
+          - paragraph [ref=e144]: Many thanks.
+  - contentinfo [ref=e145]:
+    - generic [ref=e148]:
+      - generic [ref=e149]:
+        - img "MLT Digital" [ref=e152]
+        - paragraph [ref=e155]:
+          - link "0808 164 3932" [ref=e156] [cursor=pointer]:
+            - /url: "tel:+448081643932 "
+            - strong [ref=e157]: 0808 164 3932
+        - paragraph [ref=e160]:
+          - link "enquiries@mltdigital.co.uk" [ref=e161] [cursor=pointer]:
+            - /url: mailto:enquiries@mltdigital.co.uk
+        - paragraph [ref=e164]:
+          - text: Unit 104
+          - text: South Block
+          - text: 60-64 Osborne St
+          - text: Glasgow
+          - text: G1 5QH
+      - generic [ref=e165]:
+        - heading "Services" [level=4] [ref=e168]
+        - paragraph [ref=e171]:
+          - link "SEO for law firms" [ref=e172] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-seo/
+          - link "PPC for law firms" [ref=e173] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-ppc/
+          - link "Content" [ref=e174] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/content/
+          - link "Web design" [ref=e175] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/law-firm-web-design/
+          - link "Lead generation" [ref=e176] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/lead-generation/
+          - link "Marketing" [ref=e177] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/marketing/
+          - link "Branding" [ref=e178] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/branding/
+      - generic [ref=e179]:
+        - heading "Sectors" [level=4] [ref=e182]
+        - paragraph [ref=e185]:
+          - link "Medium sized law firms" [ref=e186] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/medium-sized-law-firms/
+          - link "Commercial law firms" [ref=e187] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/commercial-law-firms/
+          - link "Criminal law firms" [ref=e188] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/criminal-law-firms/
+          - link "Employment law firms" [ref=e189] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/employment-law-firms/
+          - link "Small law firms" [ref=e190] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/small-law-firms/
+          - link "Personal injury law firms" [ref=e191] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/personal-injury-law-firms/
+          - link "Private client law firms" [ref=e192] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/private-client-law-firms/
+          - link "Family law firms" [ref=e193] [cursor=pointer]:
+            - /url: https://www.mltdigital.co.uk/family-law-firms/
+    - generic [ref=e195]:
+      - img "Scottish Legal Rewards 2024" [ref=e199]
+      - img "2025 microsoft partner badge" [ref=e203]
+      - img "google-partner" [ref=e207]
+      - generic [ref=e217] [cursor=pointer]:
+        - img [ref=e222]
+        - generic [ref=e232]:
+          - 'img "Rating: 4.6 out of 5" [ref=e233]':
+            - generic [ref=e234]: "4.6"
+            - generic [ref=e235]:
+              - generic [ref=e236]:
+                - img [ref=e238]
+                - img [ref=e242]
+              - generic [ref=e245]:
+                - img [ref=e247]
+                - img [ref=e251]
+              - generic [ref=e254]:
+                - img [ref=e256]
+                - img [ref=e260]
+              - generic [ref=e263]:
+                - img [ref=e265]
+                - img [ref=e269]
+              - generic [ref=e272]:
+                - img [ref=e274]
+                - img [ref=e278]
+          - generic [ref=e281]: 23 reviews
+      - img "NLA_banner" [ref=e285]
+    - heading "As featured in" [level=2] [ref=e291]
+    - generic [ref=e293]:
+      - img "LEGAL-FUTURES-logo" [ref=e297]
+      - img "MLM" [ref=e301]
+    - generic [ref=e303]:
+      - generic [ref=e306]:
+        - paragraph [ref=e307]: © 2003 – 2025
+        - paragraph [ref=e308]: MLT Digital
+      - navigation "Menu" [ref=e316]:
+        - list [ref=e317]:
+          - listitem [ref=e318]:
+            - link "Privacy policy" [ref=e319] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/privacy-policy/
+          - listitem [ref=e320]:
+            - link "Cookies policy" [ref=e321] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/cookies-policy/
+          - listitem [ref=e322]:
+            - link "Terms of use" [ref=e323] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/terms-of-use/
+          - listitem [ref=e324]:
+            - link "Support" [ref=e325] [cursor=pointer]:
+              - /url: https://www.mltdigital.co.uk/support/
+      - list [ref=e329]:
+        - listitem [ref=e330]:
+          - link "Facebook-f" [ref=e331] [cursor=pointer]:
+            - /url: https://www.facebook.com/mltdigitalmarketing/
+            - generic [ref=e332]: Facebook-f
+            - generic [ref=e333]: 
+        - listitem [ref=e334]:
+          - link "X-twitter" [ref=e335] [cursor=pointer]:
+            - /url: https://twitter.com/mlt_digital
+            - generic [ref=e336]: X-twitter
+            - generic [ref=e337]: 
+        - listitem [ref=e338]:
+          - link "Linkedin-in" [ref=e339] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/mltdigital/
+            - generic [ref=e340]: Linkedin-in
+            - generic [ref=e341]: 
+        - listitem [ref=e342]:
+          - link "Instagram" [ref=e343] [cursor=pointer]:
+            - /url: https://www.instagram.com/mltdigital_/
+            - generic [ref=e344]: Instagram
+            - generic [ref=e345]: 
+        - listitem [ref=e346]:
+          - link "Youtube" [ref=e347] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCi6ROO4wTZPSJrT1GW6AGwg
+            - generic [ref=e348]: Youtube
+            - generic [ref=e349]: 
+        - listitem [ref=e350]:
+          - link "Tiktok" [ref=e351] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@yourlawfirmsuccess
+            - generic [ref=e352]: Tiktok
+            - generic [ref=e353]: 
+  - generic [ref=e355]: desktop
+  - iframe [ref=e360]:
+    - generic [ref=f1e2]:
+      - generic [ref=f1e5]:
+        - link "Privacy" [ref=f1e6] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/privacy/
+        - text: "-"
+        - link "Terms" [ref=f1e7] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/terms/
+      - generic [ref=f1e8]:
+        - generic [ref=f1e9]:
+          - text: protected by
+          - strong [ref=f1e10]: reCAPTCHA
+        - generic [ref=f1e11]: "-"
+  - generic:
+    - dialog "Reviews badge":
+      - generic [ref=e365]:
+        - generic [ref=e366] [cursor=pointer]:
+          - img [ref=e371]
+          - generic [ref=e382]: Our Google Reviews
+          - generic [ref=e383]:
+            - 'img "Rating: 4.6 out of 5" [ref=e384]':
+              - generic [ref=e385]: "4.6"
+              - generic [ref=e386]:
+                - generic [ref=e387]:
+                  - img [ref=e389]
+                  - img [ref=e393]
+                - generic [ref=e396]:
+                  - img [ref=e398]
+                  - img [ref=e402]
+                - generic [ref=e405]:
+                  - img [ref=e407]
+                  - img [ref=e411]
+                - generic [ref=e414]:
+                  - img [ref=e416]
+                  - img [ref=e420]
+                - generic [ref=e423]:
+                  - img [ref=e425]
+                  - img [ref=e429]
+            - generic [ref=e432]: 23 reviews
+        - button "Close Badge" [ref=e434] [cursor=pointer]:
+          - img [ref=e435]
+  - img [ref=e437]
+```

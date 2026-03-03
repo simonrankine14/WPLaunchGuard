@@ -1,0 +1,51 @@
+{
+  "name": "wplaunchguard",
+  "version": "0.1.0",
+  "description": "Website QA runner using Playwright, Lighthouse, and axe-core with HTML/Excel reports.",
+  "type": "commonjs",
+  "license": "UNLICENSED",
+  "bin": {
+    "wplaunchguard": "bin/wplaunchguard.js"
+  },
+  "files": [
+    "bin/",
+    "data/",
+    "reporting/",
+    "scripts/",
+    "tests/",
+    "visual/",
+    "playwright.config.js",
+    "README.md",
+    "COMMANDS.md"
+  ],
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "qa": "node scripts/qa-runner.js",
+    "qa:report": "node reporting/generate-dashboard.js",
+    "qa:html": "node reporting/generate-html-report.js",
+    "qa:share": "node scripts/zip-report.js",
+    "visual:page": "node scripts/visual-page.js",
+    "visual:baseline": "node scripts/visual-runner.js --mode=baseline",
+    "visual:compare": "node scripts/visual-runner.js --mode=compare",
+    "visual:summary": "node reporting/generate-visual-summary.js",
+    "visual:dashboard": "node reporting/generate-visual-dashboard.js",
+    "visual:compare-images": "node scripts/compare-images.js",
+    "test:unit": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.8.0",
+    "@playwright/test": "^1.41.2",
+    "chrome-launcher": "^0.15.2",
+    "exceljs": "^4.4.0",
+    "fast-xml-parser": "^5.3.4",
+    "lighthouse": "^13.0.1",
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "maskSelectors": [
+    ".cookie-banner",
+    ".chat-widget",
+    "iframe[src*='youtube']"
+  ],
+  "hideSelectors": [
+    ".promo-popup",
+    ".newsletter-modal"
+  ],
+  "waitForSelectors": [
+    "body"
+  ],
+  "waitForTimeoutMs": 1000,
+  "consentSelectors": [
+    "button.accept",
+    "button[aria-label*='accept']"
+  ],
+  "confidenceWeights": {
+    "diffPercent": 0.7,
+    "maskedSelectors": 0.3
+  }
+}
