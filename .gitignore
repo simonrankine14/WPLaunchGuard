@@ -4,3 +4,4 @@ playwright-report/
 .env.week0
 .env.week0.local
 services/api-worker/.dev.vars
+.wrangler-home/

@@ -4,7 +4,7 @@ compatibility_date = "2026-03-04"
 workers_dev = true
 
 # Replace before first deploy.
-account_id = "REPLACE_WITH_CLOUDFLARE_ACCOUNT_ID"
+account_id = "d47b0f5d3b937b9cd0ed40902be8c44c"
 
 [vars]
 APP_ENV = "dev"
@@ -13,7 +13,11 @@ DEFAULT_PLAN = "starter"
 [[d1_databases]]
 binding = "DB"
 database_name = "launchguard-db-dev"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "253403b3-cc3e-4008-aaff-10e24bb9f9bc"
+
+[[r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "launchguard-reports-dev"
 
 [[queues.producers]]
 binding = "SCAN_QUEUE"
