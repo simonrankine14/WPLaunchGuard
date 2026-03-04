@@ -24,6 +24,7 @@
     "test:ui": "playwright test --ui",
     "week0:verify": "bash scripts/week0-verify.sh",
     "week1:verify": "bash scripts/week1-verify.sh",
+    "week2:verify": "bash scripts/week2-verify.sh",
     "api:dev": "npx wrangler dev --config services/api-worker/wrangler.toml",
     "api:deploy": "npx wrangler deploy --config services/api-worker/wrangler.toml",
     "qa": "node scripts/qa-runner.js",

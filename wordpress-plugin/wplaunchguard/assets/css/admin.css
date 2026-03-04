@@ -6,3 +6,22 @@
   margin-left: 18px;
   list-style: disc;
 }
+
+.wplg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.wplg-card {
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.wplg-card h2 {
+  margin-top: 0;
+}

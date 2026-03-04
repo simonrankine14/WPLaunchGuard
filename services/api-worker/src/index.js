@@ -21,17 +21,32 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function requireAdminAuth(request, env) {
-  const configured = String(env.API_ADMIN_TOKEN || '').trim();
-  if (!configured) {
-    return true;
-  }
+function getConfiguredAdminToken(env) {
+  return String(env.API_ADMIN_TOKEN || '').trim();
+}
+
+function hasValidAdminAuth(request, env) {
+  const configured = getConfiguredAdminToken(env);
+  if (!configured) return false;
   const auth = String(request.headers.get('authorization') || '').trim();
-  if (!auth.toLowerCase().startsWith('bearer ')) {
-    return false;
-  }
+  if (!auth.toLowerCase().startsWith('bearer ')) return false;
   const token = auth.slice(7).trim();
   return token === configured;
+}
+
+function extractSiteToken(request) {
+  const headerToken = String(request.headers.get('x-launchguard-site-token') || '').trim();
+  if (headerToken) return headerToken;
+
+  const fallbackHeader = String(request.headers.get('x-site-token') || '').trim();
+  if (fallbackHeader) return fallbackHeader;
+
+  const auth = String(request.headers.get('authorization') || '').trim();
+  if (auth.toLowerCase().startsWith('bearer ')) {
+    return auth.slice(7).trim();
+  }
+
+  return '';
 }
 
 async function parseJson(request) {
@@ -63,6 +78,28 @@ async function ensurePlansSeeded(env) {
       .bind(plan.id, plan.scans_limit, plan.sites_limit, plan.whitelabel, nowIso())
       .run();
   }
+}
+
+async function authorizeSiteRequest(request, env, siteId) {
+  if (hasValidAdminAuth(request, env)) {
+    return true;
+  }
+
+  const siteToken = extractSiteToken(request);
+  if (!siteToken || !siteId) {
+    return false;
+  }
+
+  const site = await env.DB.prepare('SELECT token_hash FROM sites WHERE id = ?').bind(siteId).first();
+  if (!site || !site.token_hash) {
+    return false;
+  }
+
+  return String(site.token_hash) === siteToken;
+}
+
+async function getSiteById(env, siteId) {
+  return env.DB.prepare('SELECT * FROM sites WHERE id = ?').bind(siteId).first();
 }
 
 async function registerSite(request, env) {
@@ -104,7 +141,12 @@ async function registerSite(request, env) {
     .run();
 
   await env.DB.prepare(
-    'INSERT INTO usage_counters (tenant_id, period_key, scans_used, active_sites, updated_at) VALUES (?, ?, 0, 1, ?) ON CONFLICT(tenant_id, period_key) DO NOTHING'
+    [
+      'INSERT INTO usage_counters (tenant_id, period_key, scans_used, active_sites, updated_at)',
+      'VALUES (?, ?, 0, 1, ?)',
+      'ON CONFLICT(tenant_id, period_key) DO UPDATE SET',
+      'active_sites = MAX(active_sites, 1), updated_at = excluded.updated_at'
+    ].join(' ')
   )
     .bind(tenantId, createdAt.slice(0, 7), createdAt)
     .run();
@@ -118,11 +160,49 @@ async function registerSite(request, env) {
   });
 }
 
+async function incrementUsageForSite(env, siteId, createdAt) {
+  const site = await env.DB.prepare('SELECT tenant_id FROM sites WHERE id = ?').bind(siteId).first();
+  if (!site || !site.tenant_id) {
+    return;
+  }
+
+  const periodKey = createdAt.slice(0, 7);
+  await env.DB.prepare(
+    [
+      'INSERT INTO usage_counters (tenant_id, period_key, scans_used, active_sites, updated_at)',
+      'VALUES (?, ?, 0, 1, ?)',
+      'ON CONFLICT(tenant_id, period_key) DO NOTHING'
+    ].join(' ')
+  )
+    .bind(site.tenant_id, periodKey, createdAt)
+    .run();
+
+  await env.DB.prepare(
+    'UPDATE usage_counters SET scans_used = scans_used + 1, updated_at = ? WHERE tenant_id = ? AND period_key = ?'
+  )
+    .bind(createdAt, site.tenant_id, periodKey)
+    .run();
+}
+
 async function createScan(request, env) {
   const body = await parseJson(request);
   if (!body || !body.site_id) {
     return badRequest('site_id is required');
   }
+
+  const site = await getSiteById(env, body.site_id);
+  if (!site) {
+    return badRequest('unknown site_id');
+  }
+
+  const authorized = await authorizeSiteRequest(request, env, body.site_id);
+  if (!authorized) {
+    return unauthorized();
+  }
+
+  const formMode = ['dry-run', 'live'].includes(String(body.form_mode || '').toLowerCase())
+    ? String(body.form_mode).toLowerCase()
+    : 'dry-run';
 
   const scanId = crypto.randomUUID();
   const createdAt = nowIso();
@@ -130,7 +210,7 @@ async function createScan(request, env) {
     scan_id: scanId,
     site_id: body.site_id,
     profile: body.profile || 'full_qa_no_visual',
-    form_mode: body.form_mode || 'dry-run',
+    form_mode: formMode,
     trigger: body.trigger || 'manual',
     sitemap_url: body.sitemap_url || '',
     created_at: createdAt
@@ -155,21 +235,31 @@ async function createScan(request, env) {
     )
     .run();
 
+  await incrementUsageForSite(env, payload.site_id, createdAt);
+
   if (env.SCAN_QUEUE) {
     await env.SCAN_QUEUE.send(payload);
   }
 
-  return json({
-    scan_id: scanId,
-    status: env.SCAN_QUEUE ? 'queued' : 'queued_local',
-    created_at: createdAt
-  }, 202);
+  return json(
+    {
+      scan_id: scanId,
+      status: env.SCAN_QUEUE ? 'queued' : 'queued_local',
+      created_at: createdAt
+    },
+    202
+  );
 }
 
-async function getScan(scanId, env) {
+async function getScan(request, scanId, env) {
   const row = await env.DB.prepare('SELECT * FROM scans WHERE id = ?').bind(scanId).first();
   if (!row) {
     return notFound();
+  }
+
+  const authorized = await authorizeSiteRequest(request, env, row.site_id);
+  if (!authorized) {
+    return unauthorized();
   }
 
   const issueTotals = await env.DB.prepare(
@@ -184,7 +274,55 @@ async function getScan(scanId, env) {
   });
 }
 
+async function listSiteScans(request, env, siteId, limitValue) {
+  const authorized = await authorizeSiteRequest(request, env, siteId);
+  if (!authorized) {
+    return unauthorized();
+  }
+
+  const limit = Math.max(1, Math.min(50, Number(limitValue || 10) || 10));
+  const result = await env.DB.prepare(
+    [
+      'SELECT id, site_id, status, profile, form_mode, trigger_type, created_at, updated_at, completed_at',
+      'FROM scans WHERE site_id = ? ORDER BY created_at DESC LIMIT ?'
+    ].join(' ')
+  )
+    .bind(siteId, limit)
+    .all();
+
+  return json({ scans: result.results || [] });
+}
+
+async function getBranding(request, env, siteId) {
+  const authorized = await authorizeSiteRequest(request, env, siteId);
+  if (!authorized) {
+    return unauthorized();
+  }
+
+  const branding = await env.DB.prepare('SELECT * FROM site_branding WHERE site_id = ?').bind(siteId).first();
+  if (!branding) {
+    return json({
+      branding: {
+        site_id: siteId,
+        brand_name: '',
+        logo_url: '',
+        primary_color: '#1f2937',
+        accent_color: '#22c55e',
+        footer_text: '',
+        hide_launchguard_branding: 0,
+        updated_at: ''
+      }
+    });
+  }
+  return json({ branding });
+}
+
 async function upsertBranding(request, env, siteId) {
+  const authorized = await authorizeSiteRequest(request, env, siteId);
+  if (!authorized) {
+    return unauthorized();
+  }
+
   const body = await parseJson(request);
   if (!body) {
     return badRequest('invalid JSON body');
@@ -221,7 +359,12 @@ async function upsertBranding(request, env, siteId) {
   return json({ branding });
 }
 
-async function getPlanLimits(env, siteId) {
+async function getPlanLimits(request, env, siteId) {
+  const authorized = await authorizeSiteRequest(request, env, siteId);
+  if (!authorized) {
+    return unauthorized();
+  }
+
   const site = await env.DB.prepare('SELECT tenant_id FROM sites WHERE id = ?').bind(siteId).first();
   if (!site) return notFound();
 
@@ -252,29 +395,24 @@ async function queueConsumer(batch, env) {
       continue;
     }
 
-    await env.DB.prepare('UPDATE scans SET status = ?, updated_at = ? WHERE id = ?')
-      .bind('running', timestamp, scanId)
-      .run();
+    await env.DB.prepare('UPDATE scans SET status = ?, updated_at = ? WHERE id = ?').bind('running', timestamp, scanId).run();
 
-    // Placeholder processing. Week 2 will dispatch to GitHub Actions runner.
+    // Placeholder processing. Week 3 will dispatch scans to GitHub Actions execution workers.
     await env.DB.prepare(
-      [
-        'UPDATE scans',
-        'SET status = ?, completed_at = ?, updated_at = ?, summary_json = ?',
-        'WHERE id = ?'
-      ].join(' ')
+      ['UPDATE scans', 'SET status = ?, completed_at = ?, updated_at = ?, summary_json = ?', 'WHERE id = ?'].join(' ')
     )
-      .bind(
-        'completed',
-        timestamp,
-        timestamp,
-        JSON.stringify({ message: 'queued placeholder completed' }),
-        scanId
-      )
+      .bind('completed', timestamp, timestamp, JSON.stringify({ message: 'queued placeholder completed' }), scanId)
       .run();
 
     message.ack();
   }
+}
+
+function extractSiteIdFromPath(pathname, suffix) {
+  if (!pathname.startsWith('/v1/sites/') || !pathname.endsWith(suffix)) {
+    return '';
+  }
+  return pathname.replace('/v1/sites/', '').replace(suffix, '').trim();
 }
 
 export default {
@@ -284,10 +422,6 @@ export default {
 
     if (request.method === 'GET' && pathname === '/health') {
       return json({ ok: true, service: 'launchguard-api', time: nowIso() });
-    }
-
-    if (!requireAdminAuth(request, env)) {
-      return unauthorized();
     }
 
     if (!env.DB) {
@@ -305,19 +439,31 @@ export default {
     if (request.method === 'GET' && pathname.startsWith('/v1/scans/')) {
       const scanId = pathname.replace('/v1/scans/', '').trim();
       if (!scanId) return notFound();
-      return getScan(scanId, env);
+      return getScan(request, scanId, env);
+    }
+
+    if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/scans')) {
+      const siteId = extractSiteIdFromPath(pathname, '/scans');
+      if (!siteId) return notFound();
+      return listSiteScans(request, env, siteId, url.searchParams.get('limit'));
+    }
+
+    if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/branding')) {
+      const siteId = extractSiteIdFromPath(pathname, '/branding');
+      if (!siteId) return notFound();
+      return getBranding(request, env, siteId);
     }
 
     if (request.method === 'PUT' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/branding')) {
-      const siteId = pathname.replace('/v1/sites/', '').replace('/branding', '').trim();
+      const siteId = extractSiteIdFromPath(pathname, '/branding');
       if (!siteId) return notFound();
       return upsertBranding(request, env, siteId);
     }
 
     if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/limits')) {
-      const siteId = pathname.replace('/v1/sites/', '').replace('/limits', '').trim();
+      const siteId = extractSiteIdFromPath(pathname, '/limits');
       if (!siteId) return notFound();
-      return getPlanLimits(env, siteId);
+      return getPlanLimits(request, env, siteId);
     }
 
     return notFound();
