@@ -14,9 +14,9 @@ GITHUB_OWNER = "simonrankine14"
 GITHUB_REPO = "WPLaunchGuard"
 GITHUB_WORKFLOW_FILE = "launchguard-scan.yml"
 GITHUB_REF = "main"
-STRIPE_PRICE_ID_STARTER = ""
-STRIPE_PRICE_ID_GROWTH = ""
-STRIPE_PRICE_ID_AGENCY = ""
+STRIPE_PRICE_ID_STARTER = "price_1T7MycIfnuQp2OJpzQOZQMPQ"
+STRIPE_PRICE_ID_GROWTH = "price_1T7MyvIfnuQp2OJpiDtlPhvn"
+STRIPE_PRICE_ID_AGENCY = "price_1T7Mz9IfnuQp2OJpMJjFFbFK"
 
 [[d1_databases]]
 binding = "DB"
