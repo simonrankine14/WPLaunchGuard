@@ -128,21 +128,15 @@ jobs:
           fi
 
           WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          PAYLOAD=$(cat <<JSON
-          {
-            "scan_id": "${{ inputs.scan_id }}",
-            "status": "$FINAL_STATUS",
-            "summary": {
-              "workflow_run_id": "${{ github.run_id }}",
-              "workflow_url": "$WORKFLOW_URL",
-              "workflow_attempt": "${{ github.run_attempt }}",
-              "qa_exit_code": "$EXIT_CODE",
-              "client_name": "${{ inputs.client_name }}",
-              "site_id": "${{ inputs.site_id }}"
-            }
-          }
-JSON
-          )
+          PAYLOAD=$(printf '{"scan_id":"%s","status":"%s","summary":{"workflow_run_id":"%s","workflow_url":"%s","workflow_attempt":"%s","qa_exit_code":"%s","client_name":"%s","site_id":"%s"}}' \
+            "${{ inputs.scan_id }}" \
+            "$FINAL_STATUS" \
+            "${{ github.run_id }}" \
+            "$WORKFLOW_URL" \
+            "${{ github.run_attempt }}" \
+            "$EXIT_CODE" \
+            "${{ inputs.client_name }}" \
+            "${{ inputs.site_id }}")
 
           curl -fsS -X POST "$TARGET_URL" \
             -H "content-type: application/json" \

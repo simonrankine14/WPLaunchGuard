@@ -469,6 +469,7 @@ async function dispatchScanToGitHub(env, scan, site) {
       accept: 'application/vnd.github+json',
       authorization: `Bearer ${config.token}`,
       'x-github-api-version': '2022-11-28',
+      'user-agent': 'wplaunchguard-worker',
       'content-type': 'application/json'
     },
     body: JSON.stringify(payload)
