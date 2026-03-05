@@ -42,6 +42,30 @@ function fileExists(relativePath, reportDir) {
   return fs.existsSync(fullPath);
 }
 
+function safeListFiles(dirPath, matcher) {
+  try {
+    if (!fs.existsSync(dirPath)) return [];
+    return fs.readdirSync(dirPath).filter((name) => matcher(name));
+  } catch {
+    return [];
+  }
+}
+
+function collectEvidenceCounts(reportDir) {
+  const screenshotsDir = path.join(reportDir, 'screenshots');
+  const lighthouseDir = path.join(reportDir, 'lighthouse');
+
+  const screenshots = safeListFiles(screenshotsDir, (name) => /\.png$/i.test(name));
+  const lighthouseHtml = safeListFiles(lighthouseDir, (name) => /\.lighthouse\.html$/i.test(name));
+  const lighthouseJson = safeListFiles(lighthouseDir, (name) => /\.lighthouse\.json$/i.test(name));
+
+  return {
+    screenshots_count: screenshots.length,
+    lighthouse_html_count: lighthouseHtml.length,
+    lighthouse_json_count: lighthouseJson.length
+  };
+}
+
 function buildArtifactPresence(clientName, reportDir) {
   const latestZip = `share-${clientName}-latest.zip`;
   return {
@@ -72,6 +96,7 @@ function collectSummary(reportDir, clientName) {
     title: String(issue.Title || ''),
     url: String(issue.URL || '')
   }));
+  const evidenceCounts = collectEvidenceCounts(reportDir);
 
   return {
     generated_at: new Date().toISOString(),
@@ -85,6 +110,7 @@ function collectSummary(reportDir, clientName) {
     issue_severity_counts: severityCounts,
     issue_category_top: topObjectEntries(categoryCounts, 8),
     issues_sample: issueSamples,
+    evidence: evidenceCounts,
     report_artifacts_present: buildArtifactPresence(clientName, reportDir)
   };
 }

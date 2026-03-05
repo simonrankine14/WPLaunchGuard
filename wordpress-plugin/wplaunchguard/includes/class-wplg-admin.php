@@ -144,6 +144,7 @@ class WPLG_Admin
     {
         $siteId = $this->get_option(self::OPTION_SITE_ID);
         $connected = $siteId !== '';
+        $autoRefreshActive = false;
 
         echo '<div class="wrap wplg-wrap">';
         echo '<h1>WP LaunchGuard</h1>';
@@ -220,10 +221,28 @@ class WPLG_Admin
         } else {
             $scan = $lastScan['data']['scan'] ?? [];
             $scanSummary = $this->extract_scan_summary($scan);
+            $scanStatus = sanitize_key((string) ($scan['status'] ?? ''));
             echo '<p><strong>ID:</strong> ' . esc_html((string) ($scan['id'] ?? 'n/a')) . '</p>';
             echo '<p><strong>Status:</strong> ' . esc_html((string) ($scan['status'] ?? 'n/a')) . '</p>';
             echo '<p><strong>Created:</strong> ' . esc_html((string) ($scan['created_at'] ?? 'n/a')) . '</p>';
             echo '<p><strong>Completed:</strong> ' . esc_html((string) ($scan['completed_at'] ?? 'pending')) . '</p>';
+
+            $progressPercent = $this->estimate_scan_progress($scanStatus, $scanSummary);
+            echo '<p><strong>Progress:</strong> ' . esc_html((string) $progressPercent) . '%</p>';
+            echo '<div class="wplg-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $progressPercent) . '">';
+            echo '<span style="width:' . esc_attr((string) $progressPercent) . '%"></span>';
+            echo '</div>';
+
+            $etaText = $this->get_scan_eta_text($scanStatus);
+            if ($etaText !== '') {
+                echo '<p class="description">' . esc_html($etaText) . '</p>';
+            }
+
+            if ($this->is_scan_in_progress($scanStatus)) {
+                $autoRefreshActive = true;
+                echo '<p class="description">This page auto-refreshes every 15 seconds while your scan is running.</p>';
+                echo '<p><a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-dashboard')) . '">Refresh Now</a></p>';
+            }
 
             $issuesTotal = $this->extract_issues_total($scanSummary);
             if ($issuesTotal !== null) {
@@ -243,8 +262,17 @@ class WPLG_Admin
                 echo '<p><a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['workflow_url']) . '">Open GitHub Run</a></p>';
             }
 
+            if (!empty($scanSummary['report_index_url'])) {
+                echo '<p><a class="button button-primary" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['report_index_url']) . '">View Report</a></p>';
+            }
+
             if (!empty($scanSummary['reports_artifact_url'])) {
-                echo '<p><a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['reports_artifact_url']) . '">Open Reports Artifact</a></p>';
+                echo '<p><a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['reports_artifact_url']) . '">Download Report ZIP</a></p>';
+            }
+
+            $evidenceText = $this->format_evidence_counts($scanSummary);
+            if ($evidenceText !== '') {
+                echo '<p><strong>Evidence:</strong> ' . esc_html($evidenceText) . '</p>';
             }
         }
         echo '</div>';
@@ -264,7 +292,7 @@ class WPLG_Admin
                 foreach ($rows as $row) {
                     $rowSummary = $this->extract_scan_summary($row);
                     $rowIssues = $this->extract_issues_total($rowSummary);
-                    $reportUrl = (string) ($rowSummary['reports_artifact_url'] ?? ($rowSummary['workflow_url'] ?? ''));
+                    $reportUrl = (string) ($rowSummary['report_index_url'] ?? ($rowSummary['workflow_url'] ?? ($rowSummary['reports_artifact_url'] ?? '')));
                     echo '<tr>';
                     echo '<td>' . esc_html((string) ($row['id'] ?? '')) . '</td>';
                     echo '<td>' . esc_html((string) ($row['status'] ?? '')) . '</td>';
@@ -282,6 +310,10 @@ class WPLG_Admin
             }
         }
         echo '</div>';
+
+        if ($autoRefreshActive) {
+            echo '<script>setTimeout(function(){ window.location.reload(); }, 15000);</script>';
+        }
 
         echo '</div>';
     }
@@ -712,6 +744,74 @@ class WPLG_Admin
         return [];
     }
 
+    private function is_scan_in_progress(string $status): bool
+    {
+        return in_array($status, ['queued', 'queued_local', 'running', 'dispatched'], true);
+    }
+
+    private function estimate_scan_progress(string $status, array $summary): int
+    {
+        if ($status === 'completed') {
+            return 100;
+        }
+
+        if (in_array($status, ['failed', 'cancelled'], true)) {
+            return 100;
+        }
+
+        $runState = sanitize_key((string) ($summary['run_state'] ?? ''));
+        if ($runState === 'complete') {
+            return 100;
+        }
+
+        if ($runState === 'partial') {
+            return 90;
+        }
+
+        if ($status === 'dispatched') {
+            return 70;
+        }
+
+        if ($status === 'running') {
+            return 45;
+        }
+
+        if ($status === 'queued_local') {
+            return 20;
+        }
+
+        if ($status === 'queued') {
+            return 10;
+        }
+
+        return 0;
+    }
+
+    private function get_scan_eta_text(string $status): string
+    {
+        if ($status === 'queued' || $status === 'queued_local') {
+            return 'Queued for processing. Expected start time is usually under 1 minute.';
+        }
+
+        if ($status === 'running' || $status === 'dispatched') {
+            return 'Scan is running in the cloud. Typical quick-scan duration is about 2 to 6 minutes.';
+        }
+
+        if ($status === 'completed') {
+            return 'Scan finished. Open the report artifact for full details.';
+        }
+
+        if ($status === 'failed') {
+            return 'Scan failed. Check the latest run link and retry the scan.';
+        }
+
+        if ($status === 'cancelled') {
+            return 'Scan was cancelled.';
+        }
+
+        return '';
+    }
+
     private function extract_issues_total(array $summary): ?int
     {
         if (isset($summary['issues_total']) && is_numeric($summary['issues_total'])) {
@@ -741,6 +841,19 @@ class WPLG_Admin
         }
 
         return implode(', ', $parts);
+    }
+
+    private function format_evidence_counts(array $summary): string
+    {
+        $evidence = isset($summary['evidence']) && is_array($summary['evidence']) ? $summary['evidence'] : [];
+        if (empty($evidence)) {
+            return '';
+        }
+
+        $screenshots = isset($evidence['screenshots_count']) && is_numeric($evidence['screenshots_count']) ? (int) $evidence['screenshots_count'] : 0;
+        $lighthouseHtml = isset($evidence['lighthouse_html_count']) && is_numeric($evidence['lighthouse_html_count']) ? (int) $evidence['lighthouse_html_count'] : 0;
+
+        return sprintf('screenshots: %d, lighthouse reports: %d', $screenshots, $lighthouseHtml);
     }
 
     private function redirect_with_notice(string $page, string $status, string $message): void

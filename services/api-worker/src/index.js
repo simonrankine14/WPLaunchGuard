@@ -1076,6 +1076,109 @@ function mergeSummary(existingSummaryRaw, patch) {
   return { ...baseObject, ...patch };
 }
 
+function getPublicApiBase(env) {
+  return String(env.PUBLIC_API_BASE || '').trim().replace(/\/+$/, '');
+}
+
+function buildScanReportIndexUrl(env, scanId, token) {
+  const base = getPublicApiBase(env);
+  if (!base || !scanId || !token) return '';
+  return `${base}/v1/reports/${encodeURIComponent(scanId)}/qa_html/index.html?t=${encodeURIComponent(token)}`;
+}
+
+function normalizeReportAssetPath(rawPath) {
+  const decoded = decodeURIComponent(String(rawPath || '').trim());
+  const parts = decoded
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (parts.some((segment) => segment === '.' || segment === '..' || segment.includes('\\'))) {
+    return '';
+  }
+
+  return parts.join('/');
+}
+
+function extractReportRequest(pathname) {
+  const prefix = '/v1/reports/';
+  if (!pathname.startsWith(prefix)) {
+    return { scanId: '', assetPath: '' };
+  }
+
+  const remainder = pathname.slice(prefix.length);
+  const parts = remainder.split('/').filter(Boolean);
+  if (parts.length < 2) {
+    return { scanId: '', assetPath: '' };
+  }
+
+  const scanId = parts.shift() || '';
+  const assetPath = parts.join('/');
+  return {
+    scanId: String(scanId).trim(),
+    assetPath: normalizeReportAssetPath(assetPath)
+  };
+}
+
+function contentTypeForReportAsset(assetPath) {
+  const value = String(assetPath || '').toLowerCase();
+  if (value.endsWith('.html')) return 'text/html; charset=utf-8';
+  if (value.endsWith('.json')) return 'application/json; charset=utf-8';
+  if (value.endsWith('.csv')) return 'text/csv; charset=utf-8';
+  if (value.endsWith('.tsv')) return 'text/tab-separated-values; charset=utf-8';
+  if (value.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (value.endsWith('.png')) return 'image/png';
+  if (value.endsWith('.jpg') || value.endsWith('.jpeg')) return 'image/jpeg';
+  if (value.endsWith('.webp')) return 'image/webp';
+  if (value.endsWith('.svg')) return 'image/svg+xml';
+  if (value.endsWith('.txt') || value.endsWith('.log') || value.endsWith('.md')) return 'text/plain; charset=utf-8';
+  return 'application/octet-stream';
+}
+
+async function getScanReportAsset(request, env, scanId, assetPath, url) {
+  if (!env.ARTIFACTS_BUCKET) {
+    return json({ error: 'report_storage_missing' }, 503);
+  }
+
+  if (!scanId || !assetPath) {
+    return notFound();
+  }
+
+  const scan = await env.DB.prepare('SELECT * FROM scans WHERE id = ?').bind(scanId).first();
+  if (!scan) {
+    return notFound();
+  }
+
+  const summary = parseSummaryObject(scan.summary_json);
+  const expectedToken = String(summary.report_public_token || '').trim();
+  const providedToken = String(url.searchParams.get('t') || '').trim();
+  if (!expectedToken || !providedToken || expectedToken !== providedToken) {
+    return unauthorized();
+  }
+
+  const prefix = String(summary.report_r2_prefix || '').trim().replace(/\/+$/, '');
+  if (!prefix) {
+    return notFound();
+  }
+
+  const objectKey = `${prefix}/${assetPath}`;
+  const reportObject = await env.ARTIFACTS_BUCKET.get(objectKey);
+  if (!reportObject) {
+    return notFound();
+  }
+
+  const headers = new Headers();
+  headers.set('content-type', contentTypeForReportAsset(assetPath));
+  headers.set('cache-control', 'private, max-age=60');
+  headers.set('x-robots-tag', 'noindex, nofollow');
+
+  if (reportObject.httpEtag) {
+    headers.set('etag', reportObject.httpEtag);
+  }
+
+  return new Response(reportObject.body, { status: 200, headers });
+}
+
 async function dispatchScanToGitHub(env, scan, site) {
   const config = getGitHubDispatchConfig(env);
   if (!config.owner || !config.repo || !config.workflow || !config.ref || !config.token) {
@@ -1215,6 +1318,14 @@ async function handleScanCallback(request, env) {
     ...summaryPatch
   });
 
+  const r2Prefix = String(summary.report_r2_prefix || '').trim().replace(/\/+$/, '');
+  if (r2Prefix) {
+    const reportToken = String(summary.report_public_token || '').trim() || crypto.randomUUID().replace(/-/g, '');
+    summary.report_public_token = reportToken;
+    summary.report_r2_prefix = r2Prefix;
+    summary.report_index_url = buildScanReportIndexUrl(env, scanId, reportToken);
+  }
+
   const completedAt = isTerminalScanStatus(status) ? nowIso() : existing.completed_at;
   await env.DB.prepare('UPDATE scans SET status = ?, updated_at = ?, completed_at = ?, summary_json = ? WHERE id = ?')
     .bind(status, nowIso(), completedAt || null, JSON.stringify(summary), scanId)
@@ -1249,6 +1360,14 @@ export default {
 
     if (request.method === 'POST' && pathname === '/v1/internal/scan-callback') {
       return handleScanCallback(request, env);
+    }
+
+    if (request.method === 'GET' && pathname.startsWith('/v1/reports/')) {
+      const reportRequest = extractReportRequest(pathname);
+      if (!reportRequest.scanId || !reportRequest.assetPath) {
+        return notFound();
+      }
+      return getScanReportAsset(request, env, reportRequest.scanId, reportRequest.assetPath, url);
     }
 
     if (request.method === 'POST' && pathname === '/v1/sites/register') {

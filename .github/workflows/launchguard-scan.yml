@@ -76,10 +76,11 @@ jobs:
         env:
           QA_PROFILE: ${{ inputs.profile }}
           FORM_SUBMIT_MODE: ${{ inputs.form_mode }}
-          SCREENSHOTS_MODE: off
+          SCREENSHOTS_MODE: issues
+          SCREENSHOTS_LIMIT: 4
         run: |
           set +e
-          CMD=(npm run qa -- "${{ inputs.client_name }}" --quick)
+          CMD=(npm run qa -- "${{ inputs.client_name }}" --projects=chrome-desktop-1920,windows-laptop-1272)
           if [[ -n "${{ inputs.single_url }}" ]]; then
             CMD+=("--single=${{ inputs.single_url }}")
           fi
@@ -107,6 +108,57 @@ jobs:
           echo "summary_json=$SUMMARY_JSON" >> "$GITHUB_OUTPUT"
           SUMMARY_B64=$(printf '%s' "$SUMMARY_JSON" | base64 | tr -d '\n')
           echo "summary_b64=$SUMMARY_B64" >> "$GITHUB_OUTPUT"
+
+      - name: Upload report files to Cloudflare R2
+        id: upload_r2
+        if: always()
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          REPORTS_R2_BUCKET: launchguard-reports-dev
+        run: |
+          set +e
+          REPORT_DIR="reports/${{ inputs.client_name }}"
+          REPORT_PREFIX=""
+          if [[ ! -d "$REPORT_DIR" ]]; then
+            echo "report_prefix=$REPORT_PREFIX" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "R2 upload skipped: missing Cloudflare secrets."
+            echo "report_prefix=$REPORT_PREFIX" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          REPORT_PREFIX="scans/${{ inputs.scan_id }}"
+          FILES=()
+
+          while IFS= read -r -d '' file; do FILES+=("$file"); done < <(find "$REPORT_DIR/qa_html" -type f -print0 2>/dev/null)
+          while IFS= read -r -d '' file; do FILES+=("$file"); done < <(find "$REPORT_DIR/screenshots" -type f -name '*.png' -print0 2>/dev/null)
+          while IFS= read -r -d '' file; do FILES+=("$file"); done < <(find "$REPORT_DIR/lighthouse" -type f -print0 2>/dev/null)
+          for file in issues.json run_meta.json site_summary.csv url_summary.csv QA_Report.xlsx; do
+            if [[ -f "$REPORT_DIR/$file" ]]; then
+              FILES+=("$REPORT_DIR/$file")
+            fi
+          done
+
+          if [[ "${#FILES[@]}" -eq 0 ]]; then
+            echo "R2 upload skipped: no report files found."
+            echo "report_prefix=$REPORT_PREFIX" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          for file in "${FILES[@]}"; do
+            rel="${file#${REPORT_DIR}/}"
+            key="${REPORT_PREFIX}/${rel}"
+            npx wrangler r2 object put "${REPORTS_R2_BUCKET}/${key}" \
+              --file "$file" \
+              --config services/api-worker/wrangler.toml >/dev/null
+          done
+
+          echo "report_prefix=$REPORT_PREFIX" >> "$GITHUB_OUTPUT"
 
       - name: Upload reports
         if: always()
@@ -179,6 +231,7 @@ jobs:
             --arg site_id "${{ inputs.site_id }}" \
             --arg artifact_name "$ARTIFACT_NAME" \
             --arg artifact_url "$ARTIFACT_URL" \
+            --arg report_r2_prefix "${{ steps.upload_r2.outputs.report_prefix }}" \
             --argjson report_summary "$SUMMARY_JSON" \
             '{
               scan_id: $scan_id,
@@ -191,7 +244,8 @@ jobs:
                 client_name: $client_name,
                 site_id: $site_id,
                 reports_artifact_name: $artifact_name,
-                reports_artifact_url: $artifact_url
+                reports_artifact_url: $artifact_url,
+                report_r2_prefix: $report_r2_prefix
               })
             }')
 
