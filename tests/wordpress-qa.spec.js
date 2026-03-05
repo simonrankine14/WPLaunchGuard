@@ -133,6 +133,9 @@ const LAUNCHGUARD_PROGRESS_ENABLED = Boolean(
   LAUNCHGUARD_PROGRESS_CALLBACK_URL &&
   LAUNCHGUARD_PROGRESS_CALLBACK_TOKEN
 );
+const CLOUD_SCAN_MODE = Boolean(LAUNCHGUARD_SCAN_ID);
+const QA_URL_LIMIT = Math.max(0, Number(process.env.QA_URL_LIMIT || (CLOUD_SCAN_MODE ? 60 : 0)));
+const URL_PACE_MS = Math.max(0, Number(process.env.URL_PACE_MS || (CLOUD_SCAN_MODE ? 400 : 0)));
 
 const results = [];
 const issues = [];
@@ -151,7 +154,15 @@ function loadUrls() {
   if (!Array.isArray(urls) || urls.length === 0) {
     throw new Error('URL list is empty. Add URLs to data/urls.json');
   }
-  return urls;
+  const normalized = urls
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+  const deduped = Array.from(new Set(normalized));
+  if (QA_URL_LIMIT > 0 && deduped.length > QA_URL_LIMIT) {
+    console.warn(`[qa] URL cap active: scanning first ${QA_URL_LIMIT} of ${deduped.length} discovered URLs.`);
+    return deduped.slice(0, QA_URL_LIMIT);
+  }
+  return deduped;
 }
 
 function csvEscape(value) {
@@ -2510,6 +2521,9 @@ test.describe('WordPress QA suite', () => {
       let fallbackContext = null;
 
       try {
+        if (URL_PACE_MS > 0 && index > 0) {
+          await page.waitForTimeout(URL_PACE_MS);
+        }
         await notifyScanUrlStarted(projectName, index, url);
         const isMobileProject = projectName === 'iphone-14' || projectName === 'ipad';
         const is1272Project = projectName === 'windows-laptop-1272';

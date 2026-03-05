@@ -234,6 +234,12 @@ jobs:
             PROJECT_COUNT=1
           fi
           PROGRESS_PROJECT="${PROJECTS[0]}"
+          URL_LIMIT="60"
+          if [[ "$QUICK_ENABLED" == "true" ]]; then
+            URL_LIMIT="35"
+          elif [[ "$VIEWPORT_PRESET" == "both" ]]; then
+            URL_LIMIT="40"
+          fi
 
           PROJECTS_CSV=$(IFS=,; echo "${PROJECTS[*]}")
           REST_BASE_INPUT="${{ inputs.site_url }}"
@@ -255,7 +261,7 @@ jobs:
           echo "effective_viewport_preset=$VIEWPORT_PRESET" >> "$GITHUB_OUTPUT"
           echo "effective_progress_project=$PROGRESS_PROJECT" >> "$GITHUB_OUTPUT"
 
-          CMD=(npm run qa -- "${{ inputs.client_name }}" "--projects=${PROJECTS_CSV}")
+          CMD=(npm run qa -- "${{ inputs.client_name }}" "--projects=${PROJECTS_CSV}" "--workers=1")
           if [[ -n "$TARGET_SINGLE" ]]; then
             CMD+=("--single=$TARGET_SINGLE")
           fi
@@ -269,9 +275,11 @@ jobs:
           export SCREENSHOTS_LIMIT=4
           export SKIP_LIGHTHOUSE="$SKIP_LIGHTHOUSE_FLAG"
           export LINK_CHECK_TIMEOUT_MS=20000
-          export LINK_CHECK_RETRIES=2
+          export LINK_CHECK_RETRIES=1
           export LINK_CHECK_RETRY_BACKOFF_MS=500
-          export LINK_CHECK_CONCURRENCY=6
+          export LINK_CHECK_CONCURRENCY=2
+          export QA_URL_LIMIT="$URL_LIMIT"
+          export URL_PACE_MS=400
           export LAUNCHGUARD_SCAN_ID="${{ inputs.scan_id }}"
           export LAUNCHGUARD_PROGRESS_PROJECT="$PROGRESS_PROJECT"
           export LAUNCHGUARD_PROGRESS_PROJECT_COUNT="$PROJECT_COUNT"
