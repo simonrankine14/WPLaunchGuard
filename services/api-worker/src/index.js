@@ -1397,7 +1397,7 @@ async function dispatchScanToGitHub(env, scan, site) {
       client_name: clientName,
       client_label: clientLabel,
       profile: mapProfileToQaProfile(scan.profile),
-      single_url: scanTargetUrl || '',
+      single_url: scanTargetUrl || siteUrl || '',
       site_url: siteUrl,
       target_url: scanTargetUrl,
       sitemap_url: String(scan.sitemap_url || ''),

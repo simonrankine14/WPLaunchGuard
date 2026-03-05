@@ -228,11 +228,11 @@ jobs:
           fi
 
           PROJECTS_CSV=$(IFS=,; echo "${PROJECTS[*]}")
+          REST_BASE_INPUT="${{ inputs.site_url }}"
           TARGET_SINGLE="${{ inputs.target_url }}"
-          if [[ -z "$TARGET_SINGLE" ]]; then
+          if [[ -z "$TARGET_SINGLE" && -z "$REST_BASE_INPUT" ]]; then
             TARGET_SINGLE="${{ inputs.single_url }}"
           fi
-          REST_BASE_INPUT="${{ inputs.site_url }}"
           CLIENT_LABEL_INPUT="${{ inputs.client_label }}"
           if [[ -z "$CLIENT_LABEL_INPUT" ]]; then
             CLIENT_LABEL_INPUT="$REST_BASE_INPUT"
