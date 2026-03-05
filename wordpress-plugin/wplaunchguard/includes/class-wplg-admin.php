@@ -967,6 +967,7 @@ class WPLG_Admin
         $progressSnapshot = $this->extract_progress_snapshot($summary);
         $progressPercent = $this->estimate_scan_progress($status, $summary);
         $currentUrl = $this->extract_current_scan_url($summary, $scanRow);
+        $targetUrl = esc_url_raw((string) ($scanRow['target_url'] ?? ($summary['target_url'] ?? ($summary['dispatch']['target_url'] ?? ($summary['dispatch']['site_url'] ?? '')))));
         $issuesTotal = $this->extract_issues_total($summary);
 
         return [
@@ -981,6 +982,7 @@ class WPLG_Admin
             'severity_text' => $this->format_severity_counts($summary),
             'eta_text' => $this->get_scan_eta_text($status),
             'current_url' => $currentUrl,
+            'target_url' => $targetUrl,
             'report_url' => esc_url_raw((string) ($summary['report_index_url'] ?? '')),
             'workflow_url' => esc_url_raw((string) ($summary['workflow_url'] ?? '')),
             'artifact_url' => esc_url_raw((string) ($summary['reports_artifact_url'] ?? '')),
@@ -1418,6 +1420,11 @@ class WPLG_Admin
               return !!runningStatusMap[String(status || '').toLowerCase()];
             }
 
+            function isTerminalStatus(status) {
+              var normalized = String(status || '').toLowerCase();
+              return normalized === 'completed' || normalized === 'failed' || normalized === 'cancelled';
+            }
+
             function clampNumber(value, min, max) {
               var parsed = parseInt(value, 10);
               if (!Number.isFinite(parsed)) return min;
@@ -1523,7 +1530,8 @@ class WPLG_Admin
                 autoOpen: modal.getAttribute('data-auto-open') === '1',
                 pollTimer: null,
                 tipTimer: null,
-                lastProgress: 0
+                lastProgress: 0,
+                lastStatus: ''
               };
 
               var tips = [
@@ -1599,14 +1607,54 @@ class WPLG_Admin
 
               function readCurrentUrl(payload) {
                 var progress = payload && payload.progress && typeof payload.progress === 'object' ? payload.progress : {};
-                var current = String(payload.current_url || progress.current_url || progress.last_completed_url || '').trim();
+                var current = String(payload.current_url || progress.current_url || progress.last_completed_url || payload.target_url || '').trim();
                 return current;
+              }
+
+              function showCompletionNotice(status, payload) {
+                var root = document.querySelector('.wrap.wplg-wrap') || document.querySelector('.wrap');
+                if (!root) return;
+
+                var existing = document.getElementById('wplg-runtime-scan-notice');
+                if (existing && existing.parentNode) {
+                  existing.parentNode.removeChild(existing);
+                }
+
+                var notice = document.createElement('div');
+                notice.id = 'wplg-runtime-scan-notice';
+                notice.className = 'notice ' + (status === 'completed' ? 'notice-success' : 'notice-error') + ' is-dismissible';
+
+                var message = 'Scan update received.';
+                if (status === 'completed') {
+                  message = 'Scan completed successfully.';
+                } else if (status === 'failed') {
+                  message = 'Scan failed.';
+                } else if (status === 'cancelled') {
+                  message = 'Scan was cancelled.';
+                }
+
+                var paragraph = document.createElement('p');
+                paragraph.appendChild(document.createTextNode(message + ' '));
+
+                var reportUrl = String((payload && payload.report_url) || '').trim();
+                if (reportUrl) {
+                  var reportLink = document.createElement('a');
+                  reportLink.href = reportUrl;
+                  reportLink.target = '_blank';
+                  reportLink.rel = 'noopener';
+                  reportLink.textContent = 'View Report';
+                  paragraph.appendChild(reportLink);
+                }
+
+                notice.appendChild(paragraph);
+                root.insertBefore(notice, root.firstChild);
               }
 
               function renderScanPayload(payload) {
                 if (!payload || typeof payload !== 'object') return;
 
                 var status = String(payload.status || payload.status_label || 'queued').toLowerCase();
+                var previousStatus = String(state.lastStatus || '').toLowerCase();
                 var progressRaw = payload.progress_percent;
                 var progress = clampNumber(progressRaw, 0, 100);
 
@@ -1618,6 +1666,10 @@ class WPLG_Admin
                   progress = state.lastProgress;
                 } else {
                   state.lastProgress = progress;
+                }
+                if (isTerminalStatus(status) && progress < 100) {
+                  progress = 100;
+                  state.lastProgress = 100;
                 }
 
                 var scanId = String(payload.scan_id || state.scanId || '').trim();
@@ -1666,6 +1718,11 @@ class WPLG_Admin
                 updateTitleForStatus(status);
                 setLinkState(viewReportEl, payload.report_url);
                 setLinkState(openWorkflowEl, payload.workflow_url);
+
+                if (isRunningStatus(previousStatus) && isTerminalStatus(status)) {
+                  showCompletionNotice(status, payload);
+                }
+                state.lastStatus = status;
               }
 
               function schedulePoll(delayMs) {

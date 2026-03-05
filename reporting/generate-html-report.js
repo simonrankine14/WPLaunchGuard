@@ -91,6 +91,14 @@ function safeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+function truncateText(value, maxLength = 400) {
+  const text = String(value ?? '');
+  if (!Number.isFinite(maxLength) || maxLength < 4 || text.length <= maxLength) {
+    return text;
+  }
+  return text.slice(0, maxLength - 3).trimEnd() + '...';
+}
+
 function relLink(fromDir, repoRoot, maybeRelativePath) {
   if (!maybeRelativePath) return '';
   // Most evidence paths are stored relative to repo root (process.cwd()).
@@ -324,18 +332,40 @@ function normalizeResultRow(row) {
   const status = String(source.status || 'PASS').toUpperCase();
   const safeStatus = ['PASS', 'FAIL', 'BLOCKED', 'ERROR'].includes(status) ? status : 'PASS';
   return {
-    ...source,
     url: String(source.url || ''),
     status: safeStatus,
     browser: String(source.browser || ''),
     device: String(source.device || ''),
     viewport: String(source.viewport || ''),
-    failReasons: String(source.failReasons || ''),
-    blockedReason: String(source.blockedReason || ''),
-    error: String(source.error || ''),
+    failReasons: truncateText(source.failReasons || '', 800),
+    blockedReason: truncateText(source.blockedReason || '', 600),
+    error: truncateText(source.error || '', 800),
+    consoleErrors: String(source.consoleErrors || ''),
+    pageErrors: String(source.pageErrors || ''),
+    brokenLinks: String(source.brokenLinks || ''),
+    h1Count: String(source.h1Count || ''),
+    missingAlt: String(source.missingAlt || ''),
+    brokenImages: String(source.brokenImages || ''),
+    imagesMissingLazy: String(source.imagesMissingLazy || ''),
+    metaTitle: truncateText(source.metaTitle || '', 300),
+    metaDescriptionPresent: String(source.metaDescriptionPresent || ''),
+    jsonLdPresent: String(source.jsonLdPresent || ''),
+    formsTotal: String(source.formsTotal || ''),
+    formsFailed: String(source.formsFailed || ''),
+    axeViolations: String(source.axeViolations || ''),
+    desktopOverflowCause: truncateText(source.desktopOverflowCause || '', 240),
+    desktopOverflowSample: truncateText(source.desktopOverflowSample || '', 240),
+    templateName: truncateText(source.templateName || '', 180),
+    pluginHints: truncateText(source.pluginHints || '', 240),
+    themeHints: truncateText(source.themeHints || '', 240),
+    schemaTypes: truncateText(source.schemaTypes || '', 300),
     screenshotPath: String(source.screenshotPath || ''),
     lighthouseReportHtml: String(source.lighthouseReportHtml || ''),
     lighthouseReportJson: String(source.lighthouseReportJson || ''),
+    lighthousePerformance: String(source.lighthousePerformance || ''),
+    lighthouseAccessibility: String(source.lighthouseAccessibility || ''),
+    lighthouseBestPractices: String(source.lighthouseBestPractices || ''),
+    lighthouseSEO: String(source.lighthouseSEO || ''),
     templateKey: String(source.templateKey || '')
   };
 }
@@ -345,23 +375,23 @@ function normalizeIssueRow(issue) {
   return {
     Category: String(source.Category || ''),
     Severity: asSeverity(source.Severity),
-    Title: String(source.Title || 'Issue'),
-    Description: String(source.Description || ''),
-    Element: String(source.Element || ''),
+    Title: truncateText(source.Title || 'Issue', 240),
+    Description: truncateText(source.Description || '', 1000),
+    Element: truncateText(source.Element || '', 1400),
     WCAG: String(source.WCAG || ''),
-    Recommendation: String(source.Recommendation || ''),
+    Recommendation: truncateText(source.Recommendation || '', 1000),
     URL: String(source.URL || ''),
     _source: String(source._source || ''),
-    resourceUrl: String(source.resourceUrl || ''),
+    resourceUrl: truncateText(source.resourceUrl || '', 400),
     httpStatus: String(source.httpStatus || ''),
     assetType: String(source.assetType || ''),
     isEnvironment: Boolean(source.isEnvironment),
     screenshotPath: String(source.screenshotPath || ''),
-    canonicalKey: String(source.canonicalKey || ''),
+    canonicalKey: truncateText(source.canonicalKey || '', 320),
     actionability: String(source.actionability || ''),
     ownership: String(source.ownership || ''),
     journeyScope: String(source.journeyScope || ''),
-    normalizedCause: String(source.normalizedCause || ''),
+    normalizedCause: truncateText(source.normalizedCause || '', 320),
     templateKey: String(source.templateKey || '')
   };
 }
@@ -469,6 +499,8 @@ async function generate(clientName) {
   const shareZipName = `share-${safeClientName}-latest.zip`;
   const shareZipPath = path.join(reportsDir, shareZipName);
   const hasShareZip = fs.existsSync(shareZipPath);
+  const hasResultsCsv = fs.existsSync(resultsPath);
+  const hasExcelWorkbook = fs.existsSync(path.join(reportsDir, 'QA_Report.xlsx'));
   const issuesPayload = loadJsonIfPresent(issuesJsonPath, { generatedAt: '', issues: [] });
   const rawResults = loadCsvIfPresent(resultsPath);
   const rawSummary = loadCsvIfPresent(summaryPath);
@@ -563,6 +595,10 @@ async function generate(clientName) {
     changeSummary,
     wpInsights: {}, // populated later from results
     shareZip: hasShareZip ? `../${shareZipName}` : '',
+    reportAssets: {
+      csv: hasResultsCsv,
+      excel: hasExcelWorkbook
+    },
     runMeta,
     reportSettings: {
       defaultAudience
@@ -1511,6 +1547,7 @@ async function generate(clientName) {
           fixPriority: { issueCount: 0, resolvedPercent: 0, issues: [] },
           changeSummary: { prevGeneratedAt: '', newCount: 0, resolvedCount: 0, newTop: [], resolvedTop: [] },
           shareZip: '',
+          reportAssets: { csv: true, excel: true },
           runMeta: { state: 'partial', run: {}, counts: {} },
           reportSettings: { defaultAudience: 'client' }
         };
@@ -1612,18 +1649,69 @@ async function generate(clientName) {
         const themesDetected = Array.from(themeCounts.entries()).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
         const schemasDetected = Array.from(schemaCounts.entries()).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
 
+        function disableAnchorButton(btn, label) {
+          if (!btn) return;
+          btn.setAttribute('href', '#');
+          btn.setAttribute('aria-disabled', 'true');
+          btn.classList.add('disabled');
+          if (label) {
+            btn.textContent = label;
+          }
+          btn.removeAttribute('target');
+          btn.removeAttribute('rel');
+          btn.addEventListener('click', function(event) {
+            event.preventDefault();
+          });
+        }
+
+        function enableAnchorButton(btn, hrefValue, label, options) {
+          if (!btn) return;
+          const href = String(hrefValue || '').trim();
+          if (!href) {
+            disableAnchorButton(btn, label);
+            return;
+          }
+          btn.setAttribute('href', withReportToken(href));
+          btn.removeAttribute('aria-disabled');
+          btn.classList.remove('disabled');
+          if (label) {
+            btn.textContent = label;
+          }
+          if (options && options.target) {
+            btn.setAttribute('target', options.target);
+          }
+          if (options && options.rel) {
+            btn.setAttribute('rel', options.rel);
+          }
+        }
+
+        function asArray(value) {
+          if (value instanceof Set) return Array.from(value);
+          if (Array.isArray(value)) return value.slice();
+          if (!value || typeof value !== 'object') return [];
+          return Object.keys(value).filter((key) => Boolean(value[key]));
+        }
+
+        function groupHasUrl(group, urlValue) {
+          if (!group || !urlValue) return false;
+          const urls = group.urls;
+          if (urls instanceof Set) return urls.has(urlValue);
+          if (Array.isArray(urls)) return urls.indexOf(urlValue) >= 0;
+          if (urls && typeof urls === 'object') return Boolean(urls[urlValue]);
+          return false;
+        }
+
         const firstLighthouse = results.find(r => r.lighthouseHtmlRel);
         function enableLighthouseButton(id) {
           const btn = document.getElementById(id);
           if (!btn) return;
           if (firstLighthouse && firstLighthouse.lighthouseHtmlRel) {
-            btn.href = withReportToken(firstLighthouse.lighthouseHtmlRel);
-            btn.textContent = 'Open Lighthouse';
-            btn.classList.remove('disabled');
+            enableAnchorButton(btn, firstLighthouse.lighthouseHtmlRel, 'Open Lighthouse', {
+              target: '_blank',
+              rel: 'noopener'
+            });
           } else {
-            btn.href = '#';
-            btn.textContent = 'No Lighthouse';
-            btn.classList.add('disabled');
+            disableAnchorButton(btn, 'No Lighthouse');
           }
         }
         enableLighthouseButton('lighthouseBtn');
@@ -1850,7 +1938,7 @@ async function generate(clientName) {
             const key = makeKey(g);
             const existing = globals.get(key);
             if (existing) {
-              g.urls.forEach((u) => existing.urls.add(u));
+              asArray(g.urls).forEach((u) => existing.urls.add(u));
               g.elements.forEach((e) => existing.elements.add(e));
               (g.instances || []).forEach((inst) => {
                 if (existing.instances.length < MAX_INSTANCES_PER_GROUP) {
@@ -1866,7 +1954,7 @@ async function generate(clientName) {
             } else {
               globals.set(key, {
                 ...g,
-                urls: new Set(g.urls),
+                urls: new Set(asArray(g.urls)),
                 elements: new Set(g.elements),
                 instances: (g.instances || []).slice(),
                 screenshots: new Set(g.screenshots || [])
@@ -1906,7 +1994,7 @@ async function generate(clientName) {
 
         function groupToText(g){
           const i = g.issue || {};
-          const urls = Array.from(g.urls).slice(0, 10).join(' ');
+          const urls = asArray(g.urls).slice(0, 10).join(' ');
           return [i.Title, i.Description, i.Element, i.Recommendation, urls].join(' ').toLowerCase();
         }
 
@@ -2751,7 +2839,7 @@ async function generate(clientName) {
             card.setAttribute('open', 'open');
           }
 
-          const hasLighthouseForGroup = results.some((r) => g.urls && g.urls.has(r.url) && r.lighthouseHtmlRel);
+          const hasLighthouseForGroup = results.some((r) => groupHasUrl(g, r.url) && r.lighthouseHtmlRel);
           const badgeNodes = [
             el('span', { class:'badge sev-'+sev }, [document.createTextNode(sev)]),
             el('span', { class:'badge' }, [document.createTextNode(g.displayCategory || i.CategoryGroup || i.Category || 'Structure')]),
@@ -2783,7 +2871,7 @@ async function generate(clientName) {
             ])
           ]);
 
-          const urls = Array.from(g.urls);
+          const urls = asArray(g.urls);
           const instances = Array.from(g.instances || []);
           const hiddenInstanceCount = Number(g.instanceOverflow || 0);
           const screenshots = Array.from(g.screenshots || []);
@@ -2843,7 +2931,7 @@ async function generate(clientName) {
             });
           }
 
-          const lighthouseLink = results.find((r) => g.urls && g.urls.has(r.url) && r.lighthouseHtmlRel);
+          const lighthouseLink = results.find((r) => groupHasUrl(g, r.url) && r.lighthouseHtmlRel);
           const bodySections = [
             el('div', null, [
               el('div', { class:'sectionTitle' }, [document.createTextNode("What's broken")]),
@@ -2930,7 +3018,7 @@ async function generate(clientName) {
               maxWeight: 0
             };
             existing.groups.push(g);
-            (g.urls || []).forEach((u) => existing.urls.add(u));
+            asArray(g.urls).forEach((u) => existing.urls.add(u));
             const sev = String(issue.Severity || 'info').toLowerCase();
             const weight = severityWeight[sev] || 1;
             if (weight > existing.maxWeight) {
@@ -3091,29 +3179,32 @@ async function generate(clientName) {
           const buttons = [document.getElementById('shareZipBtn'), document.getElementById('shareZipBtnSticky')].filter(Boolean);
           buttons.forEach(btn => {
             if (!href) {
-              btn.setAttribute('aria-disabled', 'true');
-              btn.setAttribute('href', '#');
-              btn.textContent = 'Export Report (zip)';
-              btn.addEventListener('click', (e) => e.preventDefault());
+              disableAnchorButton(btn, 'Export Report (not available)');
               return;
             }
-            btn.setAttribute('href', withReportToken(href));
+            enableAnchorButton(btn, href, 'Export Report (zip)');
             btn.setAttribute('download', '');
-            btn.textContent = 'Export Report (zip)';
           });
         }
 
         function wireStaticAssetButtons() {
           const targets = [
-            ['exportCsvBtn', '../results.csv'],
-            ['exportCsvBtnSticky', '../results.csv'],
-            ['openExcelBtn', '../QA_Report.xlsx'],
-            ['openExcelBtnSticky', '../QA_Report.xlsx']
+            ['exportCsvBtn', '../results.csv', !!(data.reportAssets && data.reportAssets.csv), 'Export CSV'],
+            ['exportCsvBtnSticky', '../results.csv', !!(data.reportAssets && data.reportAssets.csv), 'Export CSV'],
+            ['openExcelBtn', '../QA_Report.xlsx', !!(data.reportAssets && data.reportAssets.excel), 'Open Excel'],
+            ['openExcelBtnSticky', '../QA_Report.xlsx', !!(data.reportAssets && data.reportAssets.excel), 'Open Excel']
           ];
-          targets.forEach(([id, href]) => {
+          targets.forEach(([id, href, isAvailable, label]) => {
             const btn = document.getElementById(id);
             if (!btn) return;
-            btn.setAttribute('href', withReportToken(href));
+            if (!isAvailable) {
+              disableAnchorButton(btn, label + ' (not available)');
+              return;
+            }
+            enableAnchorButton(btn, href, label, {
+              target: btn.getAttribute('target') || '',
+              rel: btn.getAttribute('rel') || ''
+            });
           });
         }
 

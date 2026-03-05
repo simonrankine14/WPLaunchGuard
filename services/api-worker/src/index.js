@@ -1385,6 +1385,24 @@ function contentTypeForReportAsset(assetPath) {
   return 'application/octet-stream';
 }
 
+function extractReportTokenFromReferer(request, scanId) {
+  const refererHeader = String(request.headers.get('referer') || request.headers.get('referrer') || '').trim();
+  if (!refererHeader || !scanId) {
+    return '';
+  }
+
+  try {
+    const refererUrl = new URL(refererHeader);
+    const refererRequest = extractReportRequest(refererUrl.pathname);
+    if (refererRequest.scanId !== String(scanId).trim()) {
+      return '';
+    }
+    return String(refererUrl.searchParams.get('t') || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 async function getScanReportAsset(request, env, scanId, assetPath, url) {
   if (!env.ARTIFACTS_BUCKET) {
     return json({ error: 'report_storage_missing' }, 503);
@@ -1401,7 +1419,9 @@ async function getScanReportAsset(request, env, scanId, assetPath, url) {
 
   const summary = parseSummaryObject(scan.summary_json);
   const expectedToken = String(summary.report_public_token || '').trim();
-  const providedToken = String(url.searchParams.get('t') || '').trim();
+  const tokenFromQuery = String(url.searchParams.get('t') || '').trim();
+  const tokenFromReferer = extractReportTokenFromReferer(request, scanId);
+  const providedToken = tokenFromQuery || tokenFromReferer;
   if (!expectedToken || !providedToken || expectedToken !== providedToken) {
     return unauthorized();
   }
