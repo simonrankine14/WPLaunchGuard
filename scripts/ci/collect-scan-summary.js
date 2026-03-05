@@ -86,6 +86,9 @@ function collectSummary(reportDir, clientName) {
   const runMeta = safeReadJson(runMetaPath) || {};
   const issuesJson = safeReadJson(issuesPath) || {};
   const issues = Array.isArray(issuesJson.issues) ? issuesJson.issues : [];
+  const issueRowsTotal = Number(issuesJson?.totals?.issues || issues.length || 0);
+  const issueSummaryTotal = Number(issuesJson?.totals?.summary || 0);
+  const displayIssueTotal = issueSummaryTotal > 0 ? issueSummaryTotal : issueRowsTotal;
 
   const severityCounts = countBy(issues, (issue) => normalizeKey(issue.Severity));
   const categoryCounts = countBy(issues, (issue) => normalizeKey(issue.Category));
@@ -105,8 +108,9 @@ function collectSummary(reportDir, clientName) {
     run_state: String(runMeta.state || ''),
     run: runMeta.run || {},
     run_counts: runMeta.counts || {},
-    issues_total: Number(issuesJson?.totals?.issues || issues.length || 0),
-    issue_summary_total: Number(issuesJson?.totals?.summary || 0),
+    issues_total: displayIssueTotal,
+    issue_rows_total: issueRowsTotal,
+    issue_summary_total: issueSummaryTotal,
     issue_severity_counts: severityCounts,
     issue_category_top: topObjectEntries(categoryCounts, 8),
     issues_sample: issueSamples,

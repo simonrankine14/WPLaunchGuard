@@ -58,6 +58,11 @@ const BROKEN_LINK_IGNORE_PATTERNS = (process.env.BROKEN_LINK_IGNORE || '')
   .map((p) => new RegExp(p, 'i'))
   .concat([/\.cpanel\.site/i, /\/wordpress\/?$/i]);
 const MAX_SAMPLES = Number(process.env.MAX_SAMPLES || 5);
+const MAX_RUNTIME_MESSAGES_PER_TYPE = Math.max(1, Number(process.env.MAX_RUNTIME_MESSAGES_PER_TYPE || 80));
+const MAX_RUNTIME_DUPLICATES_PER_SIGNATURE = Math.max(
+  1,
+  Number(process.env.MAX_RUNTIME_DUPLICATES_PER_SIGNATURE || 2)
+);
 const SKIP_LIGHTHOUSE = (process.env.SKIP_LIGHTHOUSE || '').toLowerCase() === 'true';
 const LIGHTHOUSE_QUEUE = (process.env.LIGHTHOUSE_QUEUE || 'true').toLowerCase() === 'true';
 const LIGHTHOUSE_WORKERS = Math.max(1, Number(process.env.LIGHTHOUSE_WORKERS || 1));
@@ -631,6 +636,21 @@ function isAllowlisted(message, allowlist) {
 
 function shouldIgnoreClassification(classification) {
   return classification && classification.severity === 'ignore';
+}
+
+function normalizeRuntimeMessageSignature(message) {
+  let text = String(message || '').toLowerCase().trim();
+  text = text.replace(/https?:\/\/[^\s)"]+/g, (match) => {
+    try {
+      const parsed = new URL(match);
+      return `${parsed.origin}${parsed.pathname}`;
+    } catch {
+      return match;
+    }
+  });
+  text = text.replace(/\b\d+\b/g, 'n');
+  text = text.replace(/\s+/g, ' ').trim();
+  return text.slice(0, 240);
 }
 
 function classificationCausesFailure(classification, threshold) {
@@ -2342,19 +2362,47 @@ test.describe('WordPress QA suite', () => {
 
       const consoleErrors = [];
       const pageErrors = [];
+      const runtimeMessageLimiter = {
+        console: {
+          seen: new Map(),
+          dropped: 0
+        },
+        page: {
+          seen: new Map(),
+          dropped: 0
+        }
+      };
+
+      const pushLimitedRuntimeMessage = (kind, rawMessage) => {
+        const text = String(rawMessage || '').trim();
+        if (!text) return;
+
+        const bucket = runtimeMessageLimiter[kind];
+        const target = kind === 'console' ? consoleErrors : pageErrors;
+        const signature = normalizeRuntimeMessageSignature(text);
+        const currentCount = bucket.seen.get(signature) || 0;
+
+        if (currentCount >= MAX_RUNTIME_DUPLICATES_PER_SIGNATURE || target.length >= MAX_RUNTIME_MESSAGES_PER_TYPE) {
+          bucket.dropped += 1;
+          return;
+        }
+
+        bucket.seen.set(signature, currentCount + 1);
+        target.push(text);
+      };
 
       let captureConsole = true;
       const attachErrorListeners = (targetPage) => {
         targetPage.on('console', (message) => {
           if (!captureConsole) return;
           if (message.type() === 'error') {
-            consoleErrors.push(message.text());
+            pushLimitedRuntimeMessage('console', message.text());
           }
         });
 
         targetPage.on('pageerror', (error) => {
           if (!captureConsole) return;
-          pageErrors.push(error.message || String(error));
+          pushLimitedRuntimeMessage('page', error.message || String(error));
         });
       };
 
@@ -2640,6 +2688,14 @@ test.describe('WordPress QA suite', () => {
         result.consoleErrorsSample = consoleErrors.slice(0, MAX_SAMPLES).join(' | ');
         result.pageErrors = pageErrors.length;
         result.pageErrorsSample = pageErrors.slice(0, MAX_SAMPLES).join(' | ');
+        if (runtimeMessageLimiter.console.dropped > 0) {
+          const note = `(+${runtimeMessageLimiter.console.dropped} duplicate/noisy console errors collapsed)`;
+          result.consoleErrorsSample = result.consoleErrorsSample ? `${result.consoleErrorsSample} | ${note}` : note;
+        }
+        if (runtimeMessageLimiter.page.dropped > 0) {
+          const note = `(+${runtimeMessageLimiter.page.dropped} duplicate/noisy runtime errors collapsed)`;
+          result.pageErrorsSample = result.pageErrorsSample ? `${result.pageErrorsSample} | ${note}` : note;
+        }
         result.brokenLinks = brokenLinks.length;
         result.linkCheckErrors = linkCheckErrors.length;
         result.brokenLinksSample = brokenLinks

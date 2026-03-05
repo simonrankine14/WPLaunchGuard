@@ -1406,8 +1406,16 @@ class WPLG_Admin
 
     private function extract_issues_total(array $summary): ?int
     {
+        if (isset($summary['issue_summary_total']) && is_numeric($summary['issue_summary_total'])) {
+            return (int) $summary['issue_summary_total'];
+        }
+
         if (isset($summary['issues_total']) && is_numeric($summary['issues_total'])) {
             return (int) $summary['issues_total'];
+        }
+
+        if (isset($summary['run_counts']) && is_array($summary['run_counts']) && isset($summary['run_counts']['summaryRows']) && is_numeric($summary['run_counts']['summaryRows'])) {
+            return (int) $summary['run_counts']['summaryRows'];
         }
 
         if (isset($summary['run_counts']) && is_array($summary['run_counts']) && isset($summary['run_counts']['issueRows']) && is_numeric($summary['run_counts']['issueRows'])) {

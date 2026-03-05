@@ -416,7 +416,12 @@ function normalizeRunMeta(rawMeta, fallbackState, stats) {
       inputUrls: Number.isFinite(Number(counts.inputUrls)) ? Number(counts.inputUrls) : stats.totalUrls,
       resultRows: Number.isFinite(Number(counts.resultRows)) ? Number(counts.resultRows) : stats.totalRuns,
       uniqueUrls: Number.isFinite(Number(counts.uniqueUrls)) ? Number(counts.uniqueUrls) : stats.totalUrls,
-      issueRows: Number.isFinite(Number(counts.issueRows)) ? Number(counts.issueRows) : 0,
+      issueRows: Number.isFinite(Number(counts.issueRows))
+        ? Number(counts.issueRows)
+        : Number.isFinite(Number(counts.summaryRows))
+        ? Number(counts.summaryRows)
+        : 0,
+      issueRowsRaw: Number.isFinite(Number(counts.issueRowsRaw)) ? Number(counts.issueRowsRaw) : null,
       summaryRows: Number.isFinite(Number(counts.summaryRows)) ? Number(counts.summaryRows) : 0,
       blockedSamples: Number.isFinite(Number(counts.blockedSamples)) ? Number(counts.blockedSamples) : 0
     }
@@ -1796,17 +1801,34 @@ async function generate(clientName) {
 
         // Build stable issue groups so "Affected pages" does not change when filtering.
         const groupsMap = new Map();
+        const MAX_INSTANCES_PER_GROUP = 120;
         issues.forEach(i => {
           const key = groupKey(i);
-          const entry = groupsMap.get(key) || { issue: i, urls: new Set(), elements: new Set(), instances: [], screenshots: new Set() };
+          const entry = groupsMap.get(key) || {
+            issue: i,
+            urls: new Set(),
+            elements: new Set(),
+            instances: [],
+            instanceKeys: new Set(),
+            instanceOverflow: 0,
+            screenshots: new Set()
+          };
           if (i.URL) entry.urls.add(i.URL);
           if (i.Element) entry.elements.add(i.Element);
           if (i.screenshotRel) entry.screenshots.add(i.screenshotRel);
-          entry.instances.push({
-            url: i.URL || '',
-            element: i.Element || '',
-            recommendation: i.Recommendation || ''
-          });
+          const instanceKey = [i.URL || '', i.Element || '', i.Recommendation || ''].join('::');
+          if (!entry.instanceKeys.has(instanceKey)) {
+            entry.instanceKeys.add(instanceKey);
+            if (entry.instances.length < MAX_INSTANCES_PER_GROUP) {
+              entry.instances.push({
+                url: i.URL || '',
+                element: i.Element || '',
+                recommendation: i.Recommendation || ''
+              });
+            } else {
+              entry.instanceOverflow += 1;
+            }
+          }
           groupsMap.set(key, entry);
         });
 
@@ -1830,7 +1852,14 @@ async function generate(clientName) {
             if (existing) {
               g.urls.forEach((u) => existing.urls.add(u));
               g.elements.forEach((e) => existing.elements.add(e));
-              (g.instances || []).forEach((inst) => existing.instances.push(inst));
+              (g.instances || []).forEach((inst) => {
+                if (existing.instances.length < MAX_INSTANCES_PER_GROUP) {
+                  existing.instances.push(inst);
+                } else {
+                  existing.instanceOverflow = (existing.instanceOverflow || 0) + 1;
+                }
+              });
+              existing.instanceOverflow = (existing.instanceOverflow || 0) + Number(g.instanceOverflow || 0);
               (g.screenshots || []).forEach((scr) => existing.screenshots.add(scr));
               existing.impacted = existing.urls.size;
               existing.ratio = existing.impacted / totalUniqueUrls;
@@ -2756,6 +2785,7 @@ async function generate(clientName) {
 
           const urls = Array.from(g.urls);
           const instances = Array.from(g.instances || []);
+          const hiddenInstanceCount = Number(g.instanceOverflow || 0);
           const screenshots = Array.from(g.screenshots || []);
 
           const affectedList = el('ul', { class:'issueUrlList' }, []);
@@ -2860,6 +2890,9 @@ async function generate(clientName) {
             bodySections.splice(4, 0, el('div', null, [
               el('div', { class:'sectionTitle' }, [document.createTextNode('Instances')]),
               instanceList,
+              hiddenInstanceCount > 0
+                ? el('div', { class:'muted', style:'margin-top:6px' }, [document.createTextNode(String(hiddenInstanceCount) + ' additional duplicate instances hidden for readability.')])
+                : null,
               moreInstancesBtn || el('div', { class:'muted' }, [document.createTextNode(instances.length ? '' : '-')]),
               allInstanceBox
             ].filter(Boolean)));

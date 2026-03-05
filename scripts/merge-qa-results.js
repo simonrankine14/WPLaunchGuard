@@ -334,6 +334,33 @@ function dedupeResults(rows) {
   return Array.from(map.values());
 }
 
+function dedupeIssueRows(rows) {
+  const map = new Map();
+  rows.forEach((rawRow) => {
+    const row = normalizeIssue(rawRow);
+    const key = [row.canonicalKey || issueKey(row), row.URL || '']
+      .map((part) => String(part || '').toLowerCase())
+      .join('|');
+
+    if (!map.has(key)) {
+      map.set(key, row);
+      return;
+    }
+
+    const existing = map.get(key);
+    if (!existing.screenshotPath && row.screenshotPath) {
+      existing.screenshotPath = row.screenshotPath;
+    }
+    if (!existing.resourceUrl && row.resourceUrl) {
+      existing.resourceUrl = row.resourceUrl;
+    }
+    if (!existing.httpStatus && row.httpStatus) {
+      existing.httpStatus = row.httpStatus;
+    }
+  });
+  return Array.from(map.values());
+}
+
 function parseBoolean(value) {
   return String(value || '').toLowerCase() === 'true';
 }
@@ -353,6 +380,7 @@ function writeRunMeta({
   resultsRows,
   uniqueUrls,
   issuesRows,
+  issuesRowsRaw,
   summaryRows,
   blockedSamples
 }) {
@@ -383,6 +411,7 @@ function writeRunMeta({
       resultRows: resultsRows,
       uniqueUrls,
       issueRows: issuesRows,
+      issueRowsRaw: issuesRowsRaw,
       summaryRows,
       blockedSamples
     }
@@ -434,7 +463,8 @@ function main() {
   const results = dedupeResults(allResults);
   const urlUniverse = totalInputUrls || new Set(results.map((row) => row.url).filter(Boolean)).size;
   const initialSummary = buildIssueSummary(allIssues, urlUniverse);
-  const filteredIssues = filterGlobalAxeIssues(allIssues, initialSummary).map((issue) => normalizeIssue(issue));
+  const filteredIssuesRaw = filterGlobalAxeIssues(allIssues, initialSummary).map((issue) => normalizeIssue(issue));
+  const filteredIssues = dedupeIssueRows(filteredIssuesRaw);
   const effectiveSummary = buildIssueSummary(filteredIssues, urlUniverse);
   const urlSummaryRows = buildUrlSummary(results);
 
@@ -465,6 +495,7 @@ function main() {
     resultsRows: results.length,
     uniqueUrls,
     issuesRows: filteredIssues.length,
+    issuesRowsRaw: filteredIssuesRaw.length,
     summaryRows: effectiveSummary.size,
     blockedSamples: allBlockedSamples.length
   });
@@ -474,7 +505,7 @@ function main() {
   }
 
   console.log(
-    `[merge-qa-results] Merged ${selectedShards.length} shard(s): ${results.length} runs, ${filteredIssues.length} issues, state=${state}`
+    `[merge-qa-results] Merged ${selectedShards.length} shard(s): ${results.length} runs, ${filteredIssues.length} unique issues (${filteredIssuesRaw.length} raw), state=${state}`
   );
 }
 
