@@ -1,5 +1,24 @@
 .wplg-wrap {
-  max-width: 900px;
+  --wplg-bg: #f5f8fc;
+  --wplg-surface: #ffffff;
+  --wplg-surface-soft: #f9fcff;
+  --wplg-border: #d9e3ee;
+  --wplg-text: #17202b;
+  --wplg-muted: #637282;
+  --wplg-brand: #2f86c3;
+  --wplg-brand-strong: #1f6ea7;
+  --wplg-accent: #34b3a0;
+  --wplg-warning: #b36a00;
+  --wplg-danger: #b52323;
+  --wplg-ok: #0f7a4b;
+  max-width: 1220px;
+}
+
+.wplg-wrap h1,
+.wplg-wrap h2,
+.wplg-wrap h3 {
+  color: var(--wplg-text);
+  letter-spacing: 0.01em;
 }
 
 .wplg-wrap ul {
@@ -7,28 +26,216 @@
   list-style: disc;
 }
 
+.wplg-dashboard .wplg-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0 16px;
+  padding: 4px 2px;
+}
+
+.wplg-dashboard .wplg-page-title h1 {
+  margin: 0 0 6px;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+.wplg-dashboard .wplg-page-subtitle {
+  margin: 0;
+  color: var(--wplg-muted);
+  font-size: 14px;
+}
+
+.wplg-page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.wplg-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #ccd7e5;
+  background: #f0f5fb;
+  color: #314458;
+  font-size: 12px;
+  line-height: 1;
+  padding: 7px 10px;
+  font-weight: 600;
+}
+
+.wplg-badge.is-success {
+  border-color: #9fd5c4;
+  background: #e7f8f1;
+  color: #126b47;
+}
+
+.wplg-badge.is-warning {
+  border-color: #eac48a;
+  background: #fff5e6;
+  color: #915400;
+}
+
 .wplg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin: 16px 0;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 18px;
+  margin: 18px 0;
 }
 
 .wplg-card {
-  background: #fff;
-  border: 1px solid #dcdcde;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
+  background: linear-gradient(180deg, var(--wplg-surface) 0%, var(--wplg-surface-soft) 100%);
+  border: 1px solid var(--wplg-border);
+  border-radius: 14px;
+  padding: 18px;
+  margin: 0;
+  box-shadow: 0 10px 24px -22px rgba(22, 33, 48, 0.45);
 }
 
 .wplg-card h2 {
-  margin-top: 0;
+  margin: 0 0 14px;
+  font-size: 25px;
+  line-height: 1.1;
+}
+
+.wplg-card h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #2e455d;
+}
+
+.wplg-card p {
+  color: #2c3a49;
+}
+
+.wplg-card-intro {
+  margin: 0 0 12px;
+  color: var(--wplg-muted);
+  font-size: 13px;
+}
+
+.wplg-kv-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wplg-kv-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px dashed #dce5ef;
+}
+
+.wplg-kv-list li:last-child {
+  border-bottom: 0;
+}
+
+.wplg-kv-list li > span:first-child {
+  color: #597084;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.wplg-wrap code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  background: #eff5fb;
+  border: 1px solid #cfdceb;
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: #1e3043;
+  font-size: 12px;
+}
+
+.wplg-inline-muted {
+  color: var(--wplg-muted);
+  font-size: 12px;
+}
+
+.wplg-wrap input[type="text"],
+.wplg-wrap input[type="url"],
+.wplg-wrap select,
+.wplg-wrap textarea {
+  border: 1px solid #c6d5e7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #182636;
+  box-shadow: none;
+}
+
+.wplg-wrap input[type="text"]:focus,
+.wplg-wrap input[type="url"]:focus,
+.wplg-wrap select:focus,
+.wplg-wrap textarea:focus {
+  border-color: var(--wplg-brand);
+  box-shadow: 0 0 0 2px rgba(47, 134, 195, 0.18);
+  outline: none;
+}
+
+.wplg-wrap .button,
+.wplg-wrap .button-primary {
+  border-radius: 8px;
+  min-height: 32px;
+  line-height: 30px;
+  padding: 0 12px;
+}
+
+.wplg-wrap .button-primary {
+  border-color: var(--wplg-brand-strong);
+  background: linear-gradient(180deg, var(--wplg-brand) 0%, var(--wplg-brand-strong) 100%);
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.wplg-wrap .button-primary:hover,
+.wplg-wrap .button-primary:focus {
+  border-color: #1a6194;
+  background: linear-gradient(180deg, #2a7eb8 0%, #1a6194 100%);
+  box-shadow: none;
+}
+
+.wplg-wrap .button {
+  border-color: #c2d1e2;
+  background: #f7fbff;
+  color: #24415d;
+}
+
+.wplg-wrap .button:hover,
+.wplg-wrap .button:focus {
+  border-color: #9db6cf;
+  background: #eef5fd;
+  color: #18344e;
+}
+
+.wplg-primary-cta {
+  width: 100%;
+  margin-top: 6px !important;
+}
+
+.wplg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .wplg-plan-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 16px;
   margin: 16px 0;
 }
@@ -42,16 +249,16 @@
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 12px;
-  background: #d9f7e8;
-  color: #0a5a31;
-  border: 1px solid #9bd9b6;
+  background: #e7f8f1;
+  color: var(--wplg-ok);
+  border: 1px solid #9fd5c4;
 }
 
 .wplg-progress {
   width: 100%;
   height: 10px;
   border-radius: 999px;
-  background: #edf0f3;
+  background: #e8eef5;
   overflow: hidden;
   margin: 6px 0 10px;
 }
@@ -60,21 +267,16 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2f86c3, #34b3a0);
+  background: linear-gradient(90deg, var(--wplg-brand) 0%, var(--wplg-accent) 100%);
   transition: width 0.3s ease;
 }
 
 .wplg-scan-section {
-  border: 1px solid #dcdcde;
-  border-radius: 8px;
+  border: 1px solid #d9e4ef;
+  border-radius: 10px;
   padding: 12px;
   margin: 10px 0;
-  background: #fafafa;
-}
-
-.wplg-scan-section h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.84);
 }
 
 .wplg-field {
@@ -88,7 +290,7 @@
 }
 
 .wplg-help-tip {
-  color: #3858e9;
+  color: #3e66d4;
   cursor: help;
   font-size: 16px;
   vertical-align: middle;
@@ -97,9 +299,68 @@
 .wplg-summary-line {
   margin: 14px 0 0;
   padding: 10px 12px;
-  border-radius: 8px;
-  background: #f0f6fc;
-  border: 1px solid #c6def6;
+  border-radius: 10px;
+  background: #eef7ff;
+  border: 1px solid #c8deef;
+  color: #20425f;
+}
+
+.wplg-table-wrap {
+  overflow-x: auto;
+}
+
+.wplg-table {
+  border: 1px solid #d8e3f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.wplg-table thead th {
+  background: #f2f7fc;
+  color: #2a4865;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.wplg-table td,
+.wplg-table th {
+  border-bottom: 1px solid #e3ebf4;
+}
+
+.wplg-status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #c8d6e6;
+  background: #f0f5fb;
+  color: #2d465f;
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 10px;
+  font-weight: 600;
+}
+
+.wplg-status-pill.status-completed {
+  border-color: #9fd5c4;
+  background: #e7f8f1;
+  color: #126b47;
+}
+
+.wplg-status-pill.status-running,
+.wplg-status-pill.status-dispatched,
+.wplg-status-pill.status-queued,
+.wplg-status-pill.status-queued_local {
+  border-color: #9dc5e8;
+  background: #e9f5ff;
+  color: #175483;
+}
+
+.wplg-status-pill.status-failed,
+.wplg-status-pill.status-cancelled {
+  border-color: #e2a5a5;
+  background: #fff0f0;
+  color: #8f2424;
 }
 
 .wplg-metabox-options {
@@ -119,4 +380,18 @@
 
 .is-hidden {
   display: none;
+}
+
+@media (max-width: 960px) {
+  .wplg-dashboard .wplg-page-title h1 {
+    font-size: 29px;
+  }
+
+  .wplg-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wplg-kv-list li {
+    align-items: flex-start;
+  }
 }

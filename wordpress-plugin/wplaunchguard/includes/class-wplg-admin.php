@@ -282,12 +282,24 @@ class WPLG_Admin
         $siteId = $this->get_option(self::OPTION_SITE_ID);
         $connected = $siteId !== '';
         $autoRefreshActive = false;
+        $siteHost = wp_parse_url(home_url('/'), PHP_URL_HOST);
 
-        echo '<div class="wrap wplg-wrap">';
+        echo '<div class="wrap wplg-wrap wplg-dashboard">';
+        echo '<div class="wplg-page-header">';
+        echo '<div class="wplg-page-title">';
         echo '<h1>WP LaunchGuard</h1>';
+        echo '<p class="wplg-page-subtitle">Cloud QA control center for scans, evidence, and client-ready reporting.</p>';
+        echo '</div>';
+        echo '<div class="wplg-page-meta">';
+        echo '<span class="wplg-badge ' . ($connected ? 'is-success' : 'is-warning') . '">' . ($connected ? 'Connected' : 'Not Connected') . '</span>';
+        if (!empty($siteHost)) {
+            echo '<span class="wplg-badge">' . esc_html((string) $siteHost) . '</span>';
+        }
+        echo '</div>';
+        echo '</div>';
 
         if (!$connected) {
-            echo '<div class="wplg-card">';
+            echo '<div class="wplg-card wplg-card-hero">';
             echo '<h2>Connect This Site</h2>';
             echo '<p>Register this WordPress site with your LaunchGuard API to enable scans and white-label controls.</p>';
             echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
@@ -305,17 +317,20 @@ class WPLG_Admin
         $lastScan = $this->fetch_last_scan();
         $scanDefaults = $this->get_scan_defaults();
 
-        echo '<div class="wplg-grid">';
+        echo '<div class="wplg-grid wplg-grid-top">';
 
-        echo '<div class="wplg-card">';
+        echo '<div class="wplg-card wplg-card-connection">';
         echo '<h2>Connection</h2>';
-        echo '<p><strong>Site ID:</strong> ' . esc_html($siteId) . '</p>';
-        echo '<p><strong>Tenant ID:</strong> ' . esc_html($this->get_option(self::OPTION_TENANT_ID)) . '</p>';
-        echo '<p><strong>API:</strong> ' . esc_html($this->get_api_base()) . '</p>';
+        echo '<ul class="wplg-kv-list">';
+        echo '<li><span>Site ID</span><code>' . esc_html($siteId) . '</code></li>';
+        echo '<li><span>Tenant ID</span><code>' . esc_html($this->get_option(self::OPTION_TENANT_ID)) . '</code></li>';
+        echo '<li><span>API Base</span><code>' . esc_html($this->get_api_base()) . '</code></li>';
+        echo '</ul>';
         echo '</div>';
 
-        echo '<div class="wplg-card">';
+        echo '<div class="wplg-card wplg-card-scan-setup">';
         echo '<h2>Scan Setup</h2>';
+        echo '<p class="wplg-card-intro">Choose the scan profile for this run. You can still override per-page scans from post/page edit screens.</p>';
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="wplg-scan-config-form">';
         echo '<input type="hidden" name="action" value="wplg_run_scan" />';
         wp_nonce_field('wplg_run_scan');
@@ -356,14 +371,14 @@ class WPLG_Admin
 
         echo '<p class="wplg-summary-line"><strong>Selected profile summary:</strong> <span id="wplg-dashboard-summary-text"></span></p>';
 
-        submit_button('Start Scan', 'primary', 'submit', false);
+        submit_button('Start Scan', 'primary wplg-primary-cta', 'submit', false);
         echo '</form>';
         echo '</div>';
 
         echo '</div>';
 
-        echo '<div class="wplg-grid">';
-        echo '<div class="wplg-card">';
+        echo '<div class="wplg-grid wplg-grid-mid">';
+        echo '<div class="wplg-card wplg-card-plan">';
         echo '<h2>Plan Usage</h2>';
         if (is_wp_error($limits)) {
             echo '<p>' . esc_html($limits->get_error_message()) . '</p>';
@@ -371,15 +386,24 @@ class WPLG_Admin
             $data = $limits['data'];
             $planId = sanitize_text_field((string) ($data['plan_id'] ?? 'starter'));
             $billingStatus = sanitize_text_field((string) ($data['billing_status'] ?? 'trial'));
-            echo '<p><strong>Period:</strong> ' . esc_html((string) ($data['period_key'] ?? 'n/a')) . '</p>';
-            echo '<p><strong>Plan:</strong> ' . esc_html($planId) . ' (' . esc_html($billingStatus) . ')</p>';
-            echo '<p><strong>Scans:</strong> ' . esc_html((string) ($data['scans_used'] ?? 0)) . ' / ' . esc_html((string) ($data['scans_limit'] ?? 0)) . '</p>';
-            echo '<p><strong>Sites Limit:</strong> ' . esc_html((string) ($data['sites_limit'] ?? 0)) . '</p>';
-            echo '<p><a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-billing')) . '">Manage Billing</a></p>';
+            $scansUsed = (int) ($data['scans_used'] ?? 0);
+            $scansLimit = (int) ($data['scans_limit'] ?? 0);
+            $usagePercent = $scansLimit > 0 ? (int) max(0, min(100, round(($scansUsed / $scansLimit) * 100))) : 0;
+
+            echo '<ul class="wplg-kv-list">';
+            echo '<li><span>Period</span><strong>' . esc_html((string) ($data['period_key'] ?? 'n/a')) . '</strong></li>';
+            echo '<li><span>Plan</span><strong>' . esc_html($planId) . ' <span class="wplg-inline-muted">(' . esc_html($billingStatus) . ')</span></strong></li>';
+            echo '<li><span>Scans</span><strong>' . esc_html((string) $scansUsed) . ' / ' . esc_html((string) $scansLimit) . '</strong></li>';
+            echo '<li><span>Sites Limit</span><strong>' . esc_html((string) ($data['sites_limit'] ?? 0)) . '</strong></li>';
+            echo '</ul>';
+            echo '<div class="wplg-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $usagePercent) . '">';
+            echo '<span style="width:' . esc_attr((string) $usagePercent) . '%"></span>';
+            echo '</div>';
+            echo '<div class="wplg-actions"><a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-billing')) . '">Manage Billing</a></div>';
         }
         echo '</div>';
 
-        echo '<div class="wplg-card">';
+        echo '<div class="wplg-card wplg-card-latest">';
         echo '<h2>Latest Scan</h2>';
         if (is_wp_error($lastScan)) {
             echo '<p>' . esc_html($lastScan->get_error_message()) . '</p>';
@@ -389,20 +413,22 @@ class WPLG_Admin
             $scan = $lastScan['data']['scan'] ?? [];
             $scanSummary = $this->extract_scan_summary($scan);
             $scanStatus = sanitize_key((string) ($scan['status'] ?? ''));
-            echo '<p><strong>ID:</strong> ' . esc_html((string) ($scan['id'] ?? 'n/a')) . '</p>';
-            echo '<p><strong>Status:</strong> ' . esc_html((string) ($scan['status'] ?? 'n/a')) . '</p>';
-            echo '<p><strong>Created:</strong> ' . esc_html((string) ($scan['created_at'] ?? 'n/a')) . '</p>';
-            echo '<p><strong>Completed:</strong> ' . esc_html((string) ($scan['completed_at'] ?? 'pending')) . '</p>';
+            echo '<ul class="wplg-kv-list">';
+            echo '<li><span>ID</span><code>' . esc_html((string) ($scan['id'] ?? 'n/a')) . '</code></li>';
+            echo '<li><span>Status</span>' . $this->render_status_pill((string) ($scan['status'] ?? 'n/a')) . '</li>';
+            echo '<li><span>Created</span><strong>' . esc_html((string) ($scan['created_at'] ?? 'n/a')) . '</strong></li>';
+            echo '<li><span>Completed</span><strong>' . esc_html((string) ($scan['completed_at'] ?? 'pending')) . '</strong></li>';
 
             $targetUrl = sanitize_text_field((string) ($scan['target_url'] ?? ($scanSummary['target_url'] ?? '')));
             if ($targetUrl !== '') {
-                echo '<p><strong>Target URL:</strong> <span class="wplg-break-word">' . esc_html($targetUrl) . '</span></p>';
+                echo '<li><span>Target URL</span><span class="wplg-break-word"><code>' . esc_html($targetUrl) . '</code></span></li>';
             }
 
             $scanOptions = $this->extract_scan_options($scan, $scanSummary);
             if (!empty($scanOptions)) {
-                echo '<p><strong>Profile:</strong> ' . esc_html($this->format_scan_options_summary($scanOptions)) . '</p>';
+                echo '<li><span>Profile</span><strong>' . esc_html($this->format_scan_options_summary($scanOptions)) . '</strong></li>';
             }
+            echo '</ul>';
 
             $progressPercent = $this->estimate_scan_progress($scanStatus, $scanSummary);
             echo '<p><strong>Progress:</strong> ' . esc_html((string) $progressPercent) . '%</p>';
@@ -418,7 +444,7 @@ class WPLG_Admin
             if ($this->is_scan_in_progress($scanStatus)) {
                 $autoRefreshActive = true;
                 echo '<p class="description">This page auto-refreshes every 15 seconds while your scan is running.</p>';
-                echo '<p><a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-dashboard')) . '">Refresh Now</a></p>';
+                echo '<div class="wplg-actions"><a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-dashboard')) . '">Refresh Now</a></div>';
             }
 
             $issuesTotal = $this->extract_issues_total($scanSummary);
@@ -435,17 +461,19 @@ class WPLG_Admin
                 echo '<p><strong>Run State:</strong> ' . esc_html((string) $scanSummary['run_state']) . '</p>';
             }
 
+            echo '<div class="wplg-actions">';
             if (!empty($scanSummary['report_index_url'])) {
-                echo '<p><a class="button button-primary" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['report_index_url']) . '">View Report</a></p>';
+                echo '<a class="button button-primary" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['report_index_url']) . '">View Report</a>';
             }
 
             if (!empty($scanSummary['workflow_url'])) {
-                echo '<p><a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['workflow_url']) . '">Open GitHub Run</a></p>';
+                echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['workflow_url']) . '">Open GitHub Run</a>';
             }
 
             if (!empty($scanSummary['reports_artifact_url'])) {
-                echo '<p><a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['reports_artifact_url']) . '">Download Report ZIP</a></p>';
+                echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['reports_artifact_url']) . '">Download Report ZIP</a>';
             }
+            echo '</div>';
 
             $evidenceText = $this->format_evidence_counts($scanSummary);
             if ($evidenceText !== '') {
@@ -455,7 +483,7 @@ class WPLG_Admin
         echo '</div>';
         echo '</div>';
 
-        echo '<div class="wplg-card">';
+        echo '<div class="wplg-card wplg-card-recent">';
         echo '<h2>Recent Scans</h2>';
         if (is_wp_error($scans)) {
             echo '<p>' . esc_html($scans->get_error_message()) . '</p>';
@@ -464,7 +492,8 @@ class WPLG_Admin
             if (empty($rows)) {
                 echo '<p>No scan history yet.</p>';
             } else {
-                echo '<table class="widefat striped">';
+                echo '<div class="wplg-table-wrap">';
+                echo '<table class="widefat striped wplg-table">';
                 echo '<thead><tr><th>Scan ID</th><th>Status</th><th>Mode</th><th>Issues</th><th>Report</th><th>Created</th></tr></thead><tbody>';
                 foreach ($rows as $row) {
                     $rowSummary = $this->extract_scan_summary($row);
@@ -472,7 +501,7 @@ class WPLG_Admin
                     $reportUrl = (string) ($rowSummary['report_index_url'] ?? ($rowSummary['workflow_url'] ?? ($rowSummary['reports_artifact_url'] ?? '')));
                     echo '<tr>';
                     echo '<td>' . esc_html((string) ($row['id'] ?? '')) . '</td>';
-                    echo '<td>' . esc_html((string) ($row['status'] ?? '')) . '</td>';
+                    echo '<td>' . $this->render_status_pill((string) ($row['status'] ?? '')) . '</td>';
                     echo '<td>' . esc_html((string) ($row['form_mode'] ?? '')) . '</td>';
                     echo '<td>' . esc_html($rowIssues !== null ? (string) $rowIssues : 'n/a') . '</td>';
                     if ($reportUrl !== '') {
@@ -484,6 +513,7 @@ class WPLG_Admin
                     echo '</tr>';
                 }
                 echo '</tbody></table>';
+                echo '</div>';
             }
         }
         echo '</div>';
@@ -1416,6 +1446,17 @@ class WPLG_Admin
         $lighthouseHtml = isset($evidence['lighthouse_html_count']) && is_numeric($evidence['lighthouse_html_count']) ? (int) $evidence['lighthouse_html_count'] : 0;
 
         return sprintf('screenshots: %d, lighthouse reports: %d', $screenshots, $lighthouseHtml);
+    }
+
+    private function render_status_pill(string $status): string
+    {
+        $value = sanitize_key($status);
+        if ($value === '') {
+            $value = 'unknown';
+        }
+
+        $class = 'wplg-status-pill status-' . sanitize_html_class($value);
+        return '<span class="' . esc_attr($class) . '">' . esc_html($status !== '' ? $status : 'unknown') . '</span>';
     }
 
     private function format_scan_options_summary(array $options): string
