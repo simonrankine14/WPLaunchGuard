@@ -452,6 +452,7 @@ function safeJsonForInlineScript(payload) {
 async function generate(clientName) {
   const packageRoot = path.join(__dirname, '..');
   const safeClientName = validateClientId(clientName);
+  const reportClientLabel = String(process.env.REPORT_CLIENT_LABEL || '').trim() || safeClientName;
   const runRoot = resolveRunRoot(process.env, packageRoot);
   const reportsDir = resolveClientReportsDir(runRoot, safeClientName);
   const issuesJsonPath = path.join(reportsDir, 'issues.json');
@@ -548,6 +549,7 @@ async function generate(clientName) {
 
   const data = {
     stats,
+    clientLabel: reportClientLabel,
     results: resultsWithLinks,
     issues: displayIssues,
     summary,
@@ -591,7 +593,7 @@ async function generate(clientName) {
     <meta http-equiv="Cache-Control" content="no-store" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>${safeHtml(TOOL_NAME)} - ${safeHtml(safeClientName)} Report</title>
+    <title>${safeHtml(TOOL_NAME)} - ${safeHtml(reportClientLabel)} Report</title>
     <style>
       :root{
         --bg: #f6f8fc;
@@ -1351,9 +1353,9 @@ async function generate(clientName) {
             data-audience-toggle="1"
             onclick="if (window.__wplgToggleAudience) { window.__wplgToggleAudience(); } return false;"
           >Switch to Developer View</button>
-          <a class="btn primary" href="../results.csv" download>Export CSV</a>
+          <a id="exportCsvBtn" class="btn primary" href="../results.csv" download>Export CSV</a>
           <a id="shareZipBtn" class="btn" href="#" download>Export Report</a>
-          <a class="btn" href="../QA_Report.xlsx" target="_blank" rel="noopener">Open Excel</a>
+          <a id="openExcelBtn" class="btn" href="../QA_Report.xlsx" target="_blank" rel="noopener">Open Excel</a>
           <a id="lighthouseBtn" class="btn" href="#" target="_blank" rel="noopener">Lighthouse</a>
         </div>
       </div>
@@ -1361,7 +1363,7 @@ async function generate(clientName) {
       <div class="pageHead">
         <h1>WP Launch QA Report</h1>
         <div class="sub">
-          <span class="pill">Client: ${safeHtml(safeClientName)}</span>
+          <span class="pill">Client: ${safeHtml(reportClientLabel)}</span>
           <span class="pill">Generated: ${safeHtml(stats.generatedAt || new Date().toISOString())}</span>
           <span class="pill">Total URLs: ${safeHtml(stats.totalUrls)}</span>
           <span class="pill">Total runs: ${safeHtml(stats.totalRuns)}</span>
@@ -1370,7 +1372,7 @@ async function generate(clientName) {
           <span class="pill ok">WordPress QA Mode Active</span>
         </div>
         <div class="topActions" style="margin-top:10px">
-          <a class="btn" href="#page-failures">Go to Page Failures</a>
+          <a id="goToPageFailuresBtn" class="btn" href="#page-failures">Go to Page Failures</a>
         </div>
       </div>
       <div id="runStateBanner" class="runStateBanner"></div>
@@ -1425,9 +1427,9 @@ async function generate(clientName) {
                   data-audience-toggle="1"
                   onclick="if (window.__wplgToggleAudience) { window.__wplgToggleAudience(); } return false;"
                 >Switch to Developer View</button>
-                <a class="btn primary" href="../results.csv" download>Export CSV</a>
+                <a id="exportCsvBtnSticky" class="btn primary" href="../results.csv" download>Export CSV</a>
                 <a id="shareZipBtnSticky" class="btn" href="#" download>Export Report</a>
-                <a class="btn" href="../QA_Report.xlsx" target="_blank" rel="noopener">Open Excel</a>
+                <a id="openExcelBtnSticky" class="btn" href="../QA_Report.xlsx" target="_blank" rel="noopener">Open Excel</a>
                 <a id="lighthouseBtnSticky" class="btn" href="#" target="_blank" rel="noopener">Lighthouse</a>
               </div>
             </div>
@@ -1496,6 +1498,7 @@ async function generate(clientName) {
       (function(){
         let data = {
           stats: {},
+          clientLabel: '',
           results: [],
           issues: [],
           summary: [],
@@ -1515,6 +1518,41 @@ async function generate(clientName) {
         } catch {
           // Keep resilient defaults.
         }
+        const reportToken = (() => {
+          try {
+            return String(new URLSearchParams(window.location.search).get('t') || '').trim();
+          } catch {
+            return '';
+          }
+        })();
+        const clientLabel = String(data.clientLabel || data.stats?.client || '').trim();
+        if (clientLabel) {
+          document.querySelectorAll('.pill').forEach((pill) => {
+            if (!pill.textContent || !pill.textContent.startsWith('Client: ')) return;
+            pill.textContent = 'Client: ' + clientLabel;
+          });
+        }
+
+        function withReportToken(urlValue) {
+          const href = String(urlValue || '').trim();
+          if (!href || !reportToken) return href;
+          if (href.startsWith('#')) return href;
+          if (/^(mailto:|tel:|javascript:|data:)/i.test(href)) return href;
+          if (/^https?:\/\//i.test(href)) return href;
+
+          const hashIndex = href.indexOf('#');
+          const hash = hashIndex >= 0 ? href.slice(hashIndex) : '';
+          const withoutHash = hashIndex >= 0 ? href.slice(0, hashIndex) : href;
+          const queryIndex = withoutHash.indexOf('?');
+          const basePath = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+          const query = queryIndex >= 0 ? withoutHash.slice(queryIndex + 1) : '';
+          const params = new URLSearchParams(query);
+          if (!params.has('t')) {
+            params.set('t', reportToken);
+          }
+          return basePath + '?' + params.toString() + hash;
+        }
+
         const issues = data.issues || [];
         const results = data.results || [];
         const stats = data.stats || {};
@@ -1574,7 +1612,7 @@ async function generate(clientName) {
           const btn = document.getElementById(id);
           if (!btn) return;
           if (firstLighthouse && firstLighthouse.lighthouseHtmlRel) {
-            btn.href = firstLighthouse.lighthouseHtmlRel;
+            btn.href = withReportToken(firstLighthouse.lighthouseHtmlRel);
             btn.textContent = 'Open Lighthouse';
             btn.classList.remove('disabled');
           } else {
@@ -1665,16 +1703,32 @@ async function generate(clientName) {
           });
         }
         tabButtons.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
-        const initialTab = ['overview','issues','pages','evidence','history'].includes(window.location.hash.replace('#',''))
-          ? window.location.hash.replace('#','')
+        const rawInitialHash = window.location.hash.replace('#','');
+        const initialTab = rawInitialHash === 'page-failures'
+          ? 'pages'
+          : ['overview','issues','pages','evidence','history'].includes(rawInitialHash)
+          ? rawInitialHash
           : 'overview';
         activateTab(initialTab);
+        const goToPageFailuresBtn = document.getElementById('goToPageFailuresBtn');
+        if (goToPageFailuresBtn) {
+          goToPageFailuresBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            activateTab('pages');
+            const target = document.getElementById('page-failures');
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        }
 
         function el(tag, attrs, children){
           const node = document.createElement(tag);
           if (attrs) Object.entries(attrs).forEach(([k,v]) => {
             if (k === 'class') node.className = v;
             else if (k === 'html') node.innerHTML = v;
+            else if (k === 'href') node.setAttribute(k, withReportToken(v));
+            else if (k === 'src') node.setAttribute(k, withReportToken(v));
             else node.setAttribute(k, v);
           });
           (children || []).forEach(child => {
@@ -3010,9 +3064,23 @@ async function generate(clientName) {
               btn.addEventListener('click', (e) => e.preventDefault());
               return;
             }
-            btn.setAttribute('href', href);
+            btn.setAttribute('href', withReportToken(href));
             btn.setAttribute('download', '');
             btn.textContent = 'Export Report (zip)';
+          });
+        }
+
+        function wireStaticAssetButtons() {
+          const targets = [
+            ['exportCsvBtn', '../results.csv'],
+            ['exportCsvBtnSticky', '../results.csv'],
+            ['openExcelBtn', '../QA_Report.xlsx'],
+            ['openExcelBtnSticky', '../QA_Report.xlsx']
+          ];
+          targets.forEach(([id, href]) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.setAttribute('href', withReportToken(href));
           });
         }
 
@@ -3092,6 +3160,7 @@ async function generate(clientName) {
         }
 
         render();
+        wireStaticAssetButtons();
         wireShareButtons();
       })();
     </script>

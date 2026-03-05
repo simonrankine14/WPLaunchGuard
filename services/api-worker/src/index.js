@@ -208,9 +208,44 @@ function isTerminalScanStatus(status) {
   return ['completed', 'failed', 'cancelled'].includes(status);
 }
 
-function buildClientName(scanId) {
-  const compact = String(scanId || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
-  return `scan${compact.slice(0, 12) || 'run'}`;
+function slugifyClientId(value, fallback = 'site') {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return normalized || fallback;
+}
+
+function deriveClientSlugFromSite(site) {
+  const siteIdSuffix = String(site?.id || '')
+    .replace(/[^a-z0-9]/gi, '')
+    .toLowerCase()
+    .slice(0, 8);
+  const fallbackBase = siteIdSuffix ? `site-${siteIdSuffix}` : 'site';
+
+  try {
+    const siteUrl = String(site?.site_url || '').trim();
+    if (!siteUrl) return fallbackBase;
+    const hostname = new URL(siteUrl).hostname.replace(/^www\./i, '');
+    const hostSlug = slugifyClientId(hostname, fallbackBase);
+    return siteIdSuffix ? `${hostSlug}-${siteIdSuffix}`.slice(0, 64) : hostSlug.slice(0, 64);
+  } catch {
+    return fallbackBase;
+  }
+}
+
+function deriveClientLabel(site, tenantName = '') {
+  const tenantLabel = String(tenantName || '').trim();
+  if (tenantLabel) return tenantLabel;
+  const siteUrl = String(site?.site_url || '').trim();
+  if (!siteUrl) return 'Site';
+  try {
+    const parsed = new URL(siteUrl);
+    return parsed.origin;
+  } catch {
+    return siteUrl;
+  }
 }
 
 function mapProfileToQaProfile(scanProfile) {
@@ -575,6 +610,11 @@ function buildPlansPayload(env, plans) {
 
 async function getSiteById(env, siteId) {
   return env.DB.prepare('SELECT * FROM sites WHERE id = ?').bind(siteId).first();
+}
+
+async function getTenantById(env, tenantId) {
+  if (!tenantId) return null;
+  return env.DB.prepare('SELECT * FROM tenants WHERE id = ?').bind(tenantId).first();
 }
 
 async function authorizeSiteRequest(request, env, siteId) {
@@ -1343,17 +1383,23 @@ async function dispatchScanToGitHub(env, scan, site) {
   const callbackPath = '/v1/internal/scan-callback';
   const callbackUrl = config.publicApiBase ? `${config.publicApiBase.replace(/\/+$/, '')}${callbackPath}` : '';
   const scanOptions = normalizeScanOptions(safeParseJson(scan.options_json), DEFAULT_SCAN_OPTIONS);
-  const targetUrl = normalizeTargetUrl(scan.target_url) || normalizeTargetUrl(site.site_url);
+  const scanTargetUrl = normalizeTargetUrl(scan.target_url);
+  const siteUrl = normalizeTargetUrl(site.site_url);
+  const tenant = await getTenantById(env, site.tenant_id);
+  const clientName = deriveClientSlugFromSite(site);
+  const clientLabel = deriveClientLabel(site, tenant?.name || '');
 
   const payload = {
     ref: config.ref,
     inputs: {
       scan_id: String(scan.id),
       site_id: String(scan.site_id || ''),
-      client_name: buildClientName(scan.id),
+      client_name: clientName,
+      client_label: clientLabel,
       profile: mapProfileToQaProfile(scan.profile),
-      single_url: targetUrl || String(site.site_url || ''),
-      target_url: targetUrl,
+      single_url: scanTargetUrl || '',
+      site_url: siteUrl,
+      target_url: scanTargetUrl,
       sitemap_url: String(scan.sitemap_url || ''),
       form_mode: String(scan.form_mode || 'dry-run'),
       evidence_enabled: formatWorkflowBooleanInput(scanOptions.evidence_enabled),
@@ -1388,9 +1434,11 @@ async function dispatchScanToGitHub(env, scan, site) {
     repository: `${config.owner}/${config.repo}`,
     workflow: config.workflow,
     ref: config.ref,
-    client_name: payload.inputs.client_name,
+    client_name: clientName,
+    client_label: clientLabel,
     profile: payload.inputs.profile,
-    target_url: payload.inputs.target_url,
+    site_url: payload.inputs.site_url,
+    target_url: scanTargetUrl,
     scan_options: scanOptions,
     callback_url: callbackUrl
   };

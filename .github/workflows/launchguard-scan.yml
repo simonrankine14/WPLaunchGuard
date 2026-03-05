@@ -12,9 +12,19 @@ on:
         required: false
         default: ""
         type: string
+      site_url:
+        description: "Base site URL for crawl/discovery context"
+        required: false
+        default: ""
+        type: string
       client_name:
         description: "Client slug used for report folder names"
         required: true
+        type: string
+      client_label:
+        description: "Human-readable site/client label for report header"
+        required: false
+        default: ""
         type: string
       profile:
         description: "QA profile"
@@ -116,6 +126,34 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Restore previous history snapshot from Cloudflare R2
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          REPORTS_R2_BUCKET: launchguard-reports-dev
+        run: |
+          set +e
+          HISTORY_DIR="reports/.history/${{ inputs.client_name }}"
+          HISTORY_FILE="${HISTORY_DIR}/issues.previous.json"
+          HISTORY_KEY="history/${{ inputs.client_name }}/issues.previous.json"
+          mkdir -p "$HISTORY_DIR"
+
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "History restore skipped: missing Cloudflare secrets."
+            exit 0
+          fi
+
+          if npx wrangler r2 object get "${REPORTS_R2_BUCKET}/${HISTORY_KEY}" \
+            --file "$HISTORY_FILE" \
+            --remote \
+            --config services/api-worker/wrangler.toml >/dev/null 2>&1; then
+            echo "Restored history snapshot: ${HISTORY_KEY}"
+          else
+            rm -f "$HISTORY_FILE"
+            echo "No previous history snapshot found."
+          fi
+
       - name: Run QA
         id: run_qa
         shell: bash
@@ -194,6 +232,11 @@ jobs:
           if [[ -z "$TARGET_SINGLE" ]]; then
             TARGET_SINGLE="${{ inputs.single_url }}"
           fi
+          REST_BASE_INPUT="${{ inputs.site_url }}"
+          CLIENT_LABEL_INPUT="${{ inputs.client_label }}"
+          if [[ -z "$CLIENT_LABEL_INPUT" ]]; then
+            CLIENT_LABEL_INPUT="$REST_BASE_INPUT"
+          fi
 
           echo "selected_projects=$PROJECTS_CSV" >> "$GITHUB_OUTPUT"
           echo "effective_target_url=$TARGET_SINGLE" >> "$GITHUB_OUTPUT"
@@ -216,6 +259,12 @@ jobs:
           export SCREENSHOTS_MODE="$SCREENSHOTS_MODE"
           export SCREENSHOTS_LIMIT=4
           export SKIP_LIGHTHOUSE="$SKIP_LIGHTHOUSE_FLAG"
+          if [[ -n "$REST_BASE_INPUT" ]]; then
+            export REST_BASE="$REST_BASE_INPUT"
+          fi
+          if [[ -n "$CLIENT_LABEL_INPUT" ]]; then
+            export REPORT_CLIENT_LABEL="$CLIENT_LABEL_INPUT"
+          fi
 
           echo "Running command: ${CMD[*]}"
           "${CMD[@]}"
@@ -269,7 +318,7 @@ jobs:
           while IFS= read -r -d '' file; do FILES+=("$file"); done < <(find "$REPORT_DIR/qa_html" -type f -print0 2>/dev/null)
           while IFS= read -r -d '' file; do FILES+=("$file"); done < <(find "$REPORT_DIR/screenshots" -type f -name '*.png' -print0 2>/dev/null)
           while IFS= read -r -d '' file; do FILES+=("$file"); done < <(find "$REPORT_DIR/lighthouse" -type f -print0 2>/dev/null)
-          for file in issues.json run_meta.json site_summary.csv url_summary.csv QA_Report.xlsx; do
+          for file in issues.json run_meta.json site_summary.csv url_summary.csv results.csv issues.tsv QA_Report.xlsx "share-${{ inputs.client_name }}-latest.zip"; do
             if [[ -f "$REPORT_DIR/$file" ]]; then
               FILES+=("$REPORT_DIR/$file")
             fi
@@ -300,6 +349,19 @@ jobs:
           fi
 
           echo "report_prefix=$REPORT_PREFIX" >> "$GITHUB_OUTPUT"
+
+          HISTORY_FILE="reports/.history/${{ inputs.client_name }}/issues.previous.json"
+          HISTORY_KEY="history/${{ inputs.client_name }}/issues.previous.json"
+          if [[ -f "$HISTORY_FILE" ]]; then
+            if npx wrangler r2 object put "${REPORTS_R2_BUCKET}/${HISTORY_KEY}" \
+              --file "$HISTORY_FILE" \
+              --remote \
+              --config services/api-worker/wrangler.toml >/dev/null; then
+              echo "Updated history snapshot: ${HISTORY_KEY}"
+            else
+              echo "History snapshot upload failed."
+            fi
+          fi
 
       - name: Upload reports
         if: always()
@@ -369,7 +431,9 @@ jobs:
             --arg workflow_attempt "${{ github.run_attempt }}" \
             --arg qa_exit_code "$EXIT_CODE" \
             --arg client_name "${{ inputs.client_name }}" \
+            --arg client_label "${{ inputs.client_label }}" \
             --arg site_id "${{ inputs.site_id }}" \
+            --arg site_url "${{ inputs.site_url }}" \
             --arg artifact_name "$ARTIFACT_NAME" \
             --arg artifact_url "$ARTIFACT_URL" \
             --arg report_r2_prefix "${{ steps.upload_r2.outputs.report_prefix }}" \
@@ -390,7 +454,9 @@ jobs:
                 workflow_attempt: $workflow_attempt,
                 qa_exit_code: $qa_exit_code,
                 client_name: $client_name,
+                client_label: $client_label,
                 site_id: $site_id,
+                site_url: $site_url,
                 target_url: $target_url,
                 scan_options: {
                   evidence_enabled: ($evidence_enabled == "true"),
