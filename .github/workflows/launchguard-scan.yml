@@ -29,6 +29,11 @@ on:
         required: false
         default: ""
         type: string
+      target_url:
+        description: "Explicit target URL for page-level scans"
+        required: false
+        default: ""
+        type: string
       sitemap_url:
         description: "Optional sitemap URL"
         required: false
@@ -42,6 +47,47 @@ on:
         options:
           - dry-run
           - live
+      evidence_enabled:
+        description: "Capture screenshots for issue evidence"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      lighthouse_enabled:
+        description: "Run Lighthouse audits"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      quick_scan_enabled:
+        description: "Use reduced project set for faster scans"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      responsive_enabled:
+        description: "Include mobile/tablet projects"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      viewport_preset:
+        description: "Device classes to test"
+        required: false
+        default: "desktop"
+        type: choice
+        options:
+          - desktop
+          - mobile
+          - both
       callback_url:
         description: "Callback URL (optional override)"
         required: false
@@ -73,20 +119,104 @@ jobs:
       - name: Run QA
         id: run_qa
         shell: bash
-        env:
-          QA_PROFILE: ${{ inputs.profile }}
-          FORM_SUBMIT_MODE: ${{ inputs.form_mode }}
-          SCREENSHOTS_MODE: issues
-          SCREENSHOTS_LIMIT: 4
         run: |
           set +e
-          CMD=(npm run qa -- "${{ inputs.client_name }}" --projects=chrome-desktop-1920,windows-laptop-1272)
-          if [[ -n "${{ inputs.single_url }}" ]]; then
-            CMD+=("--single=${{ inputs.single_url }}")
+          normalize_bool() {
+            local value
+            value=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]' | xargs)
+            case "$value" in
+              1|true|yes|on) echo "true" ;;
+              *) echo "false" ;;
+            esac
+          }
+
+          EVIDENCE_ENABLED=$(normalize_bool "${{ inputs.evidence_enabled }}")
+          LIGHTHOUSE_ENABLED=$(normalize_bool "${{ inputs.lighthouse_enabled }}")
+          QUICK_ENABLED=$(normalize_bool "${{ inputs.quick_scan_enabled }}")
+          RESPONSIVE_ENABLED=$(normalize_bool "${{ inputs.responsive_enabled }}")
+          VIEWPORT_PRESET=$(echo "${{ inputs.viewport_preset }}" | tr '[:upper:]' '[:lower:]' | xargs)
+          case "$VIEWPORT_PRESET" in
+            desktop|mobile|both) ;;
+            *) VIEWPORT_PRESET="desktop" ;;
+          esac
+          if [[ "$RESPONSIVE_ENABLED" != "true" ]]; then
+            VIEWPORT_PRESET="desktop"
+          fi
+
+          SCREENSHOTS_MODE="issues"
+          if [[ "$EVIDENCE_ENABLED" != "true" ]]; then
+            SCREENSHOTS_MODE="off"
+          fi
+
+          SKIP_LIGHTHOUSE_FLAG="false"
+          if [[ "$LIGHTHOUSE_ENABLED" != "true" ]]; then
+            SKIP_LIGHTHOUSE_FLAG="true"
+          fi
+
+          DESKTOP_PROJECTS=(chrome-desktop-1920 windows-laptop-1272)
+          MOBILE_PROJECTS=(iphone-14 ipad)
+          PROJECTS=()
+
+          append_project_set() {
+            local class_name="$1"
+            if [[ "$class_name" == "desktop" ]]; then
+              if [[ "$QUICK_ENABLED" == "true" ]]; then
+                PROJECTS+=("${DESKTOP_PROJECTS[0]}")
+              else
+                PROJECTS+=("${DESKTOP_PROJECTS[@]}")
+              fi
+              return
+            fi
+            if [[ "$class_name" == "mobile" ]]; then
+              if [[ "$QUICK_ENABLED" == "true" ]]; then
+                PROJECTS+=("${MOBILE_PROJECTS[0]}")
+              else
+                PROJECTS+=("${MOBILE_PROJECTS[@]}")
+              fi
+            fi
+          }
+
+          if [[ "$VIEWPORT_PRESET" == "mobile" ]]; then
+            append_project_set "mobile"
+          elif [[ "$VIEWPORT_PRESET" == "both" ]]; then
+            append_project_set "desktop"
+            append_project_set "mobile"
+          else
+            append_project_set "desktop"
+          fi
+
+          if [[ "${#PROJECTS[@]}" -eq 0 ]]; then
+            PROJECTS=("${DESKTOP_PROJECTS[@]}")
+          fi
+
+          PROJECTS_CSV=$(IFS=,; echo "${PROJECTS[*]}")
+          TARGET_SINGLE="${{ inputs.target_url }}"
+          if [[ -z "$TARGET_SINGLE" ]]; then
+            TARGET_SINGLE="${{ inputs.single_url }}"
+          fi
+
+          echo "selected_projects=$PROJECTS_CSV" >> "$GITHUB_OUTPUT"
+          echo "effective_target_url=$TARGET_SINGLE" >> "$GITHUB_OUTPUT"
+          echo "effective_evidence_enabled=$EVIDENCE_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "effective_lighthouse_enabled=$LIGHTHOUSE_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "effective_quick_scan_enabled=$QUICK_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "effective_responsive_enabled=$RESPONSIVE_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "effective_viewport_preset=$VIEWPORT_PRESET" >> "$GITHUB_OUTPUT"
+
+          CMD=(npm run qa -- "${{ inputs.client_name }}" "--projects=${PROJECTS_CSV}")
+          if [[ -n "$TARGET_SINGLE" ]]; then
+            CMD+=("--single=$TARGET_SINGLE")
           fi
           if [[ -n "${{ inputs.sitemap_url }}" ]]; then
             CMD+=("--sitemap=${{ inputs.sitemap_url }}")
           fi
+
+          export QA_PROFILE="${{ inputs.profile }}"
+          export FORM_SUBMIT_MODE="${{ inputs.form_mode }}"
+          export SCREENSHOTS_MODE="$SCREENSHOTS_MODE"
+          export SCREENSHOTS_LIMIT=4
+          export SKIP_LIGHTHOUSE="$SKIP_LIGHTHOUSE_FLAG"
+
           echo "Running command: ${CMD[*]}"
           "${CMD[@]}"
           EXIT_CODE=$?
@@ -243,6 +373,13 @@ jobs:
             --arg artifact_name "$ARTIFACT_NAME" \
             --arg artifact_url "$ARTIFACT_URL" \
             --arg report_r2_prefix "${{ steps.upload_r2.outputs.report_prefix }}" \
+            --arg target_url "${{ steps.run_qa.outputs.effective_target_url }}" \
+            --arg selected_projects "${{ steps.run_qa.outputs.selected_projects }}" \
+            --arg evidence_enabled "${{ steps.run_qa.outputs.effective_evidence_enabled }}" \
+            --arg lighthouse_enabled "${{ steps.run_qa.outputs.effective_lighthouse_enabled }}" \
+            --arg quick_scan_enabled "${{ steps.run_qa.outputs.effective_quick_scan_enabled }}" \
+            --arg responsive_enabled "${{ steps.run_qa.outputs.effective_responsive_enabled }}" \
+            --arg viewport_preset "${{ steps.run_qa.outputs.effective_viewport_preset }}" \
             --argjson report_summary "$SUMMARY_JSON" \
             '{
               scan_id: $scan_id,
@@ -254,6 +391,15 @@ jobs:
                 qa_exit_code: $qa_exit_code,
                 client_name: $client_name,
                 site_id: $site_id,
+                target_url: $target_url,
+                scan_options: {
+                  evidence_enabled: ($evidence_enabled == "true"),
+                  lighthouse_enabled: ($lighthouse_enabled == "true"),
+                  quick_scan_enabled: ($quick_scan_enabled == "true"),
+                  responsive_enabled: ($responsive_enabled == "true"),
+                  viewport_preset: $viewport_preset,
+                  selected_projects: (if $selected_projects == "" then [] else ($selected_projects | split(",")) end)
+                },
                 reports_artifact_name: $artifact_name,
                 reports_artifact_url: $artifact_url,
                 report_r2_prefix: $report_r2_prefix

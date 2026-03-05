@@ -63,3 +63,60 @@
   background: linear-gradient(90deg, #2f86c3, #34b3a0);
   transition: width 0.3s ease;
 }
+
+.wplg-scan-section {
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  background: #fafafa;
+}
+
+.wplg-scan-section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.wplg-field {
+  margin: 10px 0;
+}
+
+.wplg-toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wplg-help-tip {
+  color: #3858e9;
+  cursor: help;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+.wplg-summary-line {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0f6fc;
+  border: 1px solid #c6def6;
+}
+
+.wplg-metabox-options {
+  margin-top: 10px;
+}
+
+.wplg-metabox-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.wplg-break-word {
+  overflow-wrap: anywhere;
+}
+
+.is-hidden {
+  display: none;
+}

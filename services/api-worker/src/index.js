@@ -155,6 +155,15 @@ function hasOwnProperty(target, key) {
   return Object.prototype.hasOwnProperty.call(target, key);
 }
 
+function isMissingScanOptionColumnError(error) {
+  const message = String(error && error.message ? error.message : error).toLowerCase();
+  return message.includes('no such column') && (
+    message.includes('target_url') ||
+    message.includes('options_json') ||
+    message.includes('source_context_json')
+  );
+}
+
 function getConfiguredAdminToken(env) {
   return String(env.API_ADMIN_TOKEN || '').trim();
 }
@@ -207,6 +216,88 @@ function buildClientName(scanId) {
 function mapProfileToQaProfile(scanProfile) {
   const value = String(scanProfile || '').toLowerCase();
   return value === 'engineering-deep' ? 'engineering-deep' : 'client-safe';
+}
+
+const DEFAULT_SCAN_OPTIONS = Object.freeze({
+  evidence_enabled: true,
+  lighthouse_enabled: true,
+  quick_scan_enabled: false,
+  responsive_enabled: false,
+  viewport_preset: 'desktop'
+});
+
+function normalizeBooleanFlag(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return fallback;
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
+function normalizeViewportPreset(value, fallback = 'desktop') {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ['desktop', 'mobile', 'both'].includes(normalized) ? normalized : fallback;
+}
+
+function normalizeScanOptions(rawOptions, fallbackOptions = DEFAULT_SCAN_OPTIONS) {
+  const source = rawOptions && typeof rawOptions === 'object' && !Array.isArray(rawOptions) ? rawOptions : {};
+  const fallback = fallbackOptions && typeof fallbackOptions === 'object' ? fallbackOptions : DEFAULT_SCAN_OPTIONS;
+
+  const normalized = {
+    evidence_enabled: normalizeBooleanFlag(source.evidence_enabled, normalizeBooleanFlag(fallback.evidence_enabled, true)),
+    lighthouse_enabled: normalizeBooleanFlag(source.lighthouse_enabled, normalizeBooleanFlag(fallback.lighthouse_enabled, true)),
+    quick_scan_enabled: normalizeBooleanFlag(source.quick_scan_enabled, normalizeBooleanFlag(fallback.quick_scan_enabled, false)),
+    responsive_enabled: normalizeBooleanFlag(source.responsive_enabled, normalizeBooleanFlag(fallback.responsive_enabled, false)),
+    viewport_preset: normalizeViewportPreset(source.viewport_preset, normalizeViewportPreset(fallback.viewport_preset, 'desktop'))
+  };
+
+  if (!normalized.responsive_enabled) {
+    normalized.viewport_preset = 'desktop';
+  }
+
+  return normalized;
+}
+
+function normalizeTargetUrl(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return '';
+  try {
+    const url = new URL(trimmed);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    return url.toString();
+  } catch {
+    return '';
+  }
+}
+
+function normalizeSourceContext(rawSourceContext) {
+  if (!rawSourceContext || typeof rawSourceContext !== 'object' || Array.isArray(rawSourceContext)) {
+    return null;
+  }
+
+  const source = ['dashboard', 'metabox'].includes(String(rawSourceContext.source || '').trim().toLowerCase())
+    ? String(rawSourceContext.source).trim().toLowerCase()
+    : '';
+  const postId = Number(rawSourceContext.post_id || 0);
+  const postType = String(rawSourceContext.post_type || '').trim().toLowerCase();
+
+  const normalized = {
+    source,
+    post_id: Number.isFinite(postId) && postId > 0 ? Math.floor(postId) : null,
+    post_type: postType || null
+  };
+
+  if (!normalized.source && !normalized.post_id && !normalized.post_type) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function formatWorkflowBooleanInput(value) {
+  return normalizeBooleanFlag(value, false) ? 'true' : 'false';
 }
 
 function getGitHubDispatchConfig(env) {
@@ -267,8 +358,14 @@ function deriveIssueTotalsFromSummary(summary) {
 
 function enrichScanRow(row) {
   const summary = parseSummaryObject(row.summary_json);
+  const scanOptions = normalizeScanOptions(safeParseJson(row.options_json), DEFAULT_SCAN_OPTIONS);
+  const sourceContext = normalizeSourceContext(safeParseJson(row.source_context_json));
+  const targetUrl = normalizeTargetUrl(row.target_url);
   return {
     ...row,
+    target_url: targetUrl,
+    scan_options: scanOptions,
+    source_context: sourceContext,
     summary
   };
 }
@@ -626,6 +723,14 @@ async function createScan(request, env) {
   const formMode = ['dry-run', 'live'].includes(String(body.form_mode || '').toLowerCase())
     ? String(body.form_mode).toLowerCase()
     : 'dry-run';
+  const hasTargetUrl = hasOwnProperty(body, 'target_url');
+  const targetUrl = normalizeTargetUrl(body.target_url);
+  if (hasTargetUrl && String(body.target_url || '').trim() && !targetUrl) {
+    return badRequest('target_url must be a valid http(s) URL');
+  }
+  const hasScanOptions = hasOwnProperty(body, 'scan_options');
+  const scanOptions = normalizeScanOptions(hasScanOptions ? body.scan_options : null, DEFAULT_SCAN_OPTIONS);
+  const sourceContext = normalizeSourceContext(body.source_context);
 
   const scanId = crypto.randomUUID();
   const createdAt = nowIso();
@@ -636,27 +741,58 @@ async function createScan(request, env) {
     form_mode: formMode,
     trigger: body.trigger || 'manual',
     sitemap_url: body.sitemap_url || '',
+    target_url: targetUrl,
+    scan_options: scanOptions,
+    source_context: sourceContext,
     created_at: createdAt
   };
 
-  await env.DB.prepare(
-    [
-      'INSERT INTO scans (id, site_id, status, profile, form_mode, trigger_type, sitemap_url, created_at, updated_at)',
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ].join(' ')
-  )
-    .bind(
-      payload.scan_id,
-      payload.site_id,
-      'queued',
-      payload.profile,
-      payload.form_mode,
-      payload.trigger,
-      payload.sitemap_url,
-      createdAt,
-      createdAt
+  try {
+    await env.DB.prepare(
+      [
+        'INSERT INTO scans (id, site_id, status, profile, form_mode, trigger_type, sitemap_url, target_url, options_json, source_context_json, created_at, updated_at)',
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ].join(' ')
     )
-    .run();
+      .bind(
+        payload.scan_id,
+        payload.site_id,
+        'queued',
+        payload.profile,
+        payload.form_mode,
+        payload.trigger,
+        payload.sitemap_url,
+        payload.target_url || null,
+        hasScanOptions ? JSON.stringify(scanOptions) : null,
+        sourceContext ? JSON.stringify(sourceContext) : null,
+        createdAt,
+        createdAt
+      )
+      .run();
+  } catch (error) {
+    if (!isMissingScanOptionColumnError(error)) {
+      throw error;
+    }
+
+    await env.DB.prepare(
+      [
+        'INSERT INTO scans (id, site_id, status, profile, form_mode, trigger_type, sitemap_url, created_at, updated_at)',
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ].join(' ')
+    )
+      .bind(
+        payload.scan_id,
+        payload.site_id,
+        'queued',
+        payload.profile,
+        payload.form_mode,
+        payload.trigger,
+        payload.sitemap_url,
+        createdAt,
+        createdAt
+      )
+      .run();
+  }
 
   await incrementUsageForSite(env, payload.site_id, createdAt);
 
@@ -668,7 +804,10 @@ async function createScan(request, env) {
     {
       scan_id: scanId,
       status: env.SCAN_QUEUE ? 'queued' : 'queued_local',
-      created_at: createdAt
+      created_at: createdAt,
+      target_url: payload.target_url || '',
+      scan_options: scanOptions,
+      source_context: sourceContext
     },
     202
   );
@@ -708,14 +847,30 @@ async function listSiteScans(request, env, siteId, limitValue) {
   }
 
   const limit = Math.max(1, Math.min(50, Number(limitValue || 10) || 10));
-  const result = await env.DB.prepare(
-    [
-      'SELECT id, site_id, status, profile, form_mode, trigger_type, created_at, updated_at, completed_at, summary_json',
-      'FROM scans WHERE site_id = ? ORDER BY created_at DESC LIMIT ?'
-    ].join(' ')
-  )
-    .bind(siteId, limit)
-    .all();
+  let result;
+  try {
+    result = await env.DB.prepare(
+      [
+        'SELECT id, site_id, status, profile, form_mode, trigger_type, sitemap_url, target_url, options_json, source_context_json, created_at, updated_at, completed_at, summary_json',
+        'FROM scans WHERE site_id = ? ORDER BY created_at DESC LIMIT ?'
+      ].join(' ')
+    )
+      .bind(siteId, limit)
+      .all();
+  } catch (error) {
+    if (!isMissingScanOptionColumnError(error)) {
+      throw error;
+    }
+
+    result = await env.DB.prepare(
+      [
+        'SELECT id, site_id, status, profile, form_mode, trigger_type, sitemap_url, created_at, updated_at, completed_at, summary_json',
+        'FROM scans WHERE site_id = ? ORDER BY created_at DESC LIMIT ?'
+      ].join(' ')
+    )
+      .bind(siteId, limit)
+      .all();
+  }
 
   const scans = (result.results || []).map(enrichScanRow);
   return json({ scans });
@@ -1187,6 +1342,8 @@ async function dispatchScanToGitHub(env, scan, site) {
 
   const callbackPath = '/v1/internal/scan-callback';
   const callbackUrl = config.publicApiBase ? `${config.publicApiBase.replace(/\/+$/, '')}${callbackPath}` : '';
+  const scanOptions = normalizeScanOptions(safeParseJson(scan.options_json), DEFAULT_SCAN_OPTIONS);
+  const targetUrl = normalizeTargetUrl(scan.target_url) || normalizeTargetUrl(site.site_url);
 
   const payload = {
     ref: config.ref,
@@ -1195,9 +1352,15 @@ async function dispatchScanToGitHub(env, scan, site) {
       site_id: String(scan.site_id || ''),
       client_name: buildClientName(scan.id),
       profile: mapProfileToQaProfile(scan.profile),
-      single_url: String(site.site_url || ''),
+      single_url: targetUrl || String(site.site_url || ''),
+      target_url: targetUrl,
       sitemap_url: String(scan.sitemap_url || ''),
       form_mode: String(scan.form_mode || 'dry-run'),
+      evidence_enabled: formatWorkflowBooleanInput(scanOptions.evidence_enabled),
+      lighthouse_enabled: formatWorkflowBooleanInput(scanOptions.lighthouse_enabled),
+      quick_scan_enabled: formatWorkflowBooleanInput(scanOptions.quick_scan_enabled),
+      responsive_enabled: formatWorkflowBooleanInput(scanOptions.responsive_enabled),
+      viewport_preset: normalizeViewportPreset(scanOptions.viewport_preset, 'desktop'),
       callback_url: callbackUrl
     }
   };
@@ -1227,6 +1390,8 @@ async function dispatchScanToGitHub(env, scan, site) {
     ref: config.ref,
     client_name: payload.inputs.client_name,
     profile: payload.inputs.profile,
+    target_url: payload.inputs.target_url,
+    scan_options: scanOptions,
     callback_url: callbackUrl
   };
 }
