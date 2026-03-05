@@ -124,7 +124,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium webkit
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Restore previous history snapshot from Cloudflare R2
         shell: bash
