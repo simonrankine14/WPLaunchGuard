@@ -418,7 +418,7 @@ function parseIsoToMs(value) {
 function getStalledTimeoutSeconds(env) {
   const configured = Number(env?.SCAN_STALLED_TIMEOUT_SECONDS || 0);
   if (!Number.isFinite(configured) || configured <= 0) {
-    return 600;
+    return 3600;
   }
   return Math.max(180, Math.round(configured));
 }
@@ -2225,7 +2225,8 @@ async function handleScanCallback(request, env) {
   const existingStatus = normalizeScanStatus(existing.status, 'queued');
   const summaryPatch = body.summary && typeof body.summary === 'object' ? body.summary : {};
 
-  if (isTerminalScanStatus(existingStatus) && status !== existingStatus) {
+  const allowStalledRecovery = existingStatus === 'stalled' && status !== 'stalled';
+  if (isTerminalScanStatus(existingStatus) && status !== existingStatus && !allowStalledRecovery) {
     const ignoredSummary = ensureSummaryContract(
       mergeSummary(existing.summary_json, {
         callback_received_at: nowIso(),

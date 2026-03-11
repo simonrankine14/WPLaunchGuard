@@ -9,6 +9,7 @@ account_id = "d47b0f5d3b937b9cd0ed40902be8c44c"
 [vars]
 APP_ENV = "dev"
 DEFAULT_PLAN = "starter"
+SCAN_STALLED_TIMEOUT_SECONDS = "3600"
 PUBLIC_API_BASE = "https://baseline-api.simonrankine4.workers.dev"
 GITHUB_OWNER = "WpBaselineApp"
 GITHUB_REPO = "WPLaunchGuard"
