@@ -555,7 +555,9 @@ function getGitHubDispatchConfig(env) {
   const repo = String(env.GITHUB_REPO || '').trim();
   const workflow = String(env.GITHUB_WORKFLOW_FILE || 'baseline-scan.yml').trim();
   const ref = String(env.GITHUB_REF || 'main').trim();
-  const token = String(env.GITHUB_DISPATCH_TOKEN || '').trim();
+  // Backward compatibility: allow both the dedicated dispatch token
+  // and legacy generic token naming to avoid hard failures on misnamed secrets.
+  const token = String(env.GITHUB_DISPATCH_TOKEN || env.GITHUB_TOKEN || '').trim();
   const publicApiBase = String(env.PUBLIC_API_BASE || '').trim();
 
   return { owner, repo, workflow, ref, token, publicApiBase };
