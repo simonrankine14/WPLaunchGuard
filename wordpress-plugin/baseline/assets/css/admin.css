@@ -113,6 +113,18 @@
     "latest";
 }
 
+.baseline-scan-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 18px 0;
+}
+
+.baseline-scan-page .baseline-scan-stack .baseline-card-scan-setup,
+.baseline-scan-page .baseline-scan-stack .baseline-card-latest {
+  width: 100%;
+}
+
 .baseline-card {
   background: linear-gradient(180deg, var(--baseline-surface) 0%, var(--baseline-surface-soft) 100%);
   border: 1px solid var(--baseline-border);

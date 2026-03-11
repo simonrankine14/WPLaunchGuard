@@ -523,7 +523,7 @@ class Baseline_Admin
         $shouldAutoOpenModal = $modalScanId !== '' && ($forceOpenModal || $noticeStatus === 'success' || $this->is_scan_in_progress($latestStatus));
         $lastCompletedReportUrl = $this->find_last_completed_report_url($scans);
 
-        echo '<div class="baseline-grid">';
+        echo '<div class="baseline-scan-stack">';
         $this->render_scan_setup_card($scanDefaults);
         $this->render_latest_scan_card($lastScan, $latestScanRow, $lastCompletedReportUrl);
         echo '</div>';
