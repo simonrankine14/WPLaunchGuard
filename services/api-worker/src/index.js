@@ -557,7 +557,13 @@ function getGitHubDispatchConfig(env) {
   const ref = String(env.GITHUB_REF || 'main').trim();
   // Backward compatibility: allow both the dedicated dispatch token
   // and legacy generic token naming to avoid hard failures on misnamed secrets.
-  const token = String(env.GITHUB_DISPATCH_TOKEN || env.GITHUB_TOKEN || '').trim();
+  const token = String(
+    env.GITHUB_DISPATCH_TOKEN ||
+    env.GITHUB_TOKEN ||
+    env.GITHUB_DISPATCH_FALLBACK ||
+    env.GH_DISPATCH_KEY ||
+    ''
+  ).trim();
   const publicApiBase = String(env.PUBLIC_API_BASE || '').trim();
 
   return { owner, repo, workflow, ref, token, publicApiBase };
