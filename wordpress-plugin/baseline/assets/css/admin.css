@@ -107,8 +107,10 @@
 }
 
 .baseline-scan-page .baseline-grid {
-  grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.45fr);
-  grid-template-areas: "setup latest";
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "setup"
+    "latest";
 }
 
 .baseline-card {
