@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 class Baseline_Admin
 {
     private const DEFAULT_API_BASE = 'https://baseline-api.simonrankine4.workers.dev';
+    private const LEGACY_API_BASE = 'https://launchguard-api.simonrankine4.workers.dev';
     private const OPTION_API_BASE = 'baseline_api_base_url';
     private const OPTION_SITE_TOKEN = 'baseline_site_token';
     private const OPTION_SITE_ID = 'baseline_site_id';
@@ -99,7 +100,7 @@ class Baseline_Admin
     {
         register_setting('baseline_settings_group', self::OPTION_API_BASE, [
             'type' => 'string',
-            'sanitize_callback' => 'esc_url_raw',
+            'sanitize_callback' => [$this, 'sanitize_api_base_setting'],
             'default' => self::DEFAULT_API_BASE
         ]);
 
@@ -143,6 +144,18 @@ class Baseline_Admin
     public function sanitize_form_mode(string $value): string
     {
         return in_array($value, ['dry-run', 'live'], true) ? $value : 'dry-run';
+    }
+
+    public function sanitize_api_base_setting($value): string
+    {
+        $sanitized = untrailingslashit(esc_url_raw((string) $value));
+        if ($sanitized === '') {
+            return self::DEFAULT_API_BASE;
+        }
+        if (strcasecmp($sanitized, self::LEGACY_API_BASE) === 0) {
+            return self::DEFAULT_API_BASE;
+        }
+        return $sanitized;
     }
 
     public function sanitize_scan_defaults_option($value): array
@@ -1068,7 +1081,12 @@ class Baseline_Admin
         if ($configured === '') {
             $configured = self::DEFAULT_API_BASE;
         }
-        return untrailingslashit($configured);
+        $normalized = untrailingslashit($configured);
+        if (strcasecmp($normalized, self::LEGACY_API_BASE) === 0) {
+            update_option(self::OPTION_API_BASE, self::DEFAULT_API_BASE);
+            return self::DEFAULT_API_BASE;
+        }
+        return $normalized;
     }
 
     private function get_option(string $key, string $default = ''): string

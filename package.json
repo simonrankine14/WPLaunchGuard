@@ -30,6 +30,7 @@
     "week5:verify": "bash scripts/week5-verify.sh",
     "api:dev": "npx wrangler dev --config services/api-worker/wrangler.toml",
     "api:deploy": "npx wrangler deploy --config services/api-worker/wrangler.toml",
+    "api:deploy:launchguard": "npx wrangler deploy --config services/api-worker/wrangler.launchguard.toml",
     "qa": "node scripts/qa-runner.js",
     "qa:report": "node reporting/generate-dashboard.js",
     "qa:html": "node reporting/generate-html-report.js",
