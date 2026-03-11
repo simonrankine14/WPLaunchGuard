@@ -83,28 +83,11 @@ function withAuth(init = {}) {
   };
   return { ...init, headers };
 }
-// If no sitemap flag, but client config specifies one, use it.
-let derivedSitemapFlag = sitemapFlag;
-if (!derivedSitemapFlag && clientConfig.sitemap) {
-  derivedSitemapFlag = `--sitemap=${clientConfig.sitemap}`;
-}
-// If still none, try to derive from baseUrl (common WP sitemap paths).
-if (!derivedSitemapFlag && clientConfig.baseUrl) {
-  const base = clientConfig.baseUrl.replace(/\/+$/, '');
-  derivedSitemapFlag = `--sitemap=${base}/sitemap_index.xml`;
-}
-// If still none and client has seed URLs, try to derive base from first URL.
-if (!derivedSitemapFlag && Array.isArray(clientConfig.urls) && clientConfig.urls.length > 0) {
-  try {
-    const origin = new URL(clientConfig.urls[0]).origin;
-    derivedSitemapFlag = `--sitemap=${origin}/sitemap_index.xml`;
-    if (!clientConfig.baseUrl) {
-      clientConfig.baseUrl = origin;
-    }
-  } catch {
-    // ignore
-  }
-}
+// Sitemap is now explicit-only. We do not auto-derive sitemap URLs because
+// WordPress-native REST discovery is the default source of truth.
+const explicitSitemapUrl = sitemapFlag
+  ? sitemapFlag.replace('--sitemap=', '').trim()
+  : String(clientConfig.sitemap || '').trim();
 
 const allProjects = [
   'chrome-desktop-1920',
@@ -131,6 +114,13 @@ if (projectsFlag) {
 
 const reportsDir = resolveClientReportsDir(cwd, clientName);
 const sitemapOutput = path.join(reportsDir, 'urls.json');
+
+function writeResolvedUrls(urls, sourceLabel) {
+  fs.mkdirSync(reportsDir, { recursive: true });
+  fs.writeFileSync(sitemapOutput, JSON.stringify({ urls }, null, 2));
+  console.log(`[qa-runner] URL source: ${sourceLabel}. URLs discovered: ${urls.length}.`);
+  return sitemapOutput;
+}
 
 async function fetchText(url) {
   const res = await fetch(url, withAuth());
@@ -181,39 +171,98 @@ async function fetchJson(url) {
   return res.json();
 }
 
+async function fetchJsonWithMeta(url) {
+  const res = await fetch(url, withAuth({
+    method: 'GET',
+    headers: { Accept: 'application/json' }
+  }));
+  if (!res.ok) {
+    throw new Error(`Failed request ${res.status} for ${url}`);
+  }
+  const data = await res.json();
+  const totalPages = Number(res.headers.get('x-wp-totalpages') || 0);
+  return {
+    data,
+    totalPages: Number.isFinite(totalPages) && totalPages > 0 ? totalPages : 0
+  };
+}
+
+function normalizeContentUrl(rawUrl, expectedOrigin) {
+  if (!rawUrl) return '';
+  try {
+    const parsed = new URL(String(rawUrl).trim());
+    if (!/^https?:$/i.test(parsed.protocol)) return '';
+    if (expectedOrigin && parsed.origin !== expectedOrigin) return '';
+    parsed.hash = '';
+    parsed.search = '';
+    const normalizedPath = parsed.pathname.replace(/\/{2,}/g, '/');
+    parsed.pathname = normalizedPath || '/';
+    const href = parsed.toString();
+    return href.endsWith('/') ? href : `${href}/`;
+  } catch {
+    return '';
+  }
+}
+
+function shouldIncludeContentUrl(urlValue) {
+  if (!urlValue) return false;
+  try {
+    const parsed = new URL(urlValue);
+    const path = parsed.pathname.toLowerCase();
+    if (path.startsWith('/wp-admin') || path.startsWith('/wp-json')) return false;
+    if (path.includes('/feed/')) return false;
+    if (path.includes('/embed/')) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function fetchRestUrls(restBase) {
   const apiBase = restBase.replace(/\/+$/, '');
-  const types = await fetchJson(`${apiBase}/wp-json/wp/v2/types`);
-  const typeKeys = Object.keys(types || {}).filter(
-    (key) => !['attachment', 'nav_menu_item', 'revision'].includes(key)
-  );
+  const origin = new URL(apiBase).origin;
+  const collections = ['pages', 'posts'];
 
   const urls = [];
   const seen = new Set();
+  const pushUrl = (candidate) => {
+    const normalized = normalizeContentUrl(candidate, origin);
+    if (!normalized) return;
+    if (!shouldIncludeContentUrl(normalized)) return;
+    if (seen.has(normalized)) return;
+    seen.add(normalized);
+    urls.push(normalized);
+  };
 
-  for (const typeKey of typeKeys) {
+  for (const typeKey of collections) {
     let page = 1;
     let keepGoing = true;
+    let totalPages = 0;
     while (keepGoing) {
-      const endpoint = `${apiBase}/wp-json/wp/v2/${typeKey}?per_page=100&page=${page}`;
+      const endpoint = `${apiBase}/wp-json/wp/v2/${typeKey}?per_page=100&page=${page}&status=publish&_fields=link,status`;
       let items = [];
       try {
-        items = await fetchJson(endpoint);
+        const response = await fetchJsonWithMeta(endpoint);
+        items = Array.isArray(response.data) ? response.data : [];
+        totalPages = response.totalPages || totalPages;
       } catch {
         break;
       }
       if (!Array.isArray(items) || items.length === 0) break;
       for (const item of items) {
         if (!item || !item.link) continue;
-        if (seen.has(item.link)) continue;
-        seen.add(item.link);
-        urls.push(item.link);
+        pushUrl(item.link);
       }
-      keepGoing = items.length === 100;
+      if (totalPages > 0) {
+        keepGoing = page < totalPages;
+      } else {
+        keepGoing = items.length > 0 && page < 100;
+      }
       page += 1;
     }
   }
 
+  pushUrl(apiBase);
   return urls;
 }
 
@@ -290,13 +339,11 @@ async function discoverSitemap(baseUrl) {
 
 async function resolveUrlsPath() {
   if (singleUrl) {
-    fs.mkdirSync(reportsDir, { recursive: true });
-    fs.writeFileSync(sitemapOutput, JSON.stringify({ urls: [singleUrl] }, null, 2));
-    return sitemapOutput;
+    return writeResolvedUrls([singleUrl], 'single');
   }
 
-  if (derivedSitemapFlag) {
-    const sitemapUrl = derivedSitemapFlag.replace('--sitemap=', '').trim();
+  if (explicitSitemapUrl) {
+    const sitemapUrl = explicitSitemapUrl;
     if (!sitemapUrl) {
       throw new Error('Invalid --sitemap URL');
     }
@@ -310,9 +357,7 @@ async function resolveUrlsPath() {
     }
     const limitValue = sitemapLimitFlag ? Number(sitemapLimitFlag.replace('--sitemap-limit=', '')) : 200;
     urls = applySitemapLimit(urls, limitValue);
-    fs.mkdirSync(reportsDir, { recursive: true });
-    fs.writeFileSync(sitemapOutput, JSON.stringify({ urls }, null, 2));
-    return sitemapOutput;
+    return writeResolvedUrls(urls, 'sitemap-explicit');
   }
 
   // Prefer full REST URL discovery only after explicit/derived sitemap attempts unless explicitly disabled.
@@ -320,13 +365,11 @@ async function resolveUrlsPath() {
   if (!noRest && restBaseCandidate) {
     try {
       const uniqueUrls = await fetchRestUrls(restBaseCandidate);
-      const homeCandidate = String(restBaseCandidate || '').replace(/\/+$/, '');
-      if (homeCandidate && !uniqueUrls.includes(homeCandidate)) {
-        uniqueUrls.unshift(homeCandidate);
-      }
       if (sampleTemplates) {
         uniqueUrls.splice(0, uniqueUrls.length, ...reduceTemplateUrls(uniqueUrls));
       }
+      const limitValue = sitemapLimitFlag ? Number(sitemapLimitFlag.replace('--sitemap-limit=', '')) : 200;
+      const limited = applySitemapLimit(uniqueUrls, limitValue);
       const nonHomeUrls = uniqueUrls.filter((url) => {
         try {
           return new URL(url).pathname.replace(/\/+$/, '') !== '';
@@ -335,37 +378,18 @@ async function resolveUrlsPath() {
         }
       });
       if (nonHomeUrls.length > 0) {
-        fs.mkdirSync(reportsDir, { recursive: true });
-        fs.writeFileSync(sitemapOutput, JSON.stringify({ urls: uniqueUrls }, null, 2));
-        return sitemapOutput;
+        return writeResolvedUrls(limited, 'wp-rest-published-pages-posts');
       }
-      console.warn('[qa-runner] REST discovery returned only homepage; falling back to sitemap discovery.');
+      console.warn('[qa-runner] REST discovery returned only homepage.');
     } catch {
       // ignore and fall through
     }
   }
 
-  // Try auto-discovery if no explicit sitemap and client has baseUrl.
-  const sitemapDiscoveryBase = clientConfig.baseUrl || String(restBaseCandidate || '').trim();
-  if (sitemapDiscoveryBase) {
-    const auto = await discoverSitemap(sitemapDiscoveryBase);
-    if (auto) {
-      const parser = new XMLParser({ ignoreAttributes: false });
-      let urls = await parseSitemap(auto, parser);
-      if (urls.length > 0) {
-        if (!sitemapNoSample && sampleTemplates) {
-          urls = reduceTemplateUrls(urls);
-        }
-        const limitValue = sitemapLimitFlag ? Number(sitemapLimitFlag.replace('--sitemap-limit=', '')) : 200;
-        urls = applySitemapLimit(urls, limitValue);
-        fs.mkdirSync(reportsDir, { recursive: true });
-        fs.writeFileSync(sitemapOutput, JSON.stringify({ urls }, null, 2));
-        return sitemapOutput;
-      }
-    }
-  }
+  // No implicit sitemap fallback: avoid hidden/private/non-front-facing URLs.
 
   if (fs.existsSync(dataPath)) {
+    console.warn(`[qa-runner] URL source fallback: client data file ${relativeDataPath}.`);
     return dataPath;
   }
 
@@ -509,7 +533,7 @@ resolveUrlsPath()
       ...process.env,
       CLIENT_NAME: clientName,
       URLS_PATH: urlsPath,
-      LAUNCHGUARD_ROOT: cwd,
+      BASELINE_ROOT: cwd,
       RUN_STARTED_AT: runStartedAt
     };
 

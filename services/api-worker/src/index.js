@@ -201,8 +201,15 @@ function hasValidAdminAuth(request, env) {
 }
 
 function extractSiteToken(request) {
-  const headerToken = String(request.headers.get('x-launchguard-site-token') || '').trim();
+  const headerToken = String(request.headers.get('x-baseline-site-token') || '').trim();
   if (headerToken) return headerToken;
+
+  // Backward compatibility for pre-rename clients still sending LaunchGuard headers.
+  const legacyLaunchGuardHeader = String(request.headers.get('x-launchguard-site-token') || '').trim();
+  if (legacyLaunchGuardHeader) return legacyLaunchGuardHeader;
+
+  const legacyWpLaunchGuardHeader = String(request.headers.get('x-wplaunchguard-site-token') || '').trim();
+  if (legacyWpLaunchGuardHeader) return legacyWpLaunchGuardHeader;
 
   const fallbackHeader = String(request.headers.get('x-site-token') || '').trim();
   if (fallbackHeader) return fallbackHeader;
@@ -540,7 +547,7 @@ function formatWorkflowBooleanInput(value) {
 function getGitHubDispatchConfig(env) {
   const owner = String(env.GITHUB_OWNER || '').trim();
   const repo = String(env.GITHUB_REPO || '').trim();
-  const workflow = String(env.GITHUB_WORKFLOW_FILE || 'launchguard-scan.yml').trim();
+  const workflow = String(env.GITHUB_WORKFLOW_FILE || 'baseline-scan.yml').trim();
   const ref = String(env.GITHUB_REF || 'main').trim();
   const token = String(env.GITHUB_DISPATCH_TOKEN || '').trim();
   const publicApiBase = String(env.PUBLIC_API_BASE || '').trim();
@@ -1143,7 +1150,7 @@ async function getBranding(request, env, siteId) {
         primary_color: '#1f2937',
         accent_color: '#22c55e',
         footer_text: '',
-        hide_launchguard_branding: 0,
+        hide_baseline_branding: 0,
         updated_at: ''
       },
       features: planFeatures
@@ -1175,7 +1182,7 @@ async function upsertBranding(request, env, siteId) {
   const updatedAt = nowIso();
   await env.DB.prepare(
     [
-      'INSERT INTO site_branding (site_id, brand_name, logo_url, primary_color, accent_color, footer_text, hide_launchguard_branding, updated_at)',
+      'INSERT INTO site_branding (site_id, brand_name, logo_url, primary_color, accent_color, footer_text, hide_baseline_branding, updated_at)',
       'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       'ON CONFLICT(site_id) DO UPDATE SET',
       'brand_name = excluded.brand_name,',
@@ -1183,7 +1190,7 @@ async function upsertBranding(request, env, siteId) {
       'primary_color = excluded.primary_color,',
       'accent_color = excluded.accent_color,',
       'footer_text = excluded.footer_text,',
-      'hide_launchguard_branding = excluded.hide_launchguard_branding,',
+      'hide_baseline_branding = excluded.hide_baseline_branding,',
       'updated_at = excluded.updated_at'
     ].join(' ')
   )
@@ -1194,7 +1201,7 @@ async function upsertBranding(request, env, siteId) {
       body.primary_color || '#1f2937',
       body.accent_color || '#22c55e',
       body.footer_text || '',
-      body.hide_launchguard_branding ? 1 : 0,
+      body.hide_baseline_branding ? 1 : 0,
       updatedAt
     )
     .run();
@@ -1240,7 +1247,7 @@ async function stripeApiRequest(env, path, params) {
     headers: {
       authorization: `Bearer ${config.secretKey}`,
       'content-type': 'application/x-www-form-urlencoded',
-      'user-agent': 'wplaunchguard-worker'
+      'user-agent': 'baseline-worker'
     },
     body: params.toString()
   });
@@ -1698,7 +1705,7 @@ function reportAccessCookieName(scanId) {
     .replace(/[^a-z0-9]/gi, '')
     .toLowerCase()
     .slice(0, 24);
-  return token ? `wplg_rt_${token}` : 'wplg_rt';
+  return token ? `baseline_rt_${token}` : 'baseline_rt';
 }
 
 function extractReportTokenFromCookie(request, scanId) {
@@ -1958,6 +1965,15 @@ async function dispatchScanToGitHub(env, scan, site) {
   const periodKey = nowIso().slice(0, 7);
   const usageContext = await getTenantUsageContext(env, site.tenant_id, periodKey);
   const planFeatures = getPlanFeatures(usageContext.billing?.plan_id || usageContext.plan?.id || getDefaultPlanId(env));
+  const branding = await env.DB.prepare('SELECT * FROM site_branding WHERE site_id = ?').bind(scan.site_id).first();
+  const brandingPayload = {
+    brand_name: String(branding?.brand_name || '').trim(),
+    logo_url: String(branding?.logo_url || '').trim(),
+    primary_color: String(branding?.primary_color || '#2f86c3').trim() || '#2f86c3',
+    accent_color: String(branding?.accent_color || '#34b3a0').trim() || '#34b3a0',
+    footer_text: String(branding?.footer_text || '').trim(),
+    hide_baseline_branding: Number(branding?.hide_baseline_branding || 0) === 1
+  };
 
   const payload = {
     ref: config.ref,
@@ -1979,6 +1995,12 @@ async function dispatchScanToGitHub(env, scan, site) {
       viewport_preset: normalizeViewportPreset(scanOptions.viewport_preset, 'desktop'),
       pdf_export_enabled: formatWorkflowBooleanInput(planFeatures.pdf_export),
       zip_export_enabled: formatWorkflowBooleanInput(planFeatures.zip_export),
+      brand_name: brandingPayload.brand_name,
+      brand_logo_url: brandingPayload.logo_url,
+      brand_primary_color: brandingPayload.primary_color,
+      brand_accent_color: brandingPayload.accent_color,
+      brand_footer_text: brandingPayload.footer_text,
+      hide_baseline_branding: formatWorkflowBooleanInput(brandingPayload.hide_baseline_branding),
       callback_url: callbackUrl
     }
   };
@@ -1990,7 +2012,7 @@ async function dispatchScanToGitHub(env, scan, site) {
       accept: 'application/vnd.github+json',
       authorization: `Bearer ${config.token}`,
       'x-github-api-version': '2022-11-28',
-      'user-agent': 'wplaunchguard-worker',
+      'user-agent': 'baseline-worker',
       'content-type': 'application/json'
     },
     body: JSON.stringify(payload)
@@ -2012,6 +2034,7 @@ async function dispatchScanToGitHub(env, scan, site) {
     site_url: payload.inputs.site_url,
     target_url: scanTargetUrl,
     scan_options: scanOptions,
+    branding: brandingPayload,
     callback_url: callbackUrl
   };
 }
@@ -2212,7 +2235,7 @@ export default {
     const { pathname } = url;
 
     if (request.method === 'GET' && pathname === '/health') {
-      return json({ ok: true, service: 'launchguard-api', time: nowIso() });
+      return json({ ok: true, service: 'baseline-api', time: nowIso() });
     }
 
     if (!env.DB) {

@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 
 test('html report includes audience toggle and default audience wiring', () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wplg-html-'));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-html-'));
   const client = 'audienceclient';
   const reportsDir = path.join(tmpRoot, 'reports', client);
   fs.mkdirSync(reportsDir, { recursive: true });
@@ -80,7 +80,7 @@ test('html report includes audience toggle and default audience wiring', () => {
   const run = spawnSync(process.execPath, [script, client], {
     env: {
       ...process.env,
-      LAUNCHGUARD_ROOT: tmpRoot,
+      BASELINE_ROOT: tmpRoot,
       NO_AUTO_OPEN: 'true',
       REPORT_AUDIENCE_DEFAULT: 'developer'
     }
@@ -96,7 +96,7 @@ test('html report includes audience toggle and default audience wiring', () => {
   assert.ok(html.includes('id="audienceHeadPill"'));
   assert.ok(html.includes('data-audience-toggle="1"'));
   assert.ok(html.includes('Switch to Developer View'));
-  assert.ok(html.includes('window.__wplgToggleAudience'));
+  assert.ok(html.includes('window.__baselineToggleAudience'));
   assert.ok(html.includes('"defaultAudience":"developer"'));
   assert.ok(html.includes('function readStoredAudience()'));
   assert.ok(html.includes('function renderAudienceHero()'));

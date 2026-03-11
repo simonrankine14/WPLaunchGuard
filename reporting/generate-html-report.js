@@ -3,13 +3,12 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { resolveClientReportsDir, resolveRunRoot, validateClientId } = require('../scripts/lib/safe-paths');
 
-// Hard-coded branding (no CLI/env overrides).
-const TOOL_NAME = 'WP LaunchGuard';
+const TOOL_NAME = 'Baseline';
 const BRAND_LOGO_CANDIDATES = [
+  path.join(__dirname, 'assets', 'logo.svg'),
   path.join(__dirname, 'assets', 'logo.png'),
   path.join(__dirname, 'assets', 'logo.jpg'),
-  path.join(__dirname, 'assets', 'logo.jpeg'),
-  path.join(__dirname, 'assets', 'logo.svg')
+  path.join(__dirname, 'assets', 'logo.jpeg')
 ];
 
 const VALID_RUN_STATES = new Set(['complete', 'partial', 'interrupted', 'merge_failed']);
@@ -89,6 +88,18 @@ function safeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function sanitizeHexColor(value, fallback) {
+  const raw = String(value || '').trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw;
+  if (/^#[0-9a-fA-F]{3}$/.test(raw)) return raw;
+  return fallback;
+}
+
+function toBool(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
 }
 
 function truncateText(value, maxLength = 400) {
@@ -488,6 +499,13 @@ async function generate(clientName) {
   const packageRoot = path.join(__dirname, '..');
   const safeClientName = validateClientId(clientName);
   const reportClientLabel = String(process.env.REPORT_CLIENT_LABEL || '').trim() || safeClientName;
+  const brandName = String(process.env.REPORT_BRAND_NAME || '').trim();
+  const brandLogoUrl = String(process.env.REPORT_BRAND_LOGO_URL || '').trim();
+  const brandPrimaryColor = sanitizeHexColor(process.env.REPORT_BRAND_PRIMARY_COLOR, '#2f86c3');
+  const brandAccentColor = sanitizeHexColor(process.env.REPORT_BRAND_ACCENT_COLOR, '#34b3a0');
+  const brandFooterText = String(process.env.REPORT_BRAND_FOOTER_TEXT || '').trim();
+  const hideBaselineBranding = toBool(process.env.REPORT_HIDE_BASELINE_BRANDING);
+  const reportDisplayName = hideBaselineBranding && brandName ? brandName : TOOL_NAME;
   const runRoot = resolveRunRoot(process.env, packageRoot);
   const reportsDir = resolveClientReportsDir(runRoot, safeClientName);
   const issuesJsonPath = path.join(reportsDir, 'issues.json');
@@ -603,7 +621,14 @@ async function generate(clientName) {
     },
     runMeta,
     reportSettings: {
-      defaultAudience
+      defaultAudience,
+      reportDisplayName,
+      brandName,
+      brandLogoUrl,
+      brandPrimaryColor,
+      brandAccentColor,
+      brandFooterText,
+      hideBaselineBranding
     }
   };
   // WordPress insights (derived client-side too, but store here for convenience if needed later)
@@ -618,14 +643,15 @@ async function generate(clientName) {
   const safeJsonPayload = safeJsonForInlineScript({ ...data, wpInsights });
 
   const { dataUri: brandLogoDataUri, pickedPath: brandLogoPath } = loadBrandLogoDataUri();
+  const embeddedLogo = brandLogoUrl || brandLogoDataUri;
   if (!brandLogoDataUri) {
     console.warn(
-      `[WP LaunchGuard] Brand logo not found. Add one of: ${BRAND_LOGO_CANDIDATES
+      `[Baseline] Brand logo not found. Add one of: ${BRAND_LOGO_CANDIDATES
         .map((p) => path.relative(runRoot, p))
         .join(', ')}`
     );
   } else {
-    console.log(`[WP LaunchGuard] Embedded logo: ${path.relative(runRoot, brandLogoPath)}`);
+    console.log(`[Baseline] Embedded logo: ${path.relative(runRoot, brandLogoPath)}`);
   }
 
   const html = `<!doctype html>
@@ -636,7 +662,7 @@ async function generate(clientName) {
     <meta http-equiv="Cache-Control" content="no-store" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>${safeHtml(TOOL_NAME)} - ${safeHtml(reportClientLabel)} Report</title>
+    <title>${safeHtml(reportDisplayName)} - ${safeHtml(reportClientLabel)} Report</title>
     <style>
       :root{
         --bg: #f6f8fc;
@@ -651,7 +677,8 @@ async function generate(clientName) {
         --minor: #3b82f6;
         --info: #64748b;
         --pass: #16a34a;
-        --blue: #2563eb;
+        --blue: ${brandPrimaryColor};
+        --accent: ${brandAccentColor};
         --blue2: #eef2ff;
         --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       }
@@ -1377,6 +1404,15 @@ async function generate(clientName) {
         background:#fff;
         display:flex;justify-content:space-between;align-items:center;
       }
+      .reportFooter{
+        margin-top: 18px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 12px;
+      }
     </style>
   </head>
   <body>
@@ -1384,9 +1420,9 @@ async function generate(clientName) {
       <div class="topbar">
         <div class="brand">
           <div class="brandMark">
-            ${brandLogoDataUri ? `<img alt="Brand logo" src="${brandLogoDataUri}" />` : 'MLT'}
+            ${embeddedLogo ? `<img alt="Brand logo" src="${safeHtml(embeddedLogo)}" />` : 'B'}
           </div>
-          <div>${safeHtml(TOOL_NAME)}</div>
+          <div>${safeHtml(reportDisplayName)}</div>
         </div>
         <div class="topActions">
           <button
@@ -1394,7 +1430,7 @@ async function generate(clientName) {
             class="btn"
             type="button"
             data-audience-toggle="1"
-            onclick="if (window.__wplgToggleAudience) { window.__wplgToggleAudience(); } return false;"
+            onclick="if (window.__baselineToggleAudience) { window.__baselineToggleAudience(); } return false;"
           >Switch to Developer View</button>
           <a id="exportCsvBtn" class="btn primary" href="../results.csv" download>Export CSV</a>
           <a id="openPdfBtn" class="btn primary" href="../QA_Report.pdf" target="_blank" rel="noopener">Export PDF</a>
@@ -1405,7 +1441,7 @@ async function generate(clientName) {
       </div>
 
       <div class="pageHead">
-        <h1>WP Launch QA Report</h1>
+        <h1>${safeHtml(reportDisplayName)} QA Report</h1>
         <div class="sub">
           <span class="pill">Client: ${safeHtml(reportClientLabel)}</span>
           <span class="pill">Generated: ${safeHtml(stats.generatedAt || new Date().toISOString())}</span>
@@ -1459,7 +1495,7 @@ async function generate(clientName) {
           <div class="stickyBar">
             <div class="stickyHeader">
               <div>
-                <div class="title">WP Launch QA Report</div>
+                <div class="title">${safeHtml(reportDisplayName)} QA Report</div>
                 <div class="meta" id="stickyMeta"></div>
                 <div class="meta" id="stackMeta" style="margin-top:4px"></div>
               </div>
@@ -1469,7 +1505,7 @@ async function generate(clientName) {
                   class="btn"
                   type="button"
                   data-audience-toggle="1"
-                  onclick="if (window.__wplgToggleAudience) { window.__wplgToggleAudience(); } return false;"
+                  onclick="if (window.__baselineToggleAudience) { window.__baselineToggleAudience(); } return false;"
                 >Switch to Developer View</button>
                 <a id="exportCsvBtnSticky" class="btn primary" href="../results.csv" download>Export CSV</a>
                 <a id="openPdfBtnSticky" class="btn primary" href="../QA_Report.pdf" target="_blank" rel="noopener">Export PDF</a>
@@ -1535,6 +1571,7 @@ async function generate(clientName) {
       </div>
         </div>
       </div>
+      <div id="reportFooter" class="reportFooter" style="display:none"></div>
     </div>
     <div id="audienceToast" class="audienceToast" aria-live="polite"></div>
 
@@ -1584,7 +1621,22 @@ async function generate(clientName) {
           if (!href || !reportToken) return href;
           if (href.startsWith('#')) return href;
           if (/^(mailto:|tel:|javascript:|data:)/i.test(href)) return href;
-          if (/^https?:\\/\\//i.test(href)) return href;
+
+          if (/^https?:\\/\\//i.test(href)) {
+            try {
+              const parsed = new URL(href, window.location.href);
+              const isReportHost = parsed.origin === window.location.origin;
+              if (!isReportHost) {
+                return href;
+              }
+              if (!parsed.searchParams.has('t')) {
+                parsed.searchParams.set('t', reportToken);
+              }
+              return parsed.toString();
+            } catch {
+              return href;
+            }
+          }
 
           const hashIndex = href.indexOf('#');
           const hash = hashIndex >= 0 ? href.slice(hashIndex) : '';
@@ -1606,7 +1658,24 @@ async function generate(clientName) {
         const templateNames = stats.templateNames || {};
         const wpInsights = data.wpInsights || {};
         const reportSettings = data.reportSettings || { defaultAudience: 'client' };
-        const audienceStorageKey = 'wplg-report-audience';
+        const rootStyle = document.documentElement && document.documentElement.style ? document.documentElement.style : null;
+        const brandPrimaryColor = String(reportSettings.brandPrimaryColor || '').trim();
+        const brandAccentColor = String(reportSettings.brandAccentColor || '').trim();
+        if (rootStyle) {
+          if (/^#[0-9a-fA-F]{3,6}$/.test(brandPrimaryColor)) {
+            rootStyle.setProperty('--blue', brandPrimaryColor);
+          }
+          if (/^#[0-9a-fA-F]{3,6}$/.test(brandAccentColor)) {
+            rootStyle.setProperty('--accent', brandAccentColor);
+          }
+        }
+        const footerText = String(reportSettings.brandFooterText || '').trim();
+        const footerNode = document.getElementById('reportFooter');
+        if (footerNode && footerText) {
+          footerNode.textContent = footerText;
+          footerNode.style.display = 'block';
+        }
+        const audienceStorageKey = 'baseline-report-audience';
         function readStoredAudience() {
           try {
             return String(window.localStorage.getItem(audienceStorageKey) || '').toLowerCase();
@@ -1785,7 +1854,7 @@ async function generate(clientName) {
           event.preventDefault();
           toggleAudience();
         });
-        window.__wplgToggleAudience = toggleAudience;
+        window.__baselineToggleAudience = toggleAudience;
         applyAudience();
 
         // Tabs controller
@@ -3334,7 +3403,7 @@ async function generate(clientName) {
         if (res.error) throw res.error;
       }
     } catch (error) {
-      console.warn(`[WP LaunchGuard] Auto-open failed. Open manually: ${outPath}`);
+      console.warn(`[Baseline] Auto-open failed. Open manually: ${outPath}`);
     }
   }
 }

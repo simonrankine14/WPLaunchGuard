@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS site_branding (
   primary_color TEXT,
   accent_color TEXT,
   footer_text TEXT,
-  hide_launchguard_branding INTEGER NOT NULL DEFAULT 0,
+  hide_baseline_branding INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL,
   FOREIGN KEY (site_id) REFERENCES sites(id)
 );

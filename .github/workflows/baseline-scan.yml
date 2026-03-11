@@ -1,10 +1,10 @@
-name: LaunchGuard Scan Runner
+name: Baseline Scan Runner
 
 on:
   workflow_dispatch:
     inputs:
       scan_id:
-        description: "Scan ID from LaunchGuard API"
+        description: "Scan ID from Baseline API"
         required: true
         type: string
       site_id:
@@ -114,6 +114,39 @@ on:
         options:
           - "true"
           - "false"
+      brand_name:
+        description: "Brand display name for report shell"
+        required: false
+        default: ""
+        type: string
+      brand_logo_url:
+        description: "Brand logo URL for report shell"
+        required: false
+        default: ""
+        type: string
+      brand_primary_color:
+        description: "Primary theme color (hex)"
+        required: false
+        default: "#2f86c3"
+        type: string
+      brand_accent_color:
+        description: "Accent theme color (hex)"
+        required: false
+        default: "#34b3a0"
+        type: string
+      brand_footer_text:
+        description: "Footer text for report shell"
+        required: false
+        default: ""
+        type: string
+      hide_baseline_branding:
+        description: "Hide Baseline name in report chrome"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
       callback_url:
         description: "Callback URL (optional override)"
         required: false
@@ -147,7 +180,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          REPORTS_R2_BUCKET: launchguard-reports-dev
+          REPORTS_R2_BUCKET: baseline-reports-dev
         run: |
           set +e
           HISTORY_DIR="reports/.history/${{ inputs.client_name }}"
@@ -174,8 +207,8 @@ jobs:
         id: run_qa
         shell: bash
         env:
-          CALLBACK_SECRET_URL: ${{ secrets.LAUNCHGUARD_CALLBACK_URL }}
-          CALLBACK_SECRET_TOKEN: ${{ secrets.LAUNCHGUARD_CALLBACK_TOKEN }}
+          CALLBACK_SECRET_URL: ${{ secrets.BASELINE_CALLBACK_URL != '' && secrets.BASELINE_CALLBACK_URL || secrets.LAUNCHGUARD_CALLBACK_URL }}
+          CALLBACK_SECRET_TOKEN: ${{ secrets.BASELINE_CALLBACK_TOKEN != '' && secrets.BASELINE_CALLBACK_TOKEN || secrets.LAUNCHGUARD_CALLBACK_TOKEN }}
         run: |
           set +e
           normalize_bool() {
@@ -319,6 +352,12 @@ jobs:
           if [[ -n "$CLIENT_LABEL_INPUT" ]]; then
             export REPORT_CLIENT_LABEL="$CLIENT_LABEL_INPUT"
           fi
+          export REPORT_BRAND_NAME="${{ inputs.brand_name }}"
+          export REPORT_BRAND_LOGO_URL="${{ inputs.brand_logo_url }}"
+          export REPORT_BRAND_PRIMARY_COLOR="${{ inputs.brand_primary_color }}"
+          export REPORT_BRAND_ACCENT_COLOR="${{ inputs.brand_accent_color }}"
+          export REPORT_BRAND_FOOTER_TEXT="${{ inputs.brand_footer_text }}"
+          export REPORT_HIDE_BASELINE_BRANDING="${{ inputs.hide_baseline_branding }}"
 
           send_progress_callback() {
             local current_url="$1"
@@ -392,7 +431,7 @@ jobs:
             PREFLIGHT_URL="$REST_BASE_INPUT"
           fi
           if [[ -n "$PREFLIGHT_URL" ]]; then
-            PREFLIGHT_CODE=$(curl -sS -o /tmp/wplg-preflight-body.txt -w "%{http_code}" --max-time 12 --connect-timeout 5 "$PREFLIGHT_URL" || echo "000")
+            PREFLIGHT_CODE=$(curl -sS -o /tmp/baseline-preflight-body.txt -w "%{http_code}" --max-time 12 --connect-timeout 5 "$PREFLIGHT_URL" || echo "000")
             PREFLIGHT_TIME=$(curl -sS -o /dev/null -w "%{time_total}" --max-time 12 --connect-timeout 5 "$PREFLIGHT_URL" || echo "12.000")
             PREFLIGHT_TIME_INT=$(printf '%s' "$PREFLIGHT_TIME" | awk -F'.' '{print $1}')
 
@@ -447,7 +486,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          REPORTS_R2_BUCKET: launchguard-reports-dev
+          REPORTS_R2_BUCKET: baseline-reports-dev
         run: |
           set +e
           REPORT_DIR="reports/${{ inputs.client_name }}"
@@ -523,12 +562,12 @@ jobs:
           path: reports/${{ inputs.client_name }}/
           if-no-files-found: warn
 
-      - name: Callback LaunchGuard API
+      - name: Callback Baseline API
         if: always()
         shell: bash
         env:
-          CALLBACK_SECRET_URL: ${{ secrets.LAUNCHGUARD_CALLBACK_URL }}
-          CALLBACK_SECRET_TOKEN: ${{ secrets.LAUNCHGUARD_CALLBACK_TOKEN }}
+          CALLBACK_SECRET_URL: ${{ secrets.BASELINE_CALLBACK_URL != '' && secrets.BASELINE_CALLBACK_URL || secrets.LAUNCHGUARD_CALLBACK_URL }}
+          CALLBACK_SECRET_TOKEN: ${{ secrets.BASELINE_CALLBACK_TOKEN != '' && secrets.BASELINE_CALLBACK_TOKEN || secrets.LAUNCHGUARD_CALLBACK_TOKEN }}
         run: |
           set +e
           EXIT_CODE="${{ steps.run_qa.outputs.exit_code }}"
@@ -558,7 +597,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ github.token }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            -H "User-Agent: wplaunchguard-workflow" || echo '{}')
+            -H "User-Agent: baseline-workflow" || echo '{}')
 
           ARTIFACT_ID=$(printf '%s' "$ARTIFACTS_JSON" | jq -r --arg NAME "$ARTIFACT_NAME" '.artifacts[]? | select(.name == $NAME) | .id' | head -n1)
           if [[ -n "$ARTIFACT_ID" && "$ARTIFACT_ID" != "null" ]]; then

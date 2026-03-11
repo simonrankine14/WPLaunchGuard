@@ -1,6 +1,6 @@
 # Week 5 Billing + Stripe Checkout
 
-Week 5 adds plan-aware billing to the LaunchGuard API and a Billing page in the WordPress plugin.
+Week 5 adds plan-aware billing to the Baseline API and a Billing page in the WordPress plugin.
 
 ## What is new
 
@@ -10,7 +10,7 @@ Week 5 adds plan-aware billing to the LaunchGuard API and a Billing page in the 
    - `GET /v1/sites/{siteId}/billing`
    - `POST /v1/sites/{siteId}/billing/checkout-session`
    - `POST /v1/stripe/webhook`
-4. WordPress plugin adds `LaunchGuard -> Billing` screen with plan selection and checkout start.
+4. WordPress plugin adds `Baseline -> Billing` screen with plan selection and checkout start.
 5. Stripe webhook updates billing state after checkout/subscription events.
 
 ## Step-by-step setup
@@ -18,7 +18,7 @@ Week 5 adds plan-aware billing to the LaunchGuard API and a Billing page in the 
 1. Apply D1 migration:
 
 ```bash
-npx wrangler d1 migrations apply launchguard-db-dev --remote --config services/api-worker/wrangler.toml
+npx wrangler d1 migrations apply baseline-db-dev --remote --config services/api-worker/wrangler.toml
 ```
 
 2. Add Stripe plan price IDs to Worker vars in `services/api-worker/wrangler.toml`:
@@ -56,7 +56,7 @@ Subscribe at minimum to:
 
 7. In WordPress admin:
 
-- Go to `LaunchGuard -> Billing`
+- Go to `Baseline -> Billing`
 - Choose a plan
 - Complete checkout in Stripe test mode
 - Return to Billing page and confirm status/plan updates
@@ -71,5 +71,5 @@ npm run week5:verify
 
 - `services/api-worker/migrations/0002_billing.sql`
 - `services/api-worker/src/index.js`
-- `wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php`
-- `wordpress-plugin/wplaunchguard/assets/css/admin.css`
+- `wordpress-plugin/baseline/includes/class-baseline-admin.php`
+- `wordpress-plugin/baseline/assets/css/admin.css`

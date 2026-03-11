@@ -23,19 +23,19 @@ check_pattern() {
 
 echo "Checking Week 2 files..."
 check_file "services/api-worker/src/index.js"
-check_file "wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php"
+check_file "wordpress-plugin/baseline/includes/class-baseline-admin.php"
 check_file "docs/week2-integration.md"
 
-check_pattern "x-launchguard-site-token" "services/api-worker/src/index.js"
+check_pattern "x-baseline-site-token" "services/api-worker/src/index.js"
 check_pattern "/v1/sites/" "services/api-worker/src/index.js"
-check_pattern "admin_post_wplg_run_scan" "wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php"
-check_pattern "wplg_save_branding" "wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php"
+check_pattern "admin_post_baseline_run_scan" "wordpress-plugin/baseline/includes/class-baseline-admin.php"
+check_pattern "baseline_save_branding" "wordpress-plugin/baseline/includes/class-baseline-admin.php"
 
 if command -v php >/dev/null 2>&1; then
   echo "Running PHP lint..."
-  php -l "$ROOT_DIR/wordpress-plugin/wplaunchguard/wplaunchguard.php" >/dev/null
-  php -l "$ROOT_DIR/wordpress-plugin/wplaunchguard/includes/class-wplg-plugin.php" >/dev/null
-  php -l "$ROOT_DIR/wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php" >/dev/null
+  php -l "$ROOT_DIR/wordpress-plugin/baseline/baseline.php" >/dev/null
+  php -l "$ROOT_DIR/wordpress-plugin/baseline/includes/class-baseline-plugin.php" >/dev/null
+  php -l "$ROOT_DIR/wordpress-plugin/baseline/includes/class-baseline-admin.php" >/dev/null
 fi
 
 echo "API worker route check complete."

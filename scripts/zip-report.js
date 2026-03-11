@@ -34,7 +34,7 @@ if (!fs.existsSync(htmlPath)) {
   const gen = spawnSync('node', [htmlReportScript, clientName], {
     cwd: runRoot,
     stdio: 'inherit',
-    env: { ...process.env, NO_AUTO_OPEN: 'true', LAUNCHGUARD_ROOT: runRoot }
+    env: { ...process.env, NO_AUTO_OPEN: 'true', BASELINE_ROOT: runRoot }
   });
   if (gen.status !== 0 || !fs.existsSync(htmlPath)) {
     console.error('Failed to generate HTML report.');

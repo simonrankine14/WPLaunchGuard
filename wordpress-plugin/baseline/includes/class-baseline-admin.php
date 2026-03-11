@@ -4,19 +4,19 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPLG_Admin
+class Baseline_Admin
 {
-    private const OPTION_API_BASE = 'wplg_api_base_url';
-    private const OPTION_SITE_TOKEN = 'wplg_site_token';
-    private const OPTION_SITE_ID = 'wplg_site_id';
-    private const OPTION_TENANT_ID = 'wplg_tenant_id';
-    private const OPTION_LAST_SCAN_ID = 'wplg_last_scan_id';
-    private const OPTION_DEFAULT_FORM_MODE = 'wplg_default_form_mode';
-    private const OPTION_SCAN_DEFAULTS = 'wplg_scan_defaults';
+    private const OPTION_API_BASE = 'baseline_api_base_url';
+    private const OPTION_SITE_TOKEN = 'baseline_site_token';
+    private const OPTION_SITE_ID = 'baseline_site_id';
+    private const OPTION_TENANT_ID = 'baseline_tenant_id';
+    private const OPTION_LAST_SCAN_ID = 'baseline_last_scan_id';
+    private const OPTION_DEFAULT_FORM_MODE = 'baseline_default_form_mode';
+    private const OPTION_SCAN_DEFAULTS = 'baseline_scan_defaults';
 
-    private const META_SCAN_OPTIONS = '_wplg_scan_options';
-    private const META_SCAN_USE_SITE_DEFAULTS = '_wplg_scan_use_site_defaults';
-    private const META_LAST_SCAN_ID = '_wplg_last_scan_id';
+    private const META_SCAN_OPTIONS = '_baseline_scan_options';
+    private const META_SCAN_USE_SITE_DEFAULTS = '_baseline_scan_use_site_defaults';
+    private const META_LAST_SCAN_ID = '_baseline_last_scan_id';
 
     public function __construct()
     {
@@ -24,14 +24,14 @@ class WPLG_Admin
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
 
-        add_action('admin_post_wplg_register_site', [$this, 'handle_register_site']);
-        add_action('admin_post_wplg_run_scan', [$this, 'handle_run_scan']);
-        add_action('admin_post_wplg_run_page_scan', [$this, 'handle_run_page_scan']);
-        add_action('admin_post_wplg_cancel_scan', [$this, 'handle_cancel_scan']);
-        add_action('admin_post_wplg_save_branding', [$this, 'handle_save_branding']);
-        add_action('admin_post_wplg_start_checkout', [$this, 'handle_start_checkout']);
-        add_action('wp_ajax_wplg_poll_scan', [$this, 'handle_poll_scan']);
-        add_action('wp_ajax_wplg_cancel_scan', [$this, 'handle_cancel_scan_ajax']);
+        add_action('admin_post_baseline_register_site', [$this, 'handle_register_site']);
+        add_action('admin_post_baseline_run_scan', [$this, 'handle_run_scan']);
+        add_action('admin_post_baseline_run_page_scan', [$this, 'handle_run_page_scan']);
+        add_action('admin_post_baseline_cancel_scan', [$this, 'handle_cancel_scan']);
+        add_action('admin_post_baseline_save_branding', [$this, 'handle_save_branding']);
+        add_action('admin_post_baseline_start_checkout', [$this, 'handle_start_checkout']);
+        add_action('wp_ajax_baseline_poll_scan', [$this, 'handle_poll_scan']);
+        add_action('wp_ajax_baseline_cancel_scan', [$this, 'handle_cancel_scan_ajax']);
         add_action('admin_bar_menu', [$this, 'render_active_scan_toolbar_chip'], 100);
 
         add_action('add_meta_boxes', [$this, 'register_scan_metaboxes']);
@@ -43,96 +43,96 @@ class WPLG_Admin
     public function register_menu(): void
     {
         add_menu_page(
-            __('WP LaunchGuard', 'wplaunchguard'),
-            __('LaunchGuard', 'wplaunchguard'),
+            __('Baseline', 'baseline'),
+            __('Baseline', 'baseline'),
             'manage_options',
-            'wplaunchguard-dashboard',
+            'baseline-dashboard',
             [$this, 'render_dashboard'],
             'dashicons-shield-alt',
             65
         );
 
         add_submenu_page(
-            'wplaunchguard-dashboard',
-            __('Scan', 'wplaunchguard'),
-            __('Scan', 'wplaunchguard'),
+            'baseline-dashboard',
+            __('Scan', 'baseline'),
+            __('Scan', 'baseline'),
             'manage_options',
-            'wplaunchguard-scan',
+            'baseline-scan',
             [$this, 'render_scan']
         );
 
         add_submenu_page(
-            'wplaunchguard-dashboard',
-            __('Branding', 'wplaunchguard'),
-            __('Branding', 'wplaunchguard'),
+            'baseline-dashboard',
+            __('Branding', 'baseline'),
+            __('Branding', 'baseline'),
             'manage_options',
-            'wplaunchguard-branding',
+            'baseline-branding',
             [$this, 'render_branding']
         );
 
         add_submenu_page(
-            'wplaunchguard-dashboard',
-            __('Billing', 'wplaunchguard'),
-            __('Billing', 'wplaunchguard'),
+            'baseline-dashboard',
+            __('Billing', 'baseline'),
+            __('Billing', 'baseline'),
             'manage_options',
-            'wplaunchguard-billing',
+            'baseline-billing',
             [$this, 'render_billing']
         );
 
         add_submenu_page(
-            'wplaunchguard-dashboard',
-            __('Settings', 'wplaunchguard'),
-            __('Settings', 'wplaunchguard'),
+            'baseline-dashboard',
+            __('Settings', 'baseline'),
+            __('Settings', 'baseline'),
             'manage_options',
-            'wplaunchguard-settings',
+            'baseline-settings',
             [$this, 'render_settings']
         );
 
         global $submenu;
-        if (isset($submenu['wplaunchguard-dashboard'][0][0])) {
-            $submenu['wplaunchguard-dashboard'][0][0] = __('Dashboard', 'wplaunchguard');
+        if (isset($submenu['baseline-dashboard'][0][0])) {
+            $submenu['baseline-dashboard'][0][0] = __('Dashboard', 'baseline');
         }
     }
 
     public function register_settings(): void
     {
-        register_setting('wplg_settings_group', self::OPTION_API_BASE, [
+        register_setting('baseline_settings_group', self::OPTION_API_BASE, [
             'type' => 'string',
             'sanitize_callback' => 'esc_url_raw',
             'default' => ''
         ]);
 
-        register_setting('wplg_settings_group', self::OPTION_SITE_TOKEN, [
+        register_setting('baseline_settings_group', self::OPTION_SITE_TOKEN, [
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'default' => ''
         ]);
 
-        register_setting('wplg_settings_group', self::OPTION_SITE_ID, [
+        register_setting('baseline_settings_group', self::OPTION_SITE_ID, [
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'default' => ''
         ]);
 
-        register_setting('wplg_settings_group', self::OPTION_TENANT_ID, [
+        register_setting('baseline_settings_group', self::OPTION_TENANT_ID, [
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'default' => ''
         ]);
 
-        register_setting('wplg_settings_group', self::OPTION_LAST_SCAN_ID, [
+        register_setting('baseline_settings_group', self::OPTION_LAST_SCAN_ID, [
             'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'default' => ''
         ]);
 
-        register_setting('wplg_settings_group', self::OPTION_DEFAULT_FORM_MODE, [
+        register_setting('baseline_settings_group', self::OPTION_DEFAULT_FORM_MODE, [
             'type' => 'string',
             'sanitize_callback' => [$this, 'sanitize_form_mode'],
             'default' => 'dry-run'
         ]);
 
-        register_setting('wplg_settings_group', self::OPTION_SCAN_DEFAULTS, [
+        register_setting('baseline_settings_group', self::OPTION_SCAN_DEFAULTS, [
             'type' => 'array',
             'sanitize_callback' => [$this, 'sanitize_scan_defaults_option'],
             'default' => $this->default_scan_options()
@@ -151,11 +151,13 @@ class WPLG_Admin
 
     public function enqueue_assets(string $hook): void
     {
-        $needsAssets = strpos($hook, 'wplaunchguard') !== false || in_array($hook, ['post.php', 'post-new.php'], true);
+        $needsAssets = strpos($hook, 'baseline') !== false || in_array($hook, ['post.php', 'post-new.php'], true);
         if (!$needsAssets) {
             return;
         }
-        wp_enqueue_style('wplg-admin', WPLG_PLUGIN_URL . 'assets/css/admin.css', [], WPLG_VERSION);
+        $cssPath = BASELINE_PLUGIN_DIR . 'assets/css/admin.css';
+        $cssVersion = file_exists($cssPath) ? (string) filemtime($cssPath) : BASELINE_VERSION;
+        wp_enqueue_style('baseline-admin', BASELINE_PLUGIN_URL . 'assets/css/admin.css', [], $cssVersion);
     }
 
     public function register_scan_metaboxes(): void
@@ -166,8 +168,8 @@ class WPLG_Admin
 
         foreach ($this->get_supported_scan_post_types() as $postType) {
             add_meta_box(
-                'wplg-page-scan',
-                __('LaunchGuard Page Scan', 'wplaunchguard'),
+                'baseline-page-scan',
+                __('Baseline Page Scan', 'baseline'),
                 [$this, 'render_page_scan_metabox'],
                 $postType,
                 'side',
@@ -190,40 +192,40 @@ class WPLG_Admin
         $formMode = $this->get_option(self::OPTION_DEFAULT_FORM_MODE, 'dry-run');
         $targetUrl = $this->get_published_target_url($post->ID);
         $isPublished = $targetUrl !== '';
-        $submitModeInputId = 'wplg_scan_submit_mode_' . (int) $post->ID;
+        $submitModeInputId = 'baseline_scan_submit_mode_' . (int) $post->ID;
 
-        wp_nonce_field('wplg_page_scan_settings', 'wplg_page_scan_settings_nonce');
-        wp_nonce_field('wplg_run_page_scan', 'wplg_run_page_scan_nonce');
+        wp_nonce_field('baseline_page_scan_settings', 'baseline_page_scan_settings_nonce');
+        wp_nonce_field('baseline_run_page_scan', 'baseline_run_page_scan_nonce');
 
-        echo '<input type="hidden" name="wplg_post_id" value="' . esc_attr((string) $post->ID) . '" />';
-        echo '<input type="hidden" id="' . esc_attr($submitModeInputId) . '" name="wplg_scan_submit_mode" value="custom" />';
+        echo '<input type="hidden" name="baseline_post_id" value="' . esc_attr((string) $post->ID) . '" />';
+        echo '<input type="hidden" id="' . esc_attr($submitModeInputId) . '" name="baseline_scan_submit_mode" value="custom" />';
 
         echo '<p><strong>Target URL</strong><br />';
         echo '<input class="widefat" type="text" readonly value="' . esc_attr($targetUrl !== '' ? $targetUrl : 'Publish this content to generate a public URL.') . '" /></p>';
 
         echo '<p><strong>Form Mode</strong><br />';
-        echo '<select class="widefat" name="wplg_page_form_mode">';
+        echo '<select class="widefat" name="baseline_page_form_mode">';
         echo '<option value="dry-run"' . selected($formMode, 'dry-run', false) . '>dry-run</option>';
         echo '<option value="live"' . selected($formMode, 'live', false) . '>live</option>';
         echo '</select></p>';
 
-        echo '<div class="wplg-metabox-options">';
-        echo '<input type="hidden" name="wplg_scan_use_site_defaults" value="0" />';
-        echo '<label class="wplg-toggle-row">';
-        echo '<input type="checkbox" name="wplg_scan_use_site_defaults" value="1" ' . checked($useSiteDefaults, true, false) . ' />';
+        echo '<div class="baseline-metabox-options">';
+        echo '<input type="hidden" name="baseline_scan_use_site_defaults" value="0" />';
+        echo '<label class="baseline-toggle-row">';
+        echo '<input type="checkbox" name="baseline_scan_use_site_defaults" value="1" ' . checked($useSiteDefaults, true, false) . ' />';
         echo '<span><strong>Use Site Defaults</strong></span>';
         echo '</label>';
-        echo '<p class="description">Use your global scan profile from LaunchGuard Dashboard.</p>';
+        echo '<p class="description">Use your global scan profile from Baseline Dashboard.</p>';
 
-        $this->render_scan_option_rows($effectiveOptions, 'wplg_scan_options');
+        $this->render_scan_option_rows($effectiveOptions, 'baseline_scan_options');
         echo '</div>';
 
         $actionUrl = esc_url(admin_url('admin-post.php'));
         $disabled = $isPublished ? '' : ' disabled="disabled"';
 
-        echo '<p class="wplg-metabox-actions">';
-        echo '<button type="submit" class="button button-primary" formmethod="post" formaction="' . $actionUrl . '" name="action" value="wplg_run_page_scan" onclick="document.getElementById(\'' . esc_attr($submitModeInputId) . '\').value=\'custom\';"' . $disabled . '>Scan This Page</button> ';
-        echo '<button type="submit" class="button" formmethod="post" formaction="' . $actionUrl . '" name="action" value="wplg_run_page_scan" onclick="document.getElementById(\'' . esc_attr($submitModeInputId) . '\').value=\'defaults\';"' . $disabled . '>Use Site Defaults</button>';
+        echo '<p class="baseline-metabox-actions">';
+        echo '<button type="submit" class="button button-primary" formmethod="post" formaction="' . $actionUrl . '" name="action" value="baseline_run_page_scan" onclick="document.getElementById(\'' . esc_attr($submitModeInputId) . '\').value=\'custom\';"' . $disabled . '>Scan This Page</button> ';
+        echo '<button type="submit" class="button" formmethod="post" formaction="' . $actionUrl . '" name="action" value="baseline_run_page_scan" onclick="document.getElementById(\'' . esc_attr($submitModeInputId) . '\').value=\'defaults\';"' . $disabled . '>Use Site Defaults</button>';
         echo '</p>';
 
         if (!$isPublished) {
@@ -244,12 +246,12 @@ class WPLG_Admin
             return;
         }
 
-        if (!isset($_POST['wplg_page_scan_settings_nonce'])) {
+        if (!isset($_POST['baseline_page_scan_settings_nonce'])) {
             return;
         }
 
-        $nonce = sanitize_text_field((string) wp_unslash($_POST['wplg_page_scan_settings_nonce']));
-        if (!wp_verify_nonce($nonce, 'wplg_page_scan_settings')) {
+        $nonce = sanitize_text_field((string) wp_unslash($_POST['baseline_page_scan_settings_nonce']));
+        if (!wp_verify_nonce($nonce, 'baseline_page_scan_settings')) {
             return;
         }
 
@@ -262,9 +264,9 @@ class WPLG_Admin
         }
 
         $defaults = $this->get_scan_defaults();
-        $rawOptions = wp_unslash($_POST['wplg_scan_options'] ?? []);
+        $rawOptions = wp_unslash($_POST['baseline_scan_options'] ?? []);
         $scanOptions = $this->sanitize_scan_options($rawOptions, $defaults);
-        $useSiteDefaults = !empty($_POST['wplg_scan_use_site_defaults']);
+        $useSiteDefaults = !empty($_POST['baseline_scan_use_site_defaults']);
 
         update_post_meta($postId, self::META_SCAN_OPTIONS, $scanOptions);
         update_post_meta($postId, self::META_SCAN_USE_SITE_DEFAULTS, $useSiteDefaults ? '1' : '0');
@@ -276,20 +278,20 @@ class WPLG_Admin
             return;
         }
 
-        if (!isset($_GET['wplg_notice']) || !isset($_GET['wplg_message'])) {
+        if (!isset($_GET['baseline_notice']) || !isset($_GET['baseline_message'])) {
             $this->render_active_scan_notice();
             return;
         }
 
-        $noticeType = sanitize_key((string) wp_unslash($_GET['wplg_notice']));
-        $message = sanitize_text_field((string) wp_unslash($_GET['wplg_message']));
+        $noticeType = sanitize_key((string) wp_unslash($_GET['baseline_notice']));
+        $message = sanitize_text_field((string) wp_unslash($_GET['baseline_message']));
         $class = $noticeType === 'success' ? 'notice notice-success' : 'notice notice-error';
 
         echo '<div class="' . esc_attr($class) . ' is-dismissible"><p>' . esc_html($message);
 
-        if (!empty($_GET['wplg_scan_id'])) {
-            $scanId = sanitize_text_field((string) wp_unslash($_GET['wplg_scan_id']));
-            $scanUrl = add_query_arg(['page' => 'wplaunchguard-scan'], admin_url('admin.php'));
+        if (!empty($_GET['baseline_scan_id'])) {
+            $scanId = sanitize_text_field((string) wp_unslash($_GET['baseline_scan_id']));
+            $scanUrl = add_query_arg(['page' => 'baseline-scan'], admin_url('admin.php'));
             echo ' <a href="' . esc_url($scanUrl) . '">View latest scan</a> (' . esc_html($scanId) . ')';
         }
 
@@ -320,19 +322,19 @@ class WPLG_Admin
         $scanId = sanitize_text_field((string) ($scan['id'] ?? ''));
         $href = add_query_arg(
             [
-                'page' => 'wplaunchguard-scan',
-                'wplg_scan_id' => $scanId,
-                'wplg_open_modal' => '1'
+                'page' => 'baseline-scan',
+                'baseline_scan_id' => $scanId,
+                'baseline_open_modal' => '1'
             ],
             admin_url('admin.php')
         );
 
         $adminBar->add_node([
-            'id' => 'wplg-active-scan',
-            'title' => sprintf('LaunchGuard Scan %d%%', $progress),
+            'id' => 'baseline-active-scan',
+            'title' => sprintf('Baseline Scan %d%%', $progress),
             'href' => esc_url($href),
             'meta' => [
-                'title' => 'Open LaunchGuard scan tracker'
+                'title' => 'Open Baseline scan tracker'
             ]
         ]);
     }
@@ -343,7 +345,7 @@ class WPLG_Admin
             return;
         }
 
-        if (isset($_GET['page']) && sanitize_key((string) wp_unslash($_GET['page'])) === 'wplaunchguard-scan') {
+        if (isset($_GET['page']) && sanitize_key((string) wp_unslash($_GET['page'])) === 'baseline-scan') {
             return;
         }
 
@@ -364,15 +366,15 @@ class WPLG_Admin
         $currentUrl = $this->extract_current_scan_url($summary, $scan);
         $scanUrl = add_query_arg(
             [
-                'page' => 'wplaunchguard-scan',
-                'wplg_scan_id' => $scanId,
-                'wplg_open_modal' => '1'
+                'page' => 'baseline-scan',
+                'baseline_scan_id' => $scanId,
+                'baseline_open_modal' => '1'
             ],
             admin_url('admin.php')
         );
 
-        echo '<div class="notice notice-info is-dismissible wplg-active-scan-notice"><p>';
-        echo '<strong>LaunchGuard active scan:</strong> ' . esc_html($progress) . '% complete.';
+        echo '<div class="notice notice-info is-dismissible baseline-active-scan-notice"><p>';
+        echo '<strong>Baseline active scan:</strong> ' . esc_html($progress) . '% complete.';
         if ($currentUrl !== '') {
             echo ' <code>' . esc_html($currentUrl) . '</code>';
         }
@@ -386,27 +388,27 @@ class WPLG_Admin
         $connected = $siteId !== '';
         $siteHost = wp_parse_url(home_url('/'), PHP_URL_HOST);
 
-        echo '<div class="wrap wplg-wrap wplg-dashboard">';
-        echo '<div class="wplg-page-header">';
-        echo '<div class="wplg-page-title">';
-        echo '<h1>WP LaunchGuard</h1>';
-        echo '<p class="wplg-page-subtitle">Cloud QA control center for scans, evidence, and client-ready reporting.</p>';
+        echo '<div class="wrap baseline-wrap baseline-dashboard">';
+        echo '<div class="baseline-page-header">';
+        echo '<div class="baseline-page-title">';
+        echo '<h1>Baseline</h1>';
+        echo '<p class="baseline-page-subtitle">Cloud QA control center for scans, evidence, and client-ready reporting.</p>';
         echo '</div>';
-        echo '<div class="wplg-page-meta">';
-        echo '<span class="wplg-badge ' . ($connected ? 'is-success' : 'is-warning') . '">' . ($connected ? 'Connected' : 'Not Connected') . '</span>';
+        echo '<div class="baseline-page-meta">';
+        echo '<span class="baseline-badge ' . ($connected ? 'is-success' : 'is-warning') . '">' . ($connected ? 'Connected' : 'Not Connected') . '</span>';
         if (!empty($siteHost)) {
-            echo '<span class="wplg-badge">' . esc_html((string) $siteHost) . '</span>';
+            echo '<span class="baseline-badge">' . esc_html((string) $siteHost) . '</span>';
         }
         echo '</div>';
         echo '</div>';
 
         if (!$connected) {
-            echo '<div class="wplg-card wplg-card-hero">';
+            echo '<div class="baseline-card baseline-card-hero">';
             echo '<h2>Connect This Site</h2>';
-            echo '<p>Register this WordPress site with your LaunchGuard API to enable scans and white-label controls.</p>';
+            echo '<p>Register this WordPress site with your Baseline API to enable checks and white-label controls.</p>';
             echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-            echo '<input type="hidden" name="action" value="wplg_register_site" />';
-            wp_nonce_field('wplg_register_site');
+            echo '<input type="hidden" name="action" value="baseline_register_site" />';
+            wp_nonce_field('baseline_register_site');
             submit_button('Register Site');
             echo '</form>';
             echo '</div>';
@@ -417,23 +419,23 @@ class WPLG_Admin
         $limits = $this->fetch_limits($siteId);
         $scans = $this->fetch_scans($siteId, 10);
 
-        echo '<div class="wplg-dashboard-grid">';
-        echo '<div class="wplg-grid wplg-grid-top">';
+        echo '<div class="baseline-dashboard-grid">';
+        echo '<div class="baseline-grid baseline-grid-top">';
 
-        echo '<div class="wplg-card wplg-card-connection">';
+        echo '<div class="baseline-card baseline-card-connection">';
         echo '<h2>Connection</h2>';
-        echo '<ul class="wplg-kv-list">';
+        echo '<ul class="baseline-kv-list">';
         echo '<li><span>Site ID</span><code>' . esc_html($siteId) . '</code></li>';
         echo '<li><span>Tenant ID</span><code>' . esc_html($this->get_option(self::OPTION_TENANT_ID)) . '</code></li>';
         echo '<li><span>API Base</span><code>' . esc_html($this->get_api_base()) . '</code></li>';
         echo '</ul>';
-        echo '<div class="wplg-actions"><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-scan')) . '">Open Scan Workspace</a></div>';
+        echo '<div class="baseline-actions"><a class="button button-primary" href="' . esc_url(admin_url('admin.php?page=baseline-scan')) . '">Open Scan Workspace</a></div>';
         echo '</div>';
 
         echo '</div>';
 
-        echo '<div class="wplg-grid wplg-grid-mid">';
-        echo '<div class="wplg-card wplg-card-plan">';
+        echo '<div class="baseline-grid baseline-grid-mid">';
+        echo '<div class="baseline-card baseline-card-plan">';
         echo '<h2>Plan Usage</h2>';
         if (is_wp_error($limits)) {
             echo '<p>' . esc_html($limits->get_error_message()) . '</p>';
@@ -445,19 +447,19 @@ class WPLG_Admin
             $scansLimit = (int) ($data['scans_limit'] ?? 0);
             $usagePercent = $scansLimit > 0 ? (int) max(0, min(100, round(($scansUsed / $scansLimit) * 100))) : 0;
 
-            echo '<ul class="wplg-kv-list">';
+            echo '<ul class="baseline-kv-list">';
             echo '<li><span>Period</span><strong>' . esc_html((string) ($data['period_key'] ?? 'n/a')) . '</strong></li>';
-            echo '<li><span>Plan</span><strong>' . esc_html($planId) . ' <span class="wplg-inline-muted">(' . esc_html($billingStatus) . ')</span></strong></li>';
+            echo '<li><span>Plan</span><strong>' . esc_html($planId) . ' <span class="baseline-inline-muted">(' . esc_html($billingStatus) . ')</span></strong></li>';
             echo '<li><span>Scans</span><strong>' . esc_html((string) $scansUsed) . ' / ' . esc_html((string) $scansLimit) . '</strong></li>';
             echo '<li><span>Sites Limit</span><strong>' . esc_html((string) ($data['sites_limit'] ?? 0)) . '</strong></li>';
             echo '<li><span>Client PDF</span><strong>' . (!empty($data['pdf_export']) ? 'Included' : 'Not included') . '</strong></li>';
             echo '<li><span>Evidence ZIP</span><strong>' . (!empty($data['zip_export']) ? 'Included' : 'Not included') . '</strong></li>';
             echo '<li><span>White-label</span><strong>' . (!empty($data['whitelabel']) ? 'Included' : 'Not included') . '</strong></li>';
             echo '</ul>';
-            echo '<div class="wplg-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $usagePercent) . '">';
+            echo '<div class="baseline-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $usagePercent) . '">';
             echo '<span style="width:' . esc_attr((string) $usagePercent) . '%"></span>';
             echo '</div>';
-            echo '<div class="wplg-actions"><a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-billing')) . '">Manage Billing</a></div>';
+            echo '<div class="baseline-actions"><a class="button" href="' . esc_url(admin_url('admin.php?page=baseline-billing')) . '">Manage Billing</a></div>';
         }
         echo '</div>';
 
@@ -474,27 +476,27 @@ class WPLG_Admin
         $connected = $siteId !== '';
         $siteHost = wp_parse_url(home_url('/'), PHP_URL_HOST);
 
-        echo '<div class="wrap wplg-wrap wplg-scan-page">';
-        echo '<div class="wplg-page-header">';
-        echo '<div class="wplg-page-title">';
+        echo '<div class="wrap baseline-wrap baseline-scan-page">';
+        echo '<div class="baseline-page-header">';
+        echo '<div class="baseline-page-title">';
         echo '<h1>Scan</h1>';
-        echo '<p class="wplg-page-subtitle">Configure and run site scans with live tracking.</p>';
+        echo '<p class="baseline-page-subtitle">Configure and run site scans with live tracking.</p>';
         echo '</div>';
-        echo '<div class="wplg-page-meta">';
-        echo '<span class="wplg-badge ' . ($connected ? 'is-success' : 'is-warning') . '">' . ($connected ? 'Connected' : 'Not Connected') . '</span>';
+        echo '<div class="baseline-page-meta">';
+        echo '<span class="baseline-badge ' . ($connected ? 'is-success' : 'is-warning') . '">' . ($connected ? 'Connected' : 'Not Connected') . '</span>';
         if (!empty($siteHost)) {
-            echo '<span class="wplg-badge">' . esc_html((string) $siteHost) . '</span>';
+            echo '<span class="baseline-badge">' . esc_html((string) $siteHost) . '</span>';
         }
         echo '</div>';
         echo '</div>';
 
         if (!$connected) {
-            echo '<div class="wplg-card wplg-card-hero">';
+            echo '<div class="baseline-card baseline-card-hero">';
             echo '<h2>Connect This Site</h2>';
-            echo '<p>Register this WordPress site with your LaunchGuard API to enable scans and white-label controls.</p>';
+            echo '<p>Register this WordPress site with your Baseline API to enable checks and white-label controls.</p>';
             echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-            echo '<input type="hidden" name="action" value="wplg_register_site" />';
-            wp_nonce_field('wplg_register_site');
+            echo '<input type="hidden" name="action" value="baseline_register_site" />';
+            wp_nonce_field('baseline_register_site');
             submit_button('Register Site');
             echo '</form>';
             echo '</div>';
@@ -510,17 +512,17 @@ class WPLG_Admin
             $latestScanRow = $lastScan['data']['scan'];
         }
         $latestScanId = sanitize_text_field((string) ($latestScanRow['id'] ?? ''));
-        $noticeStatus = sanitize_key((string) wp_unslash($_GET['wplg_notice'] ?? ''));
-        $modalScanId = sanitize_text_field((string) wp_unslash($_GET['wplg_scan_id'] ?? ''));
+        $noticeStatus = sanitize_key((string) wp_unslash($_GET['baseline_notice'] ?? ''));
+        $modalScanId = sanitize_text_field((string) wp_unslash($_GET['baseline_scan_id'] ?? ''));
         if ($modalScanId === '' && $latestScanId !== '') {
             $modalScanId = $latestScanId;
         }
         $latestStatus = sanitize_key((string) ($latestScanRow['status'] ?? ''));
-        $forceOpenModal = !empty($_GET['wplg_open_modal']) && sanitize_key((string) wp_unslash($_GET['wplg_open_modal'])) === '1';
+        $forceOpenModal = !empty($_GET['baseline_open_modal']) && sanitize_key((string) wp_unslash($_GET['baseline_open_modal'])) === '1';
         $shouldAutoOpenModal = $modalScanId !== '' && ($forceOpenModal || $noticeStatus === 'success' || $this->is_scan_in_progress($latestStatus));
         $lastCompletedReportUrl = $this->find_last_completed_report_url($scans);
 
-        echo '<div class="wplg-grid">';
+        echo '<div class="baseline-grid">';
         $this->render_scan_setup_card($scanDefaults);
         $this->render_latest_scan_card($lastScan, $latestScanRow, $lastCompletedReportUrl);
         echo '</div>';
@@ -535,11 +537,11 @@ class WPLG_Admin
     {
         $siteId = $this->get_option(self::OPTION_SITE_ID);
 
-        echo '<div class="wrap wplg-wrap">';
+        echo '<div class="wrap baseline-wrap">';
         echo '<h1>Branding</h1>';
 
         if ($siteId === '') {
-            echo '<p>Connect your site in LaunchGuard Dashboard first.</p>';
+            echo '<p>Connect your site in Baseline Dashboard first.</p>';
             echo '</div>';
             return;
         }
@@ -554,7 +556,7 @@ class WPLG_Admin
             'primary_color' => '#1f2937',
             'accent_color' => '#22c55e',
             'footer_text' => '',
-            'hide_launchguard_branding' => 0
+            'hide_baseline_branding' => 0
         ];
 
         $response = $this->api_request('GET', '/v1/sites/' . rawurlencode($siteId) . '/branding');
@@ -567,19 +569,19 @@ class WPLG_Admin
         }
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-        echo '<input type="hidden" name="action" value="wplg_save_branding" />';
-        wp_nonce_field('wplg_save_branding');
+        echo '<input type="hidden" name="action" value="baseline_save_branding" />';
+        wp_nonce_field('baseline_save_branding');
 
         echo '<table class="form-table" role="presentation">';
         $disabledAttr = $whitelabelEnabled ? '' : ' disabled="disabled"';
-        echo '<tr><th scope="row"><label for="wplg_brand_name">Brand Name</label></th><td><input class="regular-text" type="text" id="wplg_brand_name" name="brand_name" value="' . esc_attr((string) $brandingData['brand_name']) . '"' . $disabledAttr . ' /></td></tr>';
-        echo '<tr><th scope="row"><label for="wplg_logo_url">Logo URL</label></th><td><input class="regular-text" type="url" id="wplg_logo_url" name="logo_url" value="' . esc_attr((string) $brandingData['logo_url']) . '"' . $disabledAttr . ' /></td></tr>';
-        echo '<tr><th scope="row"><label for="wplg_primary_color">Primary Color</label></th><td><input type="color" id="wplg_primary_color" name="primary_color" value="' . esc_attr((string) $brandingData['primary_color']) . '"' . $disabledAttr . ' /></td></tr>';
-        echo '<tr><th scope="row"><label for="wplg_accent_color">Accent Color</label></th><td><input type="color" id="wplg_accent_color" name="accent_color" value="' . esc_attr((string) $brandingData['accent_color']) . '"' . $disabledAttr . ' /></td></tr>';
-        echo '<tr><th scope="row"><label for="wplg_footer_text">Footer Text</label></th><td><textarea class="large-text" rows="3" id="wplg_footer_text" name="footer_text"' . $disabledAttr . '>' . esc_textarea((string) $brandingData['footer_text']) . '</textarea></td></tr>';
+        echo '<tr><th scope="row"><label for="baseline_brand_name">Brand Name</label></th><td><input class="regular-text" type="text" id="baseline_brand_name" name="brand_name" value="' . esc_attr((string) $brandingData['brand_name']) . '"' . $disabledAttr . ' /></td></tr>';
+        echo '<tr><th scope="row"><label for="baseline_logo_url">Logo URL</label></th><td><input class="regular-text" type="url" id="baseline_logo_url" name="logo_url" value="' . esc_attr((string) $brandingData['logo_url']) . '"' . $disabledAttr . ' /></td></tr>';
+        echo '<tr><th scope="row"><label for="baseline_primary_color">Primary Color</label></th><td><input type="color" id="baseline_primary_color" name="primary_color" value="' . esc_attr((string) $brandingData['primary_color']) . '"' . $disabledAttr . ' /></td></tr>';
+        echo '<tr><th scope="row"><label for="baseline_accent_color">Accent Color</label></th><td><input type="color" id="baseline_accent_color" name="accent_color" value="' . esc_attr((string) $brandingData['accent_color']) . '"' . $disabledAttr . ' /></td></tr>';
+        echo '<tr><th scope="row"><label for="baseline_footer_text">Footer Text</label></th><td><textarea class="large-text" rows="3" id="baseline_footer_text" name="footer_text"' . $disabledAttr . '>' . esc_textarea((string) $brandingData['footer_text']) . '</textarea></td></tr>';
 
-        $checked = !empty($brandingData['hide_launchguard_branding']) ? 'checked' : '';
-        echo '<tr><th scope="row">White-label Mode</th><td><label><input type="checkbox" name="hide_launchguard_branding" value="1" ' . esc_attr($checked) . $disabledAttr . ' /> Hide LaunchGuard branding in exported reports</label></td></tr>';
+        $checked = !empty($brandingData['hide_baseline_branding']) ? 'checked' : '';
+        echo '<tr><th scope="row">White-label Mode</th><td><label><input type="checkbox" name="hide_baseline_branding" value="1" ' . esc_attr($checked) . $disabledAttr . ' /> Hide Baseline branding in exported reports</label></td></tr>';
         echo '</table>';
 
         if ($whitelabelEnabled) {
@@ -592,31 +594,31 @@ class WPLG_Admin
     public function render_settings(): void
     {
         ?>
-        <div class="wrap wplg-wrap">
+        <div class="wrap baseline-wrap">
             <h1>Settings</h1>
             <form method="post" action="options.php">
-                <?php settings_fields('wplg_settings_group'); ?>
+                <?php settings_fields('baseline_settings_group'); ?>
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><label for="wplg_api_base_url">API Base URL</label></th>
-                        <td><input class="regular-text" type="url" id="wplg_api_base_url" name="wplg_api_base_url" value="<?php echo esc_attr($this->get_option(self::OPTION_API_BASE)); ?>" placeholder="https://launchguard-api.your-subdomain.workers.dev" /></td>
+                        <th scope="row"><label for="baseline_api_base_url">API Base URL</label></th>
+                        <td><input class="regular-text" type="url" id="baseline_api_base_url" name="baseline_api_base_url" value="<?php echo esc_attr($this->get_option(self::OPTION_API_BASE)); ?>" placeholder="https://baseline-api.your-subdomain.workers.dev" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="wplg_site_token">Site Token</label></th>
-                        <td><input class="regular-text" type="text" id="wplg_site_token" name="wplg_site_token" value="<?php echo esc_attr($this->get_option(self::OPTION_SITE_TOKEN)); ?>" /></td>
+                        <th scope="row"><label for="baseline_site_token">Site Token</label></th>
+                        <td><input class="regular-text" type="text" id="baseline_site_token" name="baseline_site_token" value="<?php echo esc_attr($this->get_option(self::OPTION_SITE_TOKEN)); ?>" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="wplg_site_id">Site ID</label></th>
-                        <td><input class="regular-text" type="text" id="wplg_site_id" name="wplg_site_id" value="<?php echo esc_attr($this->get_option(self::OPTION_SITE_ID)); ?>" /></td>
+                        <th scope="row"><label for="baseline_site_id">Site ID</label></th>
+                        <td><input class="regular-text" type="text" id="baseline_site_id" name="baseline_site_id" value="<?php echo esc_attr($this->get_option(self::OPTION_SITE_ID)); ?>" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="wplg_tenant_id">Tenant ID</label></th>
-                        <td><input class="regular-text" type="text" id="wplg_tenant_id" name="wplg_tenant_id" value="<?php echo esc_attr($this->get_option(self::OPTION_TENANT_ID)); ?>" /></td>
+                        <th scope="row"><label for="baseline_tenant_id">Tenant ID</label></th>
+                        <td><input class="regular-text" type="text" id="baseline_tenant_id" name="baseline_tenant_id" value="<?php echo esc_attr($this->get_option(self::OPTION_TENANT_ID)); ?>" /></td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="wplg_default_form_mode">Default Form Mode</label></th>
+                        <th scope="row"><label for="baseline_default_form_mode">Default Form Mode</label></th>
                         <td>
-                            <select id="wplg_default_form_mode" name="wplg_default_form_mode">
+                            <select id="baseline_default_form_mode" name="baseline_default_form_mode">
                                 <?php $mode = $this->get_option(self::OPTION_DEFAULT_FORM_MODE, 'dry-run'); ?>
                                 <option value="dry-run" <?php selected($mode, 'dry-run'); ?>>dry-run</option>
                                 <option value="live" <?php selected($mode, 'live'); ?>>live</option>
@@ -634,11 +636,11 @@ class WPLG_Admin
     {
         $siteId = $this->get_option(self::OPTION_SITE_ID);
 
-        echo '<div class="wrap wplg-wrap">';
+        echo '<div class="wrap baseline-wrap">';
         echo '<h1>Billing</h1>';
 
         if ($siteId === '') {
-            echo '<p>Connect your site in LaunchGuard Dashboard first.</p>';
+            echo '<p>Connect your site in Baseline Dashboard first.</p>';
             echo '</div>';
             return;
         }
@@ -659,7 +661,7 @@ class WPLG_Admin
         $currentPeriodEnd = sanitize_text_field((string) ($billing['current_period_end'] ?? ''));
         $currentPlan = is_array($data['current_plan'] ?? null) ? $data['current_plan'] : [];
 
-        echo '<div class="wplg-card">';
+        echo '<div class="baseline-card">';
         echo '<h2>Current Subscription</h2>';
         echo '<p><strong>Plan:</strong> ' . esc_html($currentPlanId) . '</p>';
         echo '<p><strong>Status:</strong> ' . esc_html($billingStatus) . '</p>';
@@ -672,12 +674,12 @@ class WPLG_Admin
         echo '</div>';
 
         if (empty($plans)) {
-            echo '<div class="wplg-card"><p>No plans available yet.</p></div>';
+            echo '<div class="baseline-card"><p>No plans available yet.</p></div>';
             echo '</div>';
             return;
         }
 
-        echo '<div class="wplg-plan-grid">';
+        echo '<div class="baseline-plan-grid">';
         foreach ($plans as $plan) {
             $planId = sanitize_text_field((string) ($plan['id'] ?? ''));
             $planScans = (int) ($plan['scans_limit'] ?? 0);
@@ -688,10 +690,10 @@ class WPLG_Admin
             $stripeConfigured = !empty($plan['stripe_price_configured']);
             $isCurrent = $planId === $currentPlanId;
 
-            echo '<div class="wplg-card wplg-plan-card">';
+            echo '<div class="baseline-card baseline-plan-card">';
             echo '<h2>' . esc_html(ucfirst($planId)) . '</h2>';
             if ($isCurrent) {
-                echo '<p><span class="wplg-pill">Current</span></p>';
+                echo '<p><span class="baseline-pill">Current</span></p>';
             }
             echo '<p><strong>Scans / month:</strong> ' . esc_html((string) $planScans) . '</p>';
             echo '<p><strong>Sites:</strong> ' . esc_html((string) $planSites) . '</p>';
@@ -704,9 +706,9 @@ class WPLG_Admin
             }
 
             echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
-            echo '<input type="hidden" name="action" value="wplg_start_checkout" />';
+            echo '<input type="hidden" name="action" value="baseline_start_checkout" />';
             echo '<input type="hidden" name="plan_id" value="' . esc_attr($planId) . '" />';
-            wp_nonce_field('wplg_start_checkout');
+            wp_nonce_field('baseline_start_checkout');
 
             $buttonText = $isCurrent ? 'Change Plan' : 'Choose Plan';
             $buttonDisabled = $stripeConfigured ? '' : ' disabled="disabled"';
@@ -721,7 +723,7 @@ class WPLG_Admin
 
     public function handle_register_site(): void
     {
-        $this->ensure_admin_post('wplg_register_site');
+        $this->ensure_admin_post('baseline_register_site');
 
         $payload = [
             'site_url' => home_url('/'),
@@ -730,34 +732,34 @@ class WPLG_Admin
             'plan_id' => 'starter',
             'wp_version' => get_bloginfo('version'),
             'php_version' => PHP_VERSION,
-            'plugin_version' => WPLG_VERSION,
+            'plugin_version' => BASELINE_VERSION,
             'timezone' => wp_timezone_string() ?: 'UTC'
         ];
 
         $response = $this->api_request('POST', '/v1/sites/register', $payload, false);
         if (is_wp_error($response)) {
-            $this->redirect_with_notice('wplaunchguard-dashboard', 'error', $response->get_error_message());
+            $this->redirect_with_notice('baseline-dashboard', 'error', $response->get_error_message());
         }
 
         $data = $response['data'];
         if (empty($data['site_id']) || empty($data['site_token'])) {
-            $this->redirect_with_notice('wplaunchguard-dashboard', 'error', 'Site registration response missing required fields.');
+            $this->redirect_with_notice('baseline-dashboard', 'error', 'Site registration response missing required fields.');
         }
 
         update_option(self::OPTION_SITE_ID, sanitize_text_field((string) $data['site_id']));
         update_option(self::OPTION_SITE_TOKEN, sanitize_text_field((string) $data['site_token']));
         update_option(self::OPTION_TENANT_ID, sanitize_text_field((string) ($data['tenant_id'] ?? '')));
 
-        $this->redirect_with_notice('wplaunchguard-dashboard', 'success', 'Site registered successfully.');
+        $this->redirect_with_notice('baseline-dashboard', 'success', 'Site registered successfully.');
     }
 
     public function handle_run_scan(): void
     {
-        $this->ensure_admin_post('wplg_run_scan');
+        $this->ensure_admin_post('baseline_run_scan');
 
         $siteId = $this->get_option(self::OPTION_SITE_ID);
         if ($siteId === '') {
-            $this->redirect_with_notice('wplaunchguard-scan', 'error', 'Connect the site before running scans.');
+            $this->redirect_with_notice('baseline-scan', 'error', 'Connect the site before running scans.');
         }
 
         $formMode = $this->sanitize_form_mode(sanitize_text_field((string) wp_unslash($_POST['form_mode'] ?? 'dry-run')));
@@ -783,7 +785,7 @@ class WPLG_Admin
 
         $response = $this->api_request('POST', '/v1/scans', $payload);
         if (is_wp_error($response)) {
-            $this->redirect_with_notice('wplaunchguard-scan', 'error', $this->format_scan_api_error($response->get_error_message()));
+            $this->redirect_with_notice('baseline-scan', 'error', $this->format_scan_api_error($response->get_error_message()));
         }
 
         $scanId = sanitize_text_field((string) ($response['data']['scan_id'] ?? ''));
@@ -791,7 +793,7 @@ class WPLG_Admin
             update_option(self::OPTION_LAST_SCAN_ID, $scanId);
         }
 
-        $this->redirect_with_notice('wplaunchguard-scan', 'success', 'Scan queued successfully.', $scanId);
+        $this->redirect_with_notice('baseline-scan', 'success', 'Scan queued successfully.', $scanId);
     }
 
     public function handle_run_page_scan(): void
@@ -800,20 +802,20 @@ class WPLG_Admin
             wp_die('Unauthorized request');
         }
 
-        check_admin_referer('wplg_run_page_scan', 'wplg_run_page_scan_nonce');
+        check_admin_referer('baseline_run_page_scan', 'baseline_run_page_scan_nonce');
 
-        $postId = absint(wp_unslash($_POST['wplg_post_id'] ?? ($_POST['post_ID'] ?? 0)));
+        $postId = absint(wp_unslash($_POST['baseline_post_id'] ?? ($_POST['post_ID'] ?? 0)));
         if ($postId <= 0) {
-            $this->redirect_with_notice('wplaunchguard-dashboard', 'error', 'Invalid post target for page scan.');
+            $this->redirect_with_notice('baseline-dashboard', 'error', 'Invalid post target for page scan.');
         }
 
         $post = get_post($postId);
         if (!$post instanceof WP_Post) {
-            $this->redirect_with_notice('wplaunchguard-dashboard', 'error', 'Unable to load post for page scan.');
+            $this->redirect_with_notice('baseline-dashboard', 'error', 'Unable to load post for page scan.');
         }
 
         if (!in_array($post->post_type, $this->get_supported_scan_post_types(), true)) {
-            $this->redirect_to_post_with_notice($postId, 'error', 'This post type is not eligible for LaunchGuard page scans.');
+            $this->redirect_to_post_with_notice($postId, 'error', 'This post type is not eligible for Baseline page scans.');
         }
 
         $targetUrl = $this->get_published_target_url($postId);
@@ -826,13 +828,13 @@ class WPLG_Admin
             $this->redirect_to_post_with_notice($postId, 'error', 'Connect the site before running scans.');
         }
 
-        $formMode = $this->sanitize_form_mode(sanitize_text_field((string) wp_unslash($_POST['wplg_page_form_mode'] ?? $this->get_option(self::OPTION_DEFAULT_FORM_MODE, 'dry-run'))));
+        $formMode = $this->sanitize_form_mode(sanitize_text_field((string) wp_unslash($_POST['baseline_page_form_mode'] ?? $this->get_option(self::OPTION_DEFAULT_FORM_MODE, 'dry-run'))));
         update_option(self::OPTION_DEFAULT_FORM_MODE, $formMode);
 
         $defaults = $this->get_scan_defaults();
-        $storedPostOptions = $this->sanitize_scan_options(wp_unslash($_POST['wplg_scan_options'] ?? []), $defaults);
-        $submitMode = sanitize_key((string) wp_unslash($_POST['wplg_scan_submit_mode'] ?? 'custom'));
-        $useSiteDefaults = $submitMode === 'defaults' || !empty($_POST['wplg_scan_use_site_defaults']);
+        $storedPostOptions = $this->sanitize_scan_options(wp_unslash($_POST['baseline_scan_options'] ?? []), $defaults);
+        $submitMode = sanitize_key((string) wp_unslash($_POST['baseline_scan_submit_mode'] ?? 'custom'));
+        $useSiteDefaults = $submitMode === 'defaults' || !empty($_POST['baseline_scan_use_site_defaults']);
         $effectiveOptions = $useSiteDefaults ? $defaults : $storedPostOptions;
 
         update_post_meta($postId, self::META_SCAN_OPTIONS, $storedPostOptions);
@@ -868,17 +870,17 @@ class WPLG_Admin
 
     public function handle_save_branding(): void
     {
-        $this->ensure_admin_post('wplg_save_branding');
+        $this->ensure_admin_post('baseline_save_branding');
 
         $siteId = $this->get_option(self::OPTION_SITE_ID);
         if ($siteId === '') {
-            $this->redirect_with_notice('wplaunchguard-branding', 'error', 'Connect the site before saving branding.');
+            $this->redirect_with_notice('baseline-branding', 'error', 'Connect the site before saving branding.');
         }
 
         $limits = $this->fetch_limits($siteId);
         $planFeatures = $this->extract_plan_features($limits);
         if (empty($planFeatures['whitelabel'])) {
-            $this->redirect_with_notice('wplaunchguard-branding', 'error', 'Upgrade to the Agency plan to unlock white-label branding.');
+            $this->redirect_with_notice('baseline-branding', 'error', 'Upgrade to the Agency plan to unlock white-label branding.');
         }
 
         $payload = [
@@ -887,45 +889,45 @@ class WPLG_Admin
             'primary_color' => sanitize_hex_color((string) ($_POST['primary_color'] ?? '')) ?: '#1f2937',
             'accent_color' => sanitize_hex_color((string) ($_POST['accent_color'] ?? '')) ?: '#22c55e',
             'footer_text' => sanitize_textarea_field((string) ($_POST['footer_text'] ?? '')),
-            'hide_launchguard_branding' => !empty($_POST['hide_launchguard_branding'])
+            'hide_baseline_branding' => !empty($_POST['hide_baseline_branding'])
         ];
 
         $response = $this->api_request('PUT', '/v1/sites/' . rawurlencode($siteId) . '/branding', $payload);
         if (is_wp_error($response)) {
-            $this->redirect_with_notice('wplaunchguard-branding', 'error', $response->get_error_message());
+            $this->redirect_with_notice('baseline-branding', 'error', $response->get_error_message());
         }
 
-        $this->redirect_with_notice('wplaunchguard-branding', 'success', 'Branding saved.');
+        $this->redirect_with_notice('baseline-branding', 'success', 'Branding saved.');
     }
 
     public function handle_start_checkout(): void
     {
-        $this->ensure_admin_post('wplg_start_checkout');
+        $this->ensure_admin_post('baseline_start_checkout');
 
         $siteId = $this->get_option(self::OPTION_SITE_ID);
         if ($siteId === '') {
-            $this->redirect_with_notice('wplaunchguard-billing', 'error', 'Connect the site before starting checkout.');
+            $this->redirect_with_notice('baseline-billing', 'error', 'Connect the site before starting checkout.');
         }
 
         $planId = sanitize_key((string) ($_POST['plan_id'] ?? ''));
         if (!in_array($planId, ['starter', 'growth', 'agency'], true)) {
-            $this->redirect_with_notice('wplaunchguard-billing', 'error', 'Invalid plan selected.');
+            $this->redirect_with_notice('baseline-billing', 'error', 'Invalid plan selected.');
         }
 
         $successUrl = add_query_arg(
             [
-                'page' => 'wplaunchguard-billing',
-                'wplg_notice' => 'success',
-                'wplg_message' => 'Checkout complete. Billing status may take up to 60 seconds to refresh.'
+                'page' => 'baseline-billing',
+                'baseline_notice' => 'success',
+                'baseline_message' => 'Checkout complete. Billing status may take up to 60 seconds to refresh.'
             ],
             admin_url('admin.php')
         );
 
         $cancelUrl = add_query_arg(
             [
-                'page' => 'wplaunchguard-billing',
-                'wplg_notice' => 'error',
-                'wplg_message' => 'Checkout canceled.'
+                'page' => 'baseline-billing',
+                'baseline_notice' => 'error',
+                'baseline_message' => 'Checkout canceled.'
             ],
             admin_url('admin.php')
         );
@@ -938,12 +940,12 @@ class WPLG_Admin
 
         $response = $this->api_request('POST', '/v1/sites/' . rawurlencode($siteId) . '/billing/checkout-session', $payload);
         if (is_wp_error($response)) {
-            $this->redirect_with_notice('wplaunchguard-billing', 'error', $response->get_error_message());
+            $this->redirect_with_notice('baseline-billing', 'error', $response->get_error_message());
         }
 
         $checkoutUrl = esc_url_raw((string) ($response['data']['checkout_url'] ?? ''));
         if ($checkoutUrl === '' || !preg_match('#^https://#', $checkoutUrl)) {
-            $this->redirect_with_notice('wplaunchguard-billing', 'error', 'Checkout URL missing from API response.');
+            $this->redirect_with_notice('baseline-billing', 'error', 'Checkout URL missing from API response.');
         }
 
         wp_redirect($checkoutUrl);
@@ -957,7 +959,7 @@ class WPLG_Admin
         }
 
         $nonce = sanitize_text_field((string) wp_unslash($_REQUEST['nonce'] ?? ''));
-        if (!wp_verify_nonce($nonce, 'wplg_poll_scan')) {
+        if (!wp_verify_nonce($nonce, 'baseline_poll_scan')) {
             wp_send_json_error(['message' => 'invalid_nonce'], 403);
         }
 
@@ -986,7 +988,7 @@ class WPLG_Admin
         }
 
         $nonce = sanitize_text_field((string) wp_unslash($_REQUEST['nonce'] ?? ''));
-        if (!wp_verify_nonce($nonce, 'wplg_cancel_scan')) {
+        if (!wp_verify_nonce($nonce, 'baseline_cancel_scan')) {
             wp_send_json_error(['message' => 'invalid_nonce'], 403);
         }
 
@@ -1014,13 +1016,13 @@ class WPLG_Admin
         if (!current_user_can('manage_options')) {
             wp_die('Unauthorized request');
         }
-        check_admin_referer('wplg_cancel_scan', 'wplg_cancel_scan_nonce');
+        check_admin_referer('baseline_cancel_scan', 'baseline_cancel_scan_nonce');
 
-        $scanId = sanitize_text_field((string) wp_unslash($_POST['wplg_scan_id'] ?? ''));
-        $postId = absint(wp_unslash($_POST['wplg_post_id'] ?? 0));
-        $page = sanitize_key((string) wp_unslash($_POST['wplg_page'] ?? 'wplaunchguard-scan'));
-        if (!in_array($page, ['wplaunchguard-dashboard', 'wplaunchguard-scan'], true)) {
-            $page = 'wplaunchguard-scan';
+        $scanId = sanitize_text_field((string) wp_unslash($_POST['baseline_scan_id'] ?? ''));
+        $postId = absint(wp_unslash($_POST['baseline_post_id'] ?? 0));
+        $page = sanitize_key((string) wp_unslash($_POST['baseline_page'] ?? 'baseline-scan'));
+        if (!in_array($page, ['baseline-dashboard', 'baseline-scan'], true)) {
+            $page = 'baseline-scan';
         }
 
         if ($scanId === '') {
@@ -1333,41 +1335,41 @@ class WPLG_Admin
         $currentUrl = $this->extract_current_scan_url($summary, $scan);
         $message = $this->get_scan_eta_text($status);
         $pollUrl = admin_url('admin-ajax.php');
-        $pollNonce = wp_create_nonce('wplg_poll_scan');
-        $cancelNonce = wp_create_nonce('wplg_cancel_scan');
+        $pollNonce = wp_create_nonce('baseline_poll_scan');
+        $cancelNonce = wp_create_nonce('baseline_cancel_scan');
 
         $createdAt = sanitize_text_field((string) ($scan['created_at'] ?? ''));
-        echo '<div class="wplg-inline-tracker" data-wplg-inline-tracker="1" data-scan-id="' . esc_attr($scanId) . '" data-poll-url="' . esc_url($pollUrl) . '" data-poll-nonce="' . esc_attr($pollNonce) . '" data-cancel-nonce="' . esc_attr($cancelNonce) . '" data-created-at="' . esc_attr($createdAt) . '">';
+        echo '<div class="baseline-inline-tracker" data-baseline-inline-tracker="1" data-scan-id="' . esc_attr($scanId) . '" data-poll-url="' . esc_url($pollUrl) . '" data-poll-nonce="' . esc_attr($pollNonce) . '" data-cancel-nonce="' . esc_attr($cancelNonce) . '" data-created-at="' . esc_attr($createdAt) . '">';
         echo '<p><strong>ID:</strong> <code>' . esc_html($scanId) . '</code></p>';
-        echo '<p><strong>Status:</strong> <span data-wplg-inline-status>' . esc_html($status !== '' ? $status : 'unknown') . '</span></p>';
-        echo '<p><strong>Progress:</strong> <span data-wplg-inline-progress-text>' . esc_html((string) $progress) . '%</span></p>';
-        echo '<p><strong>Elapsed:</strong> <span data-wplg-inline-elapsed>--</span></p>';
-        echo '<div class="wplg-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $progress) . '" data-wplg-inline-progress-wrap="1">';
-        echo '<span data-wplg-inline-progress-bar="1" style="width:' . esc_attr((string) $progress) . '%"></span>';
+        echo '<p><strong>Status:</strong> <span data-baseline-inline-status>' . esc_html($status !== '' ? $status : 'unknown') . '</span></p>';
+        echo '<p><strong>Progress:</strong> <span data-baseline-inline-progress-text>' . esc_html((string) $progress) . '%</span></p>';
+        echo '<p><strong>Elapsed:</strong> <span data-baseline-inline-elapsed>--</span></p>';
+        echo '<div class="baseline-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $progress) . '" data-baseline-inline-progress-wrap="1">';
+        echo '<span data-baseline-inline-progress-bar="1" style="width:' . esc_attr((string) $progress) . '%"></span>';
         echo '</div>';
-        echo '<p><strong>Current URL:</strong> <code class="wplg-break-word" data-wplg-inline-current-url>' . esc_html($currentUrl !== '' ? $currentUrl : 'Waiting for live scan telemetry...') . '</code></p>';
+        echo '<p><strong>Current URL:</strong> <code class="baseline-break-word" data-baseline-inline-current-url>' . esc_html($currentUrl !== '' ? $currentUrl : 'Waiting for live scan telemetry...') . '</code></p>';
         if ($message !== '') {
-            echo '<p class="description" data-wplg-inline-message>' . esc_html($message) . '</p>';
+            echo '<p class="description" data-baseline-inline-message>' . esc_html($message) . '</p>';
         } else {
-            echo '<p class="description" data-wplg-inline-message></p>';
+            echo '<p class="description" data-baseline-inline-message></p>';
         }
 
         $isRunning = $this->is_scan_in_progress($status);
-        echo '<div class="wplg-actions">';
+        echo '<div class="baseline-actions">';
         if (!empty($summary['report_index_url'])) {
-            echo '<a class="button button-primary" data-wplg-inline-view-report="1" target="_blank" rel="noopener" href="' . esc_url((string) $summary['report_index_url']) . '">View Report</a>';
+            echo '<a class="button button-primary" data-baseline-inline-view-report="1" target="_blank" rel="noopener" href="' . esc_url((string) $summary['report_index_url']) . '">View Report</a>';
         } else {
-            echo '<a class="button button-primary is-disabled" data-wplg-inline-view-report="1" aria-disabled="true" href="#">View Report</a>';
+            echo '<a class="button button-primary is-disabled" data-baseline-inline-view-report="1" aria-disabled="true" href="#">View Report</a>';
         }
         if (!empty($summary['workflow_url'])) {
-            echo '<a class="button" data-wplg-inline-open-run="1" target="_blank" rel="noopener" href="' . esc_url((string) $summary['workflow_url']) . '">Open GitHub Run</a>';
+            echo '<a class="button" data-baseline-inline-open-run="1" target="_blank" rel="noopener" href="' . esc_url((string) $summary['workflow_url']) . '">Open GitHub Run</a>';
         } else {
-            echo '<a class="button is-disabled" data-wplg-inline-open-run="1" aria-disabled="true" href="#">Open GitHub Run</a>';
+            echo '<a class="button is-disabled" data-baseline-inline-open-run="1" aria-disabled="true" href="#">Open GitHub Run</a>';
         }
         if ($isRunning) {
-            echo '<button type="button" class="button" data-wplg-inline-stop="1">Stop Scan</button>';
+            echo '<button type="button" class="button" data-baseline-inline-stop="1">Stop Scan</button>';
         } else {
-            echo '<button type="button" class="button is-disabled" data-wplg-inline-stop="1" aria-disabled="true">Stop Scan</button>';
+            echo '<button type="button" class="button is-disabled" data-baseline-inline-stop="1" aria-disabled="true">Stop Scan</button>';
         }
         echo '</div>';
         echo '</div>';
@@ -1375,34 +1377,34 @@ class WPLG_Admin
 
     private function render_scan_setup_card(array $scanDefaults): void
     {
-        echo '<div class="wplg-card wplg-card-scan-setup">';
+        echo '<div class="baseline-card baseline-card-scan-setup">';
         echo '<h2>Scan Setup</h2>';
-        echo '<p class="wplg-card-intro">Choose the scan profile for this run. You can still override per-page scans from post/page edit screens.</p>';
-        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="wplg-scan-config-form">';
-        echo '<input type="hidden" name="action" value="wplg_run_scan" />';
-        wp_nonce_field('wplg_run_scan');
+        echo '<p class="baseline-card-intro">Choose the scan profile for this run. Baseline auto-discovers published WordPress pages/posts by default. You can still override per-page scans from post/page edit screens.</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="baseline-scan-config-form">';
+        echo '<input type="hidden" name="action" value="baseline_run_scan" />';
+        wp_nonce_field('baseline_run_scan');
 
-        echo '<div class="wplg-scan-section">';
+        echo '<div class="baseline-scan-section">';
         echo '<h3>Scope</h3>';
-        echo '<p><label for="wplg_form_mode"><strong>Form Mode</strong></label><br />';
-        echo '<select id="wplg_form_mode" name="form_mode">';
+        echo '<p><label for="baseline_form_mode"><strong>Form Mode</strong></label><br />';
+        echo '<select id="baseline_form_mode" name="form_mode">';
         $defaultMode = $this->get_option(self::OPTION_DEFAULT_FORM_MODE, 'dry-run');
         echo '<option value="dry-run"' . selected($defaultMode, 'dry-run', false) . '>dry-run</option>';
         echo '<option value="live"' . selected($defaultMode, 'live', false) . '>live</option>';
         echo '</select></p>';
-        echo '<p><label for="wplg_sitemap_url"><strong>Sitemap URL (optional)</strong></label><br />';
-        echo '<input class="regular-text" type="url" id="wplg_sitemap_url" name="sitemap_url" placeholder="https://example.com/sitemap_index.xml" /></p>';
+        echo '<p><label for="baseline_sitemap_url"><strong>Sitemap URL (optional override)</strong></label><br />';
+        echo '<input class="regular-text" type="url" id="baseline_sitemap_url" name="sitemap_url" placeholder="Only needed if you want to force a custom sitemap source." /></p>';
         echo '</div>';
 
-        echo '<div class="wplg-scan-section">';
+        echo '<div class="baseline-scan-section">';
         echo '<h3>Performance/Coverage</h3>';
-        $this->render_toggle_field('scan_options[quick_scan_enabled]', 'wplg_quick_scan', !empty($scanDefaults['quick_scan_enabled']), 'Quick scan', 'Runs a faster reduced project set for quicker feedback (example: ~2–4 min vs full run).');
-        $this->render_toggle_field('scan_options[responsive_enabled]', 'wplg_responsive_scan', !empty($scanDefaults['responsive_enabled']), 'Responsive scan', 'Tests mobile/tablet layouts for breakpoint issues (example: overlapping buttons on 390px width).');
+        $this->render_toggle_field('scan_options[quick_scan_enabled]', 'baseline_quick_scan', !empty($scanDefaults['quick_scan_enabled']), 'Quick scan', 'Runs a faster reduced project set for quicker feedback (example: ~2–4 min vs full run).');
+        $this->render_toggle_field('scan_options[responsive_enabled]', 'baseline_responsive_scan', !empty($scanDefaults['responsive_enabled']), 'Responsive scan', 'Tests mobile/tablet layouts for breakpoint issues (example: overlapping buttons on 390px width).');
 
         $viewportVisibleClass = !empty($scanDefaults['responsive_enabled']) ? '' : ' is-hidden';
-        echo '<div class="wplg-field' . esc_attr($viewportVisibleClass) . '" data-wplg-viewport-wrap="dashboard">';
-        echo '<label for="wplg_viewport_preset"><strong>Viewport preset</strong></label>' . $this->render_help_tip('Choose which device classes to test: Desktop, Mobile, or Both.') . '<br />';
-        echo '<select id="wplg_viewport_preset" name="scan_options[viewport_preset]" data-wplg-viewport-select="dashboard">';
+        echo '<div class="baseline-field' . esc_attr($viewportVisibleClass) . '" data-baseline-viewport-wrap="dashboard">';
+        echo '<label for="baseline_viewport_preset"><strong>Viewport preset</strong></label>' . $this->render_help_tip('Choose which device classes to test: Desktop, Mobile, or Both.') . '<br />';
+        echo '<select id="baseline_viewport_preset" name="scan_options[viewport_preset]" data-baseline-viewport-select="dashboard">';
         echo '<option value="desktop"' . selected($scanDefaults['viewport_preset'], 'desktop', false) . '>Desktop</option>';
         echo '<option value="mobile"' . selected($scanDefaults['viewport_preset'], 'mobile', false) . '>Mobile</option>';
         echo '<option value="both"' . selected($scanDefaults['viewport_preset'], 'both', false) . '>Both</option>';
@@ -1410,22 +1412,22 @@ class WPLG_Admin
         echo '</div>';
         echo '</div>';
 
-        echo '<div class="wplg-scan-section">';
+        echo '<div class="baseline-scan-section">';
         echo '<h3>Evidence</h3>';
-        $this->render_toggle_field('scan_options[evidence_enabled]', 'wplg_evidence_enabled', !empty($scanDefaults['evidence_enabled']), 'Evidence', 'Captures screenshot proof for detected issues (example: missing alt text evidence).');
-        $this->render_toggle_field('scan_options[lighthouse_enabled]', 'wplg_lighthouse_enabled', !empty($scanDefaults['lighthouse_enabled']), 'Lighthouse', 'Runs Lighthouse audits for performance/SEO/accessibility metrics (example: LCP, CLS, SEO score).');
+        $this->render_toggle_field('scan_options[evidence_enabled]', 'baseline_evidence_enabled', !empty($scanDefaults['evidence_enabled']), 'Evidence', 'Captures screenshot proof for detected issues (example: missing alt text evidence).');
+        $this->render_toggle_field('scan_options[lighthouse_enabled]', 'baseline_lighthouse_enabled', !empty($scanDefaults['lighthouse_enabled']), 'Lighthouse', 'Runs Lighthouse audits for performance/SEO/accessibility metrics (example: LCP, CLS, SEO score).');
         echo '</div>';
 
-        echo '<p class="wplg-summary-line"><strong>Selected profile summary:</strong> <span id="wplg-dashboard-summary-text"></span></p>';
+        echo '<p class="baseline-summary-line"><strong>Selected profile summary:</strong> <span id="baseline-dashboard-summary-text"></span></p>';
 
-        submit_button('Start Scan', 'primary wplg-primary-cta', 'submit', false);
+        submit_button('Start Scan', 'primary baseline-primary-cta', 'submit', false);
         echo '</form>';
         echo '</div>';
     }
 
     private function render_latest_scan_card($lastScan, array $latestScanRow, string $lastCompletedReportUrl = ''): void
     {
-        echo '<div class="wplg-card wplg-card-latest">';
+        echo '<div class="baseline-card baseline-card-latest">';
         echo '<h2>Latest Scan</h2>';
         if (is_wp_error($lastScan)) {
             echo '<p>' . esc_html($lastScan->get_error_message()) . '</p>';
@@ -1445,7 +1447,7 @@ class WPLG_Admin
         $scanId = sanitize_text_field((string) ($scan['id'] ?? ''));
         $reportPdfUrl = esc_url_raw((string) ($scanSummary['report_pdf_url'] ?? ''));
         $reportZipUrl = esc_url_raw((string) ($scanSummary['report_share_zip_url'] ?? ''));
-        echo '<ul class="wplg-kv-list">';
+        echo '<ul class="baseline-kv-list">';
         echo '<li><span>ID</span><code>' . esc_html((string) ($scan['id'] ?? 'n/a')) . '</code></li>';
         echo '<li><span>Status</span>' . $this->render_status_pill((string) ($scan['status'] ?? 'n/a')) . '</li>';
         echo '<li><span>Created</span><strong>' . esc_html((string) ($scan['created_at'] ?? 'n/a')) . '</strong></li>';
@@ -1453,7 +1455,7 @@ class WPLG_Admin
 
         $targetUrl = sanitize_text_field((string) ($scan['target_url'] ?? ($scanSummary['target_url'] ?? '')));
         if ($targetUrl !== '') {
-            echo '<li><span>Target URL</span><span class="wplg-break-word"><code>' . esc_html($targetUrl) . '</code></span></li>';
+            echo '<li><span>Target URL</span><span class="baseline-break-word"><code>' . esc_html($targetUrl) . '</code></span></li>';
         }
 
         $scanOptions = $this->extract_scan_options($scan, $scanSummary);
@@ -1464,13 +1466,13 @@ class WPLG_Admin
 
         $progressPercent = $this->estimate_scan_progress($scanStatus, $scanSummary);
         echo '<p><strong>Progress:</strong> ' . esc_html((string) $progressPercent) . '%</p>';
-        echo '<div class="wplg-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $progressPercent) . '">';
+        echo '<div class="baseline-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . esc_attr((string) $progressPercent) . '">';
         echo '<span style="width:' . esc_attr((string) $progressPercent) . '%"></span>';
         echo '</div>';
 
         $currentUrl = $this->extract_current_scan_url($scanSummary, $scan);
         if ($currentUrl !== '') {
-            echo '<p><strong>Current URL:</strong> <code class="wplg-break-word">' . esc_html($currentUrl) . '</code></p>';
+            echo '<p><strong>Current URL:</strong> <code class="baseline-break-word">' . esc_html($currentUrl) . '</code></p>';
         }
 
         $etaText = $this->get_scan_eta_text($scanStatus);
@@ -1480,16 +1482,16 @@ class WPLG_Admin
 
         if ($this->is_scan_in_progress($scanStatus)) {
             echo '<p class="description">Live scan progress is available in the tracker modal while your scan is running.</p>';
-            echo '<div class="wplg-actions">';
-            echo '<button type="button" class="button" data-wplg-open-scan-modal="1">Track Live Scan</button>';
-            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="wplg-inline-form">';
-            echo '<input type="hidden" name="action" value="wplg_cancel_scan" />';
-            echo '<input type="hidden" name="wplg_page" value="wplaunchguard-scan" />';
-            echo '<input type="hidden" name="wplg_scan_id" value="' . esc_attr($scanId) . '" />';
-            wp_nonce_field('wplg_cancel_scan', 'wplg_cancel_scan_nonce');
+            echo '<div class="baseline-actions">';
+            echo '<button type="button" class="button" data-baseline-open-scan-modal="1">Track Live Scan</button>';
+            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="baseline-inline-form">';
+            echo '<input type="hidden" name="action" value="baseline_cancel_scan" />';
+            echo '<input type="hidden" name="baseline_page" value="baseline-scan" />';
+            echo '<input type="hidden" name="baseline_scan_id" value="' . esc_attr($scanId) . '" />';
+            wp_nonce_field('baseline_cancel_scan', 'baseline_cancel_scan_nonce');
             echo '<button type="submit" class="button">Stop Scan</button>';
             echo '</form>';
-            echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=wplaunchguard-scan')) . '">Refresh Now</a>';
+            echo '<a class="button" href="' . esc_url(admin_url('admin.php?page=baseline-scan')) . '">Refresh Now</a>';
             echo '</div>';
         }
 
@@ -1518,11 +1520,11 @@ class WPLG_Admin
             echo '<p class="description">Report is still publishing. Retry in a few seconds, or use fallback links below.</p>';
         }
 
-        echo '<div class="wplg-actions">';
+        echo '<div class="baseline-actions">';
         if (!empty($scanSummary['report_index_url'])) {
             echo '<a class="button button-primary" target="_blank" rel="noopener" href="' . esc_url((string) $scanSummary['report_index_url']) . '">View Report</a>';
         } elseif ($scanStatus === 'completed') {
-            echo '<a class="button button-primary" href="' . esc_url(add_query_arg(['page' => 'wplaunchguard-scan'], admin_url('admin.php'))) . '">Retry Report Link</a>';
+            echo '<a class="button button-primary" href="' . esc_url(add_query_arg(['page' => 'baseline-scan'], admin_url('admin.php'))) . '">Retry Report Link</a>';
         }
 
         if (!empty($scanSummary['workflow_url'])) {
@@ -1537,15 +1539,15 @@ class WPLG_Admin
             echo '<a class="button" target="_blank" rel="noopener" href="' . esc_url($reportZipUrl) . '">Download Evidence ZIP</a>';
         }
         if (in_array($scanStatus, ['failed', 'cancelled', 'protected_stopped', 'stalled'], true)) {
-            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="wplg-inline-form">';
-            echo '<input type="hidden" name="action" value="wplg_run_scan" />';
+            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="baseline-inline-form">';
+            echo '<input type="hidden" name="action" value="baseline_run_scan" />';
             echo '<input type="hidden" name="form_mode" value="dry-run" />';
             echo '<input type="hidden" name="scan_options[evidence_enabled]" value="1" />';
             echo '<input type="hidden" name="scan_options[lighthouse_enabled]" value="0" />';
             echo '<input type="hidden" name="scan_options[quick_scan_enabled]" value="1" />';
             echo '<input type="hidden" name="scan_options[responsive_enabled]" value="0" />';
             echo '<input type="hidden" name="scan_options[viewport_preset]" value="desktop" />';
-            wp_nonce_field('wplg_run_scan');
+            wp_nonce_field('baseline_run_scan');
             echo '<button type="submit" class="button">Retry Safe Scan</button>';
             echo '</form>';
         }
@@ -1563,7 +1565,7 @@ class WPLG_Admin
 
     private function render_recent_scans_card($scans): void
     {
-        echo '<div class="wplg-card wplg-card-recent">';
+        echo '<div class="baseline-card baseline-card-recent">';
         echo '<h2>Recent Scans</h2>';
         if (is_wp_error($scans)) {
             echo '<p>' . esc_html($scans->get_error_message()) . '</p>';
@@ -1578,8 +1580,8 @@ class WPLG_Admin
             return;
         }
 
-        echo '<div class="wplg-table-wrap">';
-        echo '<table class="widefat striped wplg-table">';
+        echo '<div class="baseline-table-wrap">';
+        echo '<table class="widefat striped baseline-table">';
         echo '<thead><tr><th>Scan ID</th><th>Status</th><th>Mode</th><th>Issues</th><th>Report</th><th>Created</th></tr></thead><tbody>';
         foreach ($rows as $row) {
             $rowSummary = $this->extract_scan_summary($row);
@@ -1605,9 +1607,9 @@ class WPLG_Admin
 
     private function render_toggle_field(string $name, string $id, bool $checkedValue, string $label, string $tooltip): void
     {
-        echo '<div class="wplg-field">';
+        echo '<div class="baseline-field">';
         echo '<input type="hidden" name="' . esc_attr($name) . '" value="0" />';
-        echo '<label class="wplg-toggle-row" for="' . esc_attr($id) . '">';
+        echo '<label class="baseline-toggle-row" for="' . esc_attr($id) . '">';
         echo '<input type="checkbox" id="' . esc_attr($id) . '" name="' . esc_attr($name) . '" value="1" ' . checked($checkedValue, true, false) . ' />';
         echo '<span><strong>' . esc_html($label) . '</strong></span>';
         echo '</label>';
@@ -1647,10 +1649,10 @@ class WPLG_Admin
         $this->render_toggle_field($namePrefix . '[quick_scan_enabled]', $namePrefix . '_quick_scan_enabled', !empty($options['quick_scan_enabled']), 'Quick scan', 'Runs a faster reduced project set for quicker feedback (example: ~2–4 min vs full run).');
         $this->render_toggle_field($namePrefix . '[responsive_enabled]', $namePrefix . '_responsive_enabled', !empty($options['responsive_enabled']), 'Responsive scan', 'Tests mobile/tablet layouts for breakpoint issues (example: overlapping buttons on 390px width).');
 
-        $wrapperClass = !empty($options['responsive_enabled']) ? 'wplg-field' : 'wplg-field is-hidden';
-        echo '<div class="' . esc_attr($wrapperClass) . '" data-wplg-viewport-wrap="' . esc_attr($namePrefix) . '">';
+        $wrapperClass = !empty($options['responsive_enabled']) ? 'baseline-field' : 'baseline-field is-hidden';
+        echo '<div class="' . esc_attr($wrapperClass) . '" data-baseline-viewport-wrap="' . esc_attr($namePrefix) . '">';
         echo '<label for="' . esc_attr($namePrefix . '_viewport_preset') . '"><strong>Viewport preset</strong></label>' . $this->render_help_tip('Choose which device classes to test: Desktop, Mobile, or Both.') . '<br />';
-        echo '<select class="widefat" id="' . esc_attr($namePrefix . '_viewport_preset') . '" name="' . esc_attr($namePrefix . '[viewport_preset]') . '" data-wplg-viewport-select="' . esc_attr($namePrefix) . '">';
+        echo '<select class="widefat" id="' . esc_attr($namePrefix . '_viewport_preset') . '" name="' . esc_attr($namePrefix . '[viewport_preset]') . '" data-baseline-viewport-select="' . esc_attr($namePrefix) . '">';
         echo '<option value="desktop"' . selected($options['viewport_preset'], 'desktop', false) . '>Desktop</option>';
         echo '<option value="mobile"' . selected($options['viewport_preset'], 'mobile', false) . '>Mobile</option>';
         echo '<option value="both"' . selected($options['viewport_preset'], 'both', false) . '>Both</option>';
@@ -1665,47 +1667,47 @@ class WPLG_Admin
         }
 
         $pollUrl = admin_url('admin-ajax.php');
-        $pollNonce = wp_create_nonce('wplg_poll_scan');
-        $cancelNonce = wp_create_nonce('wplg_cancel_scan');
+        $pollNonce = wp_create_nonce('baseline_poll_scan');
+        $cancelNonce = wp_create_nonce('baseline_cancel_scan');
 
-        echo '<div id="wplg-scan-progress-modal" class="wplg-modal" data-auto-open="' . ($autoOpen ? '1' : '0') . '" data-scan-id="' . esc_attr($scanId) . '" data-poll-url="' . esc_url($pollUrl) . '" data-poll-nonce="' . esc_attr($pollNonce) . '" data-cancel-nonce="' . esc_attr($cancelNonce) . '" data-last-report-url="' . esc_url($lastCompletedReportUrl) . '" aria-hidden="true">';
-        echo '<div class="wplg-modal__backdrop" data-wplg-modal-close="1"></div>';
-        echo '<div class="wplg-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="wplg-modal-title">';
-        echo '<div class="wplg-modal__header">';
-        echo '<h2 id="wplg-modal-title">Scan In Progress</h2>';
-        echo '<button type="button" class="button-link" data-wplg-modal-close="1" aria-label="Close">Close</button>';
+        echo '<div id="baseline-scan-progress-modal" class="baseline-modal" data-auto-open="' . ($autoOpen ? '1' : '0') . '" data-scan-id="' . esc_attr($scanId) . '" data-poll-url="' . esc_url($pollUrl) . '" data-poll-nonce="' . esc_attr($pollNonce) . '" data-cancel-nonce="' . esc_attr($cancelNonce) . '" data-last-report-url="' . esc_url($lastCompletedReportUrl) . '" aria-hidden="true">';
+        echo '<div class="baseline-modal__backdrop" data-baseline-modal-close="1"></div>';
+        echo '<div class="baseline-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="baseline-modal-title">';
+        echo '<div class="baseline-modal__header">';
+        echo '<h2 id="baseline-modal-title">Scan In Progress</h2>';
+        echo '<button type="button" class="button-link" data-baseline-modal-close="1" aria-label="Close">Close</button>';
         echo '</div>';
-        echo '<div class="wplg-modal__body">';
-        echo '<div class="wplg-modal__meta"><strong>Scan ID:</strong> <code id="wplg-modal-scan-id">' . esc_html($scanId) . '</code></div>';
-        echo '<div class="wplg-modal__meta"><strong>Status:</strong> <span id="wplg-modal-status">queued</span></div>';
-        echo '<div class="wplg-modal__meta"><strong>Progress:</strong> <span id="wplg-modal-progress-text">0%</span></div>';
-        echo '<div class="wplg-progress wplg-modal__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">';
-        echo '<span id="wplg-modal-progress-bar" style="width:0%"></span>';
+        echo '<div class="baseline-modal__body">';
+        echo '<div class="baseline-modal__meta"><strong>Scan ID:</strong> <code id="baseline-modal-scan-id">' . esc_html($scanId) . '</code></div>';
+        echo '<div class="baseline-modal__meta"><strong>Status:</strong> <span id="baseline-modal-status">queued</span></div>';
+        echo '<div class="baseline-modal__meta"><strong>Progress:</strong> <span id="baseline-modal-progress-text">0%</span></div>';
+        echo '<div class="baseline-progress baseline-modal__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">';
+        echo '<span id="baseline-modal-progress-bar" style="width:0%"></span>';
         echo '</div>';
-        echo '<div class="wplg-modal__ticker"><strong>Current URL:</strong> <code id="wplg-modal-current-url">Waiting for live scan telemetry...</code></div>';
-        echo '<div class="wplg-modal__ticker"><strong>Elapsed:</strong> <span id="wplg-modal-elapsed">--</span></div>';
-        echo '<div class="wplg-modal__ticker" id="wplg-modal-status-message">Scan is queued.</div>';
-        echo '<div class="wplg-modal__ticker"><strong>QA tip:</strong> <span id="wplg-modal-tip-text">Checking forms and broken links first usually finds the highest-impact conversion issues.</span></div>';
-        echo '<div class="wplg-modal__ticker muted" id="wplg-modal-eta-text"></div>';
+        echo '<div class="baseline-modal__ticker"><strong>Current URL:</strong> <code id="baseline-modal-current-url">Waiting for live scan telemetry...</code></div>';
+        echo '<div class="baseline-modal__ticker"><strong>Elapsed:</strong> <span id="baseline-modal-elapsed">--</span></div>';
+        echo '<div class="baseline-modal__ticker" id="baseline-modal-status-message">Scan is queued.</div>';
+        echo '<div class="baseline-modal__ticker"><strong>QA tip:</strong> <span id="baseline-modal-tip-text">Checking forms and broken links first usually finds the highest-impact conversion issues.</span></div>';
+        echo '<div class="baseline-modal__ticker muted" id="baseline-modal-eta-text"></div>';
         echo '</div>';
-        echo '<div class="wplg-modal__footer">';
-        echo '<a id="wplg-modal-view-report" class="button button-primary" href="#" target="_blank" rel="noopener" aria-disabled="true">View Report</a>';
-        echo '<a id="wplg-modal-open-workflow" class="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Open GitHub Run</a>';
-        echo '<a id="wplg-modal-download-artifact" class="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Download Report ZIP</a>';
-        echo '<a id="wplg-modal-last-report" class="button" href="' . esc_url($lastCompletedReportUrl !== '' ? $lastCompletedReportUrl : '#') . '" target="_blank" rel="noopener" aria-disabled="' . ($lastCompletedReportUrl !== '' ? 'false' : 'true') . '">View Last Completed Report</a>';
-        echo '<button type="button" id="wplg-modal-retry-safe" class="button">Retry Safe Scan</button>';
-        echo '<button type="button" id="wplg-modal-stop" class="button">Stop Scan</button>';
-        echo '<button type="button" class="button" data-wplg-modal-close="1">Close</button>';
+        echo '<div class="baseline-modal__footer">';
+        echo '<a id="baseline-modal-view-report" class="button button-primary" href="#" target="_blank" rel="noopener" aria-disabled="true">View Report</a>';
+        echo '<a id="baseline-modal-open-workflow" class="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Open GitHub Run</a>';
+        echo '<a id="baseline-modal-download-artifact" class="button" href="#" target="_blank" rel="noopener" aria-disabled="true">Download Report ZIP</a>';
+        echo '<a id="baseline-modal-last-report" class="button" href="' . esc_url($lastCompletedReportUrl !== '' ? $lastCompletedReportUrl : '#') . '" target="_blank" rel="noopener" aria-disabled="' . ($lastCompletedReportUrl !== '' ? 'false' : 'true') . '">View Last Completed Report</a>';
+        echo '<button type="button" id="baseline-modal-retry-safe" class="button">Retry Safe Scan</button>';
+        echo '<button type="button" id="baseline-modal-stop" class="button">Stop Scan</button>';
+        echo '<button type="button" class="button" data-baseline-modal-close="1">Close</button>';
         echo '</div>';
-        echo '<form id="wplg-modal-retry-safe-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="wplg-hidden-form">';
-        echo '<input type="hidden" name="action" value="wplg_run_scan" />';
+        echo '<form id="baseline-modal-retry-safe-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="baseline-hidden-form">';
+        echo '<input type="hidden" name="action" value="baseline_run_scan" />';
         echo '<input type="hidden" name="form_mode" value="dry-run" />';
         echo '<input type="hidden" name="scan_options[evidence_enabled]" value="1" />';
         echo '<input type="hidden" name="scan_options[lighthouse_enabled]" value="0" />';
         echo '<input type="hidden" name="scan_options[quick_scan_enabled]" value="1" />';
         echo '<input type="hidden" name="scan_options[responsive_enabled]" value="0" />';
         echo '<input type="hidden" name="scan_options[viewport_preset]" value="desktop" />';
-        wp_nonce_field('wplg_run_scan', '_wpnonce', true, true);
+        wp_nonce_field('baseline_run_scan', '_wpnonce', true, true);
         echo '</form>';
         echo '</div>';
         echo '</div>';
@@ -1713,7 +1715,7 @@ class WPLG_Admin
 
     private function render_help_tip(string $text): string
     {
-        return ' <span class="dashicons dashicons-editor-help wplg-help-tip" title="' . esc_attr($text) . '" aria-label="' . esc_attr($text) . '"></span>';
+        return ' <span class="dashicons dashicons-editor-help baseline-help-tip" title="' . esc_attr($text) . '" aria-label="' . esc_attr($text) . '"></span>';
     }
 
     private function render_scan_form_script(): void
@@ -1766,7 +1768,7 @@ class WPLG_Admin
             function emitTelemetry(eventName, detail) {
               var payload = detail && typeof detail === 'object' ? detail : {};
               try {
-                window.dispatchEvent(new CustomEvent('wplg_scan_telemetry', { detail: Object.assign({ event: eventName }, payload) }));
+                window.dispatchEvent(new CustomEvent('baseline_scan_telemetry', { detail: Object.assign({ event: eventName }, payload) }));
               } catch (error) {}
             }
 
@@ -1798,7 +1800,7 @@ class WPLG_Admin
             }
 
             function updateDashboardSummary() {
-              var root = document.querySelector('.wplg-scan-config-form');
+              var root = document.querySelector('.baseline-scan-config-form');
               if (!root) return;
 
               var quick = root.querySelector('input[name="scan_options[quick_scan_enabled]"]:checked');
@@ -1806,7 +1808,7 @@ class WPLG_Admin
               var evidence = root.querySelector('input[name="scan_options[evidence_enabled]"]:checked');
               var lighthouse = root.querySelector('input[name="scan_options[lighthouse_enabled]"]:checked');
               var viewport = root.querySelector('select[name="scan_options[viewport_preset]"]');
-              var summary = document.getElementById('wplg-dashboard-summary-text');
+              var summary = document.getElementById('baseline-dashboard-summary-text');
 
               var viewportValue = 'Desktop';
               if (responsive && viewport) {
@@ -1827,8 +1829,8 @@ class WPLG_Admin
 
             function bindViewportToggle(namePrefix) {
               var responsive = document.getElementById(namePrefix + '_responsive_enabled');
-              var viewportWrap = document.querySelector('[data-wplg-viewport-wrap="' + namePrefix + '"]');
-              var viewportSelect = document.querySelector('[data-wplg-viewport-select="' + namePrefix + '"]');
+              var viewportWrap = document.querySelector('[data-baseline-viewport-wrap="' + namePrefix + '"]');
+              var viewportSelect = document.querySelector('[data-baseline-viewport-select="' + namePrefix + '"]');
 
               if (!responsive || !viewportWrap || !viewportSelect) {
                 return;
@@ -1976,16 +1978,16 @@ class WPLG_Admin
             }
 
             function showCompletionNotice(status, payload) {
-              var root = document.querySelector('.wrap.wplg-wrap') || document.querySelector('.wrap');
+              var root = document.querySelector('.wrap.baseline-wrap') || document.querySelector('.wrap');
               if (!root) return;
-              var existing = document.getElementById('wplg-runtime-scan-notice');
+              var existing = document.getElementById('baseline-runtime-scan-notice');
               if (existing && existing.parentNode) {
                 existing.parentNode.removeChild(existing);
               }
 
               var isOk = status === 'completed';
               var notice = document.createElement('div');
-              notice.id = 'wplg-runtime-scan-notice';
+              notice.id = 'baseline-runtime-scan-notice';
               notice.className = 'notice ' + (isOk ? 'notice-success' : 'notice-warning') + ' is-dismissible';
 
               var paragraph = document.createElement('p');
@@ -2004,9 +2006,9 @@ class WPLG_Admin
             }
 
             (function bindDashboardViewport() {
-              var responsive = document.getElementById('wplg_responsive_scan');
-              var viewportWrap = document.querySelector('[data-wplg-viewport-wrap="dashboard"]');
-              var viewportSelect = document.querySelector('[data-wplg-viewport-select="dashboard"]');
+              var responsive = document.getElementById('baseline_responsive_scan');
+              var viewportWrap = document.querySelector('[data-baseline-viewport-wrap="dashboard"]');
+              var viewportSelect = document.querySelector('[data-baseline-viewport-select="dashboard"]');
               if (!responsive || !viewportWrap || !viewportSelect) return;
 
               function sync() {
@@ -2026,15 +2028,15 @@ class WPLG_Admin
               sync();
             })();
 
-            bindViewportToggle('wplg_scan_options');
+            bindViewportToggle('baseline_scan_options');
 
-            document.querySelectorAll('.wplg-scan-config-form input, .wplg-scan-config-form select').forEach(function(field) {
+            document.querySelectorAll('.baseline-scan-config-form input, .baseline-scan-config-form select').forEach(function(field) {
               field.addEventListener('change', updateDashboardSummary);
             });
             updateDashboardSummary();
 
             (function initScanProgressModal() {
-              var modal = document.getElementById('wplg-scan-progress-modal');
+              var modal = document.getElementById('baseline-scan-progress-modal');
               if (!modal) return;
 
               var state = {
@@ -2063,24 +2065,24 @@ class WPLG_Admin
               ];
               var tipIndex = 0;
 
-              var titleEl = document.getElementById('wplg-modal-title');
-              var scanIdEl = document.getElementById('wplg-modal-scan-id');
-              var statusEl = document.getElementById('wplg-modal-status');
-              var progressTextEl = document.getElementById('wplg-modal-progress-text');
-              var progressBarEl = document.getElementById('wplg-modal-progress-bar');
-              var progressWrapEl = modal.querySelector('.wplg-modal__progress');
-              var currentUrlEl = document.getElementById('wplg-modal-current-url');
-              var elapsedEl = document.getElementById('wplg-modal-elapsed');
-              var statusMessageEl = document.getElementById('wplg-modal-status-message');
-              var tipTextEl = document.getElementById('wplg-modal-tip-text');
-              var etaTextEl = document.getElementById('wplg-modal-eta-text');
-              var viewReportEl = document.getElementById('wplg-modal-view-report');
-              var openWorkflowEl = document.getElementById('wplg-modal-open-workflow');
-              var downloadArtifactEl = document.getElementById('wplg-modal-download-artifact');
-              var lastReportEl = document.getElementById('wplg-modal-last-report');
-              var retrySafeBtn = document.getElementById('wplg-modal-retry-safe');
-              var stopBtn = document.getElementById('wplg-modal-stop');
-              var retrySafeForm = document.getElementById('wplg-modal-retry-safe-form');
+              var titleEl = document.getElementById('baseline-modal-title');
+              var scanIdEl = document.getElementById('baseline-modal-scan-id');
+              var statusEl = document.getElementById('baseline-modal-status');
+              var progressTextEl = document.getElementById('baseline-modal-progress-text');
+              var progressBarEl = document.getElementById('baseline-modal-progress-bar');
+              var progressWrapEl = modal.querySelector('.baseline-modal__progress');
+              var currentUrlEl = document.getElementById('baseline-modal-current-url');
+              var elapsedEl = document.getElementById('baseline-modal-elapsed');
+              var statusMessageEl = document.getElementById('baseline-modal-status-message');
+              var tipTextEl = document.getElementById('baseline-modal-tip-text');
+              var etaTextEl = document.getElementById('baseline-modal-eta-text');
+              var viewReportEl = document.getElementById('baseline-modal-view-report');
+              var openWorkflowEl = document.getElementById('baseline-modal-open-workflow');
+              var downloadArtifactEl = document.getElementById('baseline-modal-download-artifact');
+              var lastReportEl = document.getElementById('baseline-modal-last-report');
+              var retrySafeBtn = document.getElementById('baseline-modal-retry-safe');
+              var stopBtn = document.getElementById('baseline-modal-stop');
+              var retrySafeForm = document.getElementById('baseline-modal-retry-safe-form');
 
               function updateElapsedLabel() {
                 if (!elapsedEl) return;
@@ -2091,12 +2093,12 @@ class WPLG_Admin
                 if (isOpen) {
                   modal.classList.add('is-open');
                   modal.setAttribute('aria-hidden', 'false');
-                  document.body.classList.add('wplg-modal-open');
+                  document.body.classList.add('baseline-modal-open');
                   return;
                 }
                 modal.classList.remove('is-open');
                 modal.setAttribute('aria-hidden', 'true');
-                document.body.classList.remove('wplg-modal-open');
+                document.body.classList.remove('baseline-modal-open');
               }
 
               function updateTitle(status) {
@@ -2144,7 +2146,7 @@ class WPLG_Admin
                 }
 
                 var body = new URLSearchParams();
-                body.set('action', 'wplg_cancel_scan');
+                body.set('action', 'baseline_cancel_scan');
                 body.set('scan_id', state.scanId);
                 body.set('nonce', state.cancelNonce);
 
@@ -2249,7 +2251,7 @@ class WPLG_Admin
                   return;
                 }
                 var params = new URLSearchParams();
-                params.set('action', 'wplg_poll_scan');
+                params.set('action', 'baseline_poll_scan');
                 params.set('scan_id', state.scanId);
                 params.set('nonce', state.pollNonce);
 
@@ -2279,7 +2281,7 @@ class WPLG_Admin
                   });
               }
 
-              document.querySelectorAll('[data-wplg-open-scan-modal]').forEach(function(buttonEl) {
+              document.querySelectorAll('[data-baseline-open-scan-modal]').forEach(function(buttonEl) {
                 buttonEl.addEventListener('click', function(event) {
                   event.preventDefault();
                   setModalOpen(true);
@@ -2287,7 +2289,7 @@ class WPLG_Admin
                 });
               });
 
-              modal.querySelectorAll('[data-wplg-modal-close]').forEach(function(closeEl) {
+              modal.querySelectorAll('[data-baseline-modal-close]').forEach(function(closeEl) {
                 closeEl.addEventListener('click', function(event) {
                   event.preventDefault();
                   setModalOpen(false);
@@ -2330,7 +2332,7 @@ class WPLG_Admin
             })();
 
             (function initInlineTrackers() {
-              var trackers = document.querySelectorAll('[data-wplg-inline-tracker="1"]');
+              var trackers = document.querySelectorAll('[data-baseline-inline-tracker="1"]');
               if (!trackers.length) return;
 
               trackers.forEach(function(root) {
@@ -2347,16 +2349,16 @@ class WPLG_Admin
                 };
                 if (!state.scanId || !state.pollUrl || !state.pollNonce) return;
 
-                var statusEl = root.querySelector('[data-wplg-inline-status]');
-                var progressTextEl = root.querySelector('[data-wplg-inline-progress-text]');
-                var progressBarEl = root.querySelector('[data-wplg-inline-progress-bar]');
-                var progressWrapEl = root.querySelector('[data-wplg-inline-progress-wrap]');
-                var currentUrlEl = root.querySelector('[data-wplg-inline-current-url]');
-                var messageEl = root.querySelector('[data-wplg-inline-message]');
-                var elapsedEl = root.querySelector('[data-wplg-inline-elapsed]');
-                var viewReportEl = root.querySelector('[data-wplg-inline-view-report]');
-                var openRunEl = root.querySelector('[data-wplg-inline-open-run]');
-                var stopBtn = root.querySelector('[data-wplg-inline-stop]');
+                var statusEl = root.querySelector('[data-baseline-inline-status]');
+                var progressTextEl = root.querySelector('[data-baseline-inline-progress-text]');
+                var progressBarEl = root.querySelector('[data-baseline-inline-progress-bar]');
+                var progressWrapEl = root.querySelector('[data-baseline-inline-progress-wrap]');
+                var currentUrlEl = root.querySelector('[data-baseline-inline-current-url]');
+                var messageEl = root.querySelector('[data-baseline-inline-message]');
+                var elapsedEl = root.querySelector('[data-baseline-inline-elapsed]');
+                var viewReportEl = root.querySelector('[data-baseline-inline-view-report]');
+                var openRunEl = root.querySelector('[data-baseline-inline-open-run]');
+                var stopBtn = root.querySelector('[data-baseline-inline-stop]');
 
                 function updateElapsed() {
                   if (!elapsedEl) return;
@@ -2371,7 +2373,7 @@ class WPLG_Admin
                 function cancelInline() {
                   if (!state.cancelNonce || !state.pollUrl || !state.scanId) return;
                   var body = new URLSearchParams();
-                  body.set('action', 'wplg_cancel_scan');
+                  body.set('action', 'baseline_cancel_scan');
                   body.set('scan_id', state.scanId);
                   body.set('nonce', state.cancelNonce);
                   fetch(state.pollUrl, {
@@ -2442,7 +2444,7 @@ class WPLG_Admin
 
                 function poll() {
                   var params = new URLSearchParams();
-                  params.set('action', 'wplg_poll_scan');
+                  params.set('action', 'baseline_poll_scan');
                   params.set('scan_id', state.scanId);
                   params.set('nonce', state.pollNonce);
 
@@ -2491,16 +2493,20 @@ class WPLG_Admin
     {
         $base = $this->get_api_base();
         if ($base === '') {
-            return new WP_Error('wplg_api_base_missing', 'Set API Base URL in LaunchGuard Settings first.');
+            return new WP_Error('baseline_api_base_missing', 'Set API Base URL in Baseline Settings first.');
         }
 
         $url = $base . '/' . ltrim($path, '/');
         $headers = ['Accept' => 'application/json'];
 
         if ($includeSiteToken) {
-            $siteToken = $this->get_option(self::OPTION_SITE_TOKEN);
+            $siteToken = trim($this->get_option(self::OPTION_SITE_TOKEN));
             if ($siteToken !== '') {
+                // Send all accepted auth headers for backward compatibility.
                 $headers['x-launchguard-site-token'] = $siteToken;
+                $headers['x-site-token'] = $siteToken;
+                $headers['Authorization'] = 'Bearer ' . $siteToken;
+                $headers['x-baseline-site-token'] = $siteToken;
             }
         }
 
@@ -2529,7 +2535,7 @@ class WPLG_Admin
 
         if ($status >= 400) {
             $message = (string) ($data['error'] ?? ('API request failed with status ' . $status));
-            return new WP_Error('wplg_api_error', $message);
+            return new WP_Error('baseline_api_error', $message);
         }
 
         return [
@@ -2751,7 +2757,7 @@ class WPLG_Admin
             $value = 'unknown';
         }
 
-        $class = 'wplg-status-pill status-' . sanitize_html_class($value);
+        $class = 'baseline-status-pill status-' . sanitize_html_class($value);
         return '<span class="' . esc_attr($class) . '">' . esc_html($status !== '' ? $status : 'unknown') . '</span>';
     }
 
@@ -2789,10 +2795,10 @@ class WPLG_Admin
             return 'Monthly scan limit reached for this site. Open Billing to upgrade plan limits or wait for period reset.';
         }
         if (strpos($normalized, 'unauthorized') !== false || strpos($normalized, 'forbidden') !== false) {
-            return 'Authentication failed. Reconnect your site token in LaunchGuard Settings and retry.';
+            return 'Authentication failed. Reconnect your site token in Baseline Settings and retry.';
         }
         if (strpos($normalized, 'callback_not_configured') !== false) {
-            return 'LaunchGuard callback is not configured in cloud settings. Configure callback secrets, then retry.';
+            return 'Baseline callback is not configured in cloud settings. Configure callback secrets, then retry.';
         }
         return $message;
     }
@@ -2802,9 +2808,9 @@ class WPLG_Admin
         $url = add_query_arg(
             [
                 'page' => $page,
-                'wplg_notice' => $status,
-                'wplg_message' => $message,
-                'wplg_scan_id' => $scanId
+                'baseline_notice' => $status,
+                'baseline_message' => $message,
+                'baseline_scan_id' => $scanId
             ],
             admin_url('admin.php')
         );
@@ -2818,9 +2824,9 @@ class WPLG_Admin
             [
                 'post' => $postId,
                 'action' => 'edit',
-                'wplg_notice' => $status,
-                'wplg_message' => $message,
-                'wplg_scan_id' => $scanId
+                'baseline_notice' => $status,
+                'baseline_message' => $message,
+                'baseline_scan_id' => $scanId
             ],
             admin_url('post.php')
         );

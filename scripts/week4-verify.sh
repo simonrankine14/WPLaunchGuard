@@ -23,19 +23,19 @@ check_pattern() {
 
 echo "Checking Week 4 files..."
 check_file "scripts/ci/collect-scan-summary.js"
-check_file ".github/workflows/launchguard-scan.yml"
+check_file ".github/workflows/baseline-scan.yml"
 check_file "services/api-worker/src/index.js"
-check_file "wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php"
+check_file "wordpress-plugin/baseline/includes/class-baseline-admin.php"
 check_file "docs/week4-artifacts.md"
 
-check_pattern "Collect scan summary" ".github/workflows/launchguard-scan.yml"
-check_pattern "reports_artifact_url" ".github/workflows/launchguard-scan.yml"
+check_pattern "Collect scan summary" ".github/workflows/baseline-scan.yml"
+check_pattern "reports_artifact_url" ".github/workflows/baseline-scan.yml"
 check_pattern "deriveIssueTotalsFromSummary" "services/api-worker/src/index.js"
-check_pattern "extract_scan_summary" "wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php"
+check_pattern "extract_scan_summary" "wordpress-plugin/baseline/includes/class-baseline-admin.php"
 check_pattern "collect-scan-summary" "docs/week4-artifacts.md"
 
 if command -v php >/dev/null 2>&1; then
-  php -l "$ROOT_DIR/wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php" >/dev/null
+  php -l "$ROOT_DIR/wordpress-plugin/baseline/includes/class-baseline-admin.php" >/dev/null
 fi
 
 node "$ROOT_DIR/scripts/ci/collect-scan-summary.js" "$ROOT_DIR/reports/RoadTrafficLaw" "RoadTrafficLaw" >/dev/null

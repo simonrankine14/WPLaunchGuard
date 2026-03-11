@@ -4,7 +4,7 @@ Week 2 wires the WordPress plugin to live API endpoints.
 
 ## What changed
 
-1. API adds site-token auth (`x-launchguard-site-token`) for site-specific routes.
+1. API adds site-token auth (`x-baseline-site-token`) for site-specific routes.
 2. API adds `GET /v1/sites/{site_id}/scans` and `GET /v1/sites/{site_id}/branding`.
 3. WordPress dashboard can register site, run scans, and view status/limits.
 4. Branding page now saves to cloud endpoint.
@@ -23,12 +23,12 @@ npm run week2:verify
 
 ## WordPress setup steps
 
-1. Zip `wordpress-plugin/wplaunchguard` and upload plugin in wp-admin.
-2. Go to `LaunchGuard -> Settings` and set API Base URL:
-   - `https://launchguard-api.simonrankine4.workers.dev`
-3. Open `LaunchGuard -> Dashboard` and click `Register Site`.
+1. Zip `wordpress-plugin/baseline` and upload plugin in wp-admin.
+2. Go to `Baseline -> Settings` and set API Base URL:
+   - `https://baseline-api.simonrankine4.workers.dev`
+3. Open `Baseline -> Dashboard` and click `Register Site`.
 4. Run first scan using dry-run mode.
-5. Open `LaunchGuard -> Branding` and save brand settings.
+5. Open `Baseline -> Branding` and save brand settings.
 
 ## Smoke tests (manual)
 

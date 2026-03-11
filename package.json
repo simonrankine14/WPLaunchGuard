@@ -1,11 +1,11 @@
 {
-  "name": "wplaunchguard",
+  "name": "baseline",
   "version": "0.1.0",
-  "description": "Website QA runner using Playwright, Lighthouse, and axe-core with HTML/Excel reports.",
+  "description": "Baseline website QA platform using Playwright, Lighthouse, and axe-core with HTML and report exports.",
   "type": "commonjs",
   "license": "UNLICENSED",
   "bin": {
-    "wplaunchguard": "bin/wplaunchguard.js"
+    "baseline": "bin/baseline.js"
   },
   "files": [
     "bin/",

@@ -24,16 +24,16 @@ check_pattern() {
 echo "Checking Week 3 files..."
 check_file "services/api-worker/src/index.js"
 check_file "services/api-worker/wrangler.toml"
-check_file ".github/workflows/launchguard-scan.yml"
+check_file ".github/workflows/baseline-scan.yml"
 check_file "docs/week3-dispatch.md"
 
 check_pattern "dispatchScanToGitHub" "services/api-worker/src/index.js"
 check_pattern "/v1/internal/scan-callback" "services/api-worker/src/index.js"
-check_pattern "Callback LaunchGuard API" ".github/workflows/launchguard-scan.yml"
+check_pattern "Callback Baseline API" ".github/workflows/baseline-scan.yml"
 check_pattern "GITHUB_WORKFLOW_FILE" "services/api-worker/wrangler.toml"
 
 if command -v php >/dev/null 2>&1; then
-  php -l "$ROOT_DIR/wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php" >/dev/null
+  php -l "$ROOT_DIR/wordpress-plugin/baseline/includes/class-baseline-admin.php" >/dev/null
 fi
 
 if [[ "$missing" -ne 0 ]]; then

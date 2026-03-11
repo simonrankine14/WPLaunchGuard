@@ -1,5 +1,7 @@
 # WordPress QA Commands Cheat Sheet
 
+Brand: `Baseline`
+
 ## Core workflow
 
 1) Run the QA suite (all browsers/devices, default)
@@ -11,13 +13,13 @@ npm run qa -- <clientname>
 Or via the global CLI:
 
 ```bash
-wplaunchguard run <clientname>
+baseline run <clientname>
 ```
 
 Or without a global install:
 
 ```bash
-npx wplaunchguard run <clientname>
+npx baseline run <clientname>
 ```
 
 2) Generate the Excel dashboard
@@ -34,7 +36,7 @@ npm run qa:html -- <clientname>
 
 Branding:
 
-- Tool name is hard-coded to `WP LaunchGuard`.
+- Tool name is hard-coded to `Baseline`.
 - Logo is loaded from `reporting/assets/logo.png` (or `.jpg` / `.svg`) and embedded into the HTML so the report stays self-contained.
 
 ## Client URL files

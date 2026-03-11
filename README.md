@@ -1,4 +1,6 @@
-# WP LaunchGuard (Playwright QA Suite)
+# Baseline (Website QA Platform)
+
+Baseline is a website QA platform for confident sign-off.
 
 ## Quick start
 
@@ -9,32 +11,32 @@ npm run qa -- clientname
 npm run qa:report -- clientname
 ```
 
-## Install as an npm CLI (WP LaunchGuard)
+## Install as an npm CLI (Baseline)
 
 Recommended (no global permissions required):
 
 ```bash
-mkdir my-launchguard-runner && cd my-launchguard-runner
+mkdir my-baseline-runner && cd my-baseline-runner
 npm init -y
-npm i -D wplaunchguard
-npx wplaunchguard install-browsers
+npm i -D baseline
+npx baseline install-browsers
 ```
 
 In any folder (this is where `reports/` will be created):
 
 ```bash
-npx wplaunchguard init clientname --url=https://example.com/
-npx wplaunchguard run clientname --sitemap=https://example.com/sitemap_index.xml --quick
-npx wplaunchguard html clientname
-npx wplaunchguard pdf clientname
-npx wplaunchguard report clientname
+npx baseline init clientname --url=https://example.com/
+npx baseline run clientname --sitemap=https://example.com/sitemap_index.xml --quick
+npx baseline html clientname
+npx baseline pdf clientname
+npx baseline report clientname
 ```
 
 Optional global install:
 
 ```bash
-npm i -g wplaunchguard
-wplaunchguard install-browsers
+npm i -g baseline
+baseline install-browsers
 ```
 
 ## Inputs

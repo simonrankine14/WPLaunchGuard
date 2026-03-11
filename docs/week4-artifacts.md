@@ -17,7 +17,7 @@ Week 4 adds report-summary ingestion from GitHub scan runs back into API and Wor
 ## Data flow
 
 1. `POST /v1/scans` -> queue job.
-2. Queue consumer dispatches `launchguard-scan.yml`.
+2. Queue consumer dispatches `baseline-scan.yml`.
 3. Workflow runs QA and uploads artifact.
 4. Workflow callback posts enriched summary to `/v1/internal/scan-callback`.
 5. Plugin fetches `GET /v1/scans/{id}` and `GET /v1/sites/{id}/scans` to display metrics.
@@ -31,6 +31,6 @@ npm run week4:verify
 ## Important files
 
 - `scripts/ci/collect-scan-summary.js`
-- `.github/workflows/launchguard-scan.yml`
+- `.github/workflows/baseline-scan.yml`
 - `services/api-worker/src/index.js`
-- `wordpress-plugin/wplaunchguard/includes/class-wplg-admin.php`
+- `wordpress-plugin/baseline/includes/class-baseline-admin.php`

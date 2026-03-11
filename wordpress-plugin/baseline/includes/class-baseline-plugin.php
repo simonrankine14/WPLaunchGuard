@@ -4,13 +4,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once WPLG_PLUGIN_DIR . 'includes/class-wplg-admin.php';
+require_once BASELINE_PLUGIN_DIR . 'includes/class-baseline-admin.php';
 
-class WPLG_Plugin
+class Baseline_Plugin
 {
-    private static ?WPLG_Plugin $instance = null;
+    private static ?Baseline_Plugin $instance = null;
 
-    public static function instance(): WPLG_Plugin
+    public static function instance(): Baseline_Plugin
     {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -25,6 +25,6 @@ class WPLG_Plugin
 
     public function init(): void
     {
-        new WPLG_Admin();
+        new Baseline_Admin();
     }
 }

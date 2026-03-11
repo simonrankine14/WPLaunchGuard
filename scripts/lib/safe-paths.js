@@ -28,8 +28,8 @@ function resolveWithin(basePath, ...segments) {
 }
 
 function resolveRunRoot(env, fallbackPath) {
-  return env && env.LAUNCHGUARD_ROOT
-    ? path.resolve(env.LAUNCHGUARD_ROOT)
+  return env && env.BASELINE_ROOT
+    ? path.resolve(env.BASELINE_ROOT)
     : path.resolve(fallbackPath);
 }
 

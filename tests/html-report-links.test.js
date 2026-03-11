@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { spawnSync } = require('child_process');
 
 test('html report wires token-safe asset links and page-failures navigation', () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wplg-html-links-'));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-html-links-'));
   const client = 'linkclient';
   const reportsDir = path.join(tmpRoot, 'reports', client);
   fs.mkdirSync(path.join(reportsDir, 'lighthouse'), { recursive: true });
@@ -91,7 +91,7 @@ test('html report wires token-safe asset links and page-failures navigation', ()
   const run = spawnSync(process.execPath, [script, client], {
     env: {
       ...process.env,
-      LAUNCHGUARD_ROOT: tmpRoot,
+      BASELINE_ROOT: tmpRoot,
       NO_AUTO_OPEN: 'true',
       REPORT_CLIENT_LABEL: 'Example Site'
     }

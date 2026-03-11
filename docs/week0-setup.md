@@ -117,9 +117,9 @@ gh repo view <owner>/<repo>
 
 In Stripe dashboard (test mode):
 
-1. Create product `LaunchGuard Starter`.
-2. Create product `LaunchGuard Growth`.
-3. Create product `LaunchGuard Agency`.
+1. Create product `Baseline Starter`.
+2. Create product `Baseline Growth`.
+3. Create product `Baseline Agency`.
 4. Add recurring monthly prices for each.
 
 Collect:

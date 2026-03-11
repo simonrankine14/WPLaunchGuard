@@ -1,4 +1,4 @@
-name = "launchguard-api"
+name = "baseline-api"
 main = "src/index.js"
 compatibility_date = "2026-03-04"
 workers_dev = true
@@ -9,10 +9,10 @@ account_id = "d47b0f5d3b937b9cd0ed40902be8c44c"
 [vars]
 APP_ENV = "dev"
 DEFAULT_PLAN = "starter"
-PUBLIC_API_BASE = "https://launchguard-api.simonrankine4.workers.dev"
+PUBLIC_API_BASE = "https://baseline-api.simonrankine4.workers.dev"
 GITHUB_OWNER = "simonrankine14"
 GITHUB_REPO = "WPLaunchGuard"
-GITHUB_WORKFLOW_FILE = "launchguard-scan.yml"
+GITHUB_WORKFLOW_FILE = "baseline-scan.yml"
 GITHUB_REF = "main"
 STRIPE_PRICE_ID_STARTER = "price_1T7MycIfnuQp2OJpzQOZQMPQ"
 STRIPE_PRICE_ID_GROWTH = "price_1T7MyvIfnuQp2OJpiDtlPhvn"
@@ -20,18 +20,18 @@ STRIPE_PRICE_ID_AGENCY = "price_1T7Mz9IfnuQp2OJpMJjFFbFK"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "launchguard-db-dev"
+database_name = "baseline-db-dev"
 database_id = "253403b3-cc3e-4008-aaff-10e24bb9f9bc"
 
 [[r2_buckets]]
 binding = "ARTIFACTS_BUCKET"
-bucket_name = "launchguard-reports-dev"
+bucket_name = "baseline-reports-dev"
 
 [[queues.producers]]
 binding = "SCAN_QUEUE"
-queue = "launchguard-scan-jobs-dev"
+queue = "baseline-scan-jobs-dev"
 
 [[queues.consumers]]
-queue = "launchguard-scan-jobs-dev"
+queue = "baseline-scan-jobs-dev"
 max_batch_size = 5
 max_batch_timeout = 10

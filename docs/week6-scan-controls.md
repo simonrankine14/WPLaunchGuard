@@ -9,7 +9,7 @@
 - Responsive scan toggle.
 - Viewport preset (`desktop`, `mobile`, `both`) when responsive is enabled.
 
-2. Post/Page/CPT editor now includes a `LaunchGuard Page Scan` metabox:
+2. Post/Page/CPT editor now includes a `Baseline Page Scan` metabox:
 - Read-only target URL (published permalink).
 - Same scan option controls as dashboard.
 - `Scan This Page` (per-page run).
@@ -40,9 +40,9 @@
 
 ## Data persistence
 
-1. Global defaults: WordPress option `wplg_scan_defaults`.
-2. Per-post override: post meta `_wplg_scan_options`.
-3. Per-post default mode flag: post meta `_wplg_scan_use_site_defaults`.
+1. Global defaults: WordPress option `baseline_scan_defaults`.
+2. Per-post override: post meta `_baseline_scan_options`.
+3. Per-post default mode flag: post meta `_baseline_scan_use_site_defaults`.
 
 ## Troubleshooting
 

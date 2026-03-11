@@ -13,7 +13,7 @@ const {
   isLikelyEmbeddedFormFrame
 } = require('../scripts/lib/form-detection');
 
-const RUN_ROOT = process.env.LAUNCHGUARD_ROOT ? path.resolve(process.env.LAUNCHGUARD_ROOT) : process.cwd();
+const RUN_ROOT = process.env.BASELINE_ROOT ? path.resolve(process.env.BASELINE_ROOT) : process.cwd();
 const DEFAULT_DATA_PATH = path.join(RUN_ROOT, 'data', 'urls.json');
 const DATA_PATH = process.env.URLS_PATH
   ? path.resolve(process.env.URLS_PATH)
@@ -1831,7 +1831,7 @@ async function validateFormsInContext(context, submitMode) {
     const forms = [];
     const seenForms = new Set();
     const seenRoots = new Set();
-    const runToken = `wplg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const runToken = `baseline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
     function collectForms(root) {
       if (!root || seenRoots.has(root)) return;
@@ -1853,10 +1853,10 @@ async function validateFormsInContext(context, submitMode) {
     collectForms(document);
 
     function getFormSelector(form, index) {
-      const existing = String(form.getAttribute('data-wplg-form-key') || '').trim();
+      const existing = String(form.getAttribute('data-baseline-form-key') || '').trim();
       const key = existing || `${runToken}-${index + 1}`;
-      form.setAttribute('data-wplg-form-key', key);
-      return `form[data-wplg-form-key="${key}"]`;
+      form.setAttribute('data-baseline-form-key', key);
+      return `form[data-baseline-form-key="${key}"]`;
     }
 
     function fieldSignature(el) {
@@ -1927,7 +1927,7 @@ async function validateFormsInContext(context, submitMode) {
           return;
         }
         if (type === 'email') {
-          el.value = 'qa+launchguard@example.com';
+          el.value = 'qa+baseline@example.com';
           return;
         }
         if (type === 'tel') {

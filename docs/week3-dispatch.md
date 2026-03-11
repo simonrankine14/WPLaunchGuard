@@ -6,7 +6,7 @@ Week 3 enables asynchronous scan execution dispatch from Cloudflare Queue to Git
 
 1. Plugin calls `POST /v1/scans`.
 2. API enqueues scan job.
-3. Queue consumer dispatches `.github/workflows/launchguard-scan.yml`.
+3. Queue consumer dispatches `.github/workflows/baseline-scan.yml`.
 4. Workflow runs QA and posts callback to `/v1/internal/scan-callback`.
 5. API updates scan status to `completed` or `failed` with workflow metadata.
 
@@ -33,7 +33,7 @@ npx wrangler secret put SCAN_CALLBACK_TOKEN --config services/api-worker/wrangle
 
 In repo `Settings -> Secrets and variables -> Actions` add:
 
-- `LAUNCHGUARD_CALLBACK_URL` = `https://launchguard-api.simonrankine4.workers.dev/v1/internal/scan-callback`
+- `LAUNCHGUARD_CALLBACK_URL` = `https://baseline-api.simonrankine4.workers.dev/v1/internal/scan-callback`
 - `LAUNCHGUARD_CALLBACK_TOKEN` = same value as `SCAN_CALLBACK_TOKEN`
 
 ## Deploy

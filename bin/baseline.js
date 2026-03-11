@@ -9,7 +9,7 @@ const packageRoot = path.resolve(__dirname, '..');
 const runRoot = process.cwd();
 
 function binName() {
-  return 'wplaunchguard';
+  return 'baseline';
 }
 
 function exitWithHelp(code = 1) {
@@ -35,7 +35,7 @@ function exitWithHelp(code = 1) {
 }
 
 function spawnNode(scriptPath, scriptArgs, extraEnv = {}) {
-  const env = { ...process.env, ...extraEnv, LAUNCHGUARD_ROOT: runRoot };
+  const env = { ...process.env, ...extraEnv, BASELINE_ROOT: runRoot };
   const result = spawnSync(process.execPath, [scriptPath, ...scriptArgs], {
     stdio: 'inherit',
     cwd: runRoot,
@@ -163,7 +163,7 @@ if (command === 'share') {
   spawnNode(script, [clientName], {});
 }
 
-// Back-compat: allow `wplaunchguard <clientname> [flags...]`.
+// Back-compat: allow `baseline <clientname> [flags...]`.
 if (!command.startsWith('-')) {
   let safeClientName = command;
   try {

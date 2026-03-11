@@ -45,7 +45,7 @@ function parseCsv(content) {
 }
 
 test('merge outputs consistent effective issues and summary', () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wplg-merge-'));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-merge-'));
   const client = 'mergeclient';
   const shardDir = path.join(tmpRoot, 'reports', client, '.tmp', 'shards');
   fs.mkdirSync(shardDir, { recursive: true });
@@ -104,7 +104,7 @@ test('merge outputs consistent effective issues and summary', () => {
   const run = spawnSync(process.execPath, [script, client], {
     env: {
       ...process.env,
-      LAUNCHGUARD_ROOT: tmpRoot,
+      BASELINE_ROOT: tmpRoot,
       RUN_STARTED_AT: 'run-1',
       QA_WORKERS: ''
     }

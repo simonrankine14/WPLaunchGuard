@@ -1,0 +1,10 @@
+<svg width="1600" height="520" viewBox="0 0 1600 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="520" fill="#F3F1EC"/>
+  <rect x="120" y="128" width="184" height="184" rx="38" fill="#16181D"/>
+  <path d="M162 170V266H262" stroke="#F3F1EC" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M178 246L204 232L228 238L250 192" stroke="#C8674A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="250" cy="192" r="8" fill="#A7B1BA"/>
+  <path d="M178 246H250" stroke="#566273" stroke-width="8" stroke-linecap="round"/>
+  <text x="360" y="246" fill="#16181D" font-family="'Untitled Sans', 'Helvetica Neue', Arial, sans-serif" font-size="164" font-weight="500" letter-spacing="-5">baseline</text>
+  <text x="362" y="312" fill="#566273" font-family="'Untitled Sans', 'Helvetica Neue', Arial, sans-serif" font-size="32" letter-spacing="2">WEBSITE QA WITH A CLEAR STANDARD</text>
+</svg>
