@@ -2066,6 +2066,7 @@ async function dispatchScanToGitHub(env, scan, site) {
     dispatched_at: nowIso(),
     repository: `${config.owner}/${config.repo}`,
     workflow: config.workflow,
+    workflow_url: `https://github.com/${config.owner}/${config.repo}/actions/workflows/${config.workflow}`,
     ref: config.ref,
     client_name: clientName,
     client_label: clientLabel,
