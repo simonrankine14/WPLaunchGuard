@@ -2,62 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('@playwright/test');
 const { resolveClientReportsDir, resolveRunRoot, validateClientId } = require('../scripts/lib/safe-paths');
-
-function parseCSV(content) {
-  const rows = [];
-  let row = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < content.length; i += 1) {
-    const char = content[i];
-    const next = content[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      row.push(current);
-      current = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') i += 1;
-      row.push(current);
-      if (row.length > 1 || row[0] !== '') rows.push(row);
-      row = [];
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.length > 0 || row.length > 0) {
-    row.push(current);
-    rows.push(row);
-  }
-
-  if (rows.length === 0) return [];
-  const headers = rows[0];
-  return rows.slice(1).map((values) => {
-    const output = {};
-    headers.forEach((header, index) => {
-      output[header] = values[index] ?? '';
-    });
-    return output;
-  });
-}
-
-function safeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+const { safeHtml } = require('../scripts/lib/html-utils');
+const { parseCSV } = require('../scripts/lib/csv-utils');
 
 function toBool(value) {
   if (typeof value === 'boolean') return value;
@@ -395,7 +341,15 @@ async function generatePdfReport(clientName) {
 
   const results = parseCSV(fs.readFileSync(resultsPath, 'utf8'));
   const summaryRows = parseCSV(fs.readFileSync(summaryPath, 'utf8'));
-  const runMeta = fs.existsSync(runMetaPath) ? JSON.parse(fs.readFileSync(runMetaPath, 'utf8')) : {};
+  let runMeta = {};
+  if (fs.existsSync(runMetaPath)) {
+    try {
+      runMeta = JSON.parse(fs.readFileSync(runMetaPath, 'utf8'));
+    } catch (error) {
+      console.warn(`[pdf-report] Invalid run_meta.json at ${runMetaPath}; using safe defaults. ${String(error.message || error)}`);
+      runMeta = {};
+    }
+  }
   const model = buildPdfReportModel(
     safeClientName,
     results,

@@ -46,9 +46,10 @@ function parseCsv(content) {
 
 test('merge outputs consistent effective issues and summary', () => {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-merge-'));
-  const client = 'mergeclient';
-  const shardDir = path.join(tmpRoot, 'reports', client, '.tmp', 'shards');
-  fs.mkdirSync(shardDir, { recursive: true });
+  try {
+    const client = 'mergeclient';
+    const shardDir = path.join(tmpRoot, 'reports', client, '.tmp', 'shards');
+    fs.mkdirSync(shardDir, { recursive: true });
 
   const shardPayload = {
     schemaVersion: 1,
@@ -98,30 +99,33 @@ test('merge outputs consistent effective issues and summary', () => {
     blockedSamples: []
   };
 
-  fs.writeFileSync(path.join(shardDir, 's1.json'), JSON.stringify(shardPayload), 'utf8');
+    fs.writeFileSync(path.join(shardDir, 's1.json'), JSON.stringify(shardPayload), 'utf8');
 
-  const script = path.join(process.cwd(), 'scripts', 'merge-qa-results.js');
-  const run = spawnSync(process.execPath, [script, client], {
-    env: {
-      ...process.env,
-      BASELINE_ROOT: tmpRoot,
-      RUN_STARTED_AT: 'run-1',
-      QA_WORKERS: ''
-    }
-  });
-  assert.equal(run.status, 0, run.stderr && run.stderr.toString());
+    const script = path.join(process.cwd(), 'scripts', 'merge-qa-results.js');
+    const run = spawnSync(process.execPath, [script, client], {
+      env: {
+        ...process.env,
+        BASELINE_ROOT: tmpRoot,
+        RUN_STARTED_AT: 'run-1',
+        QA_WORKERS: ''
+      }
+    });
+    assert.equal(run.status, 0, run.stderr && run.stderr.toString());
 
-  const reportsDir = path.join(tmpRoot, 'reports', client);
-  const issuesJson = JSON.parse(fs.readFileSync(path.join(reportsDir, 'issues.json'), 'utf8'));
-  const summaryRows = parseCsv(fs.readFileSync(path.join(reportsDir, 'site_summary.csv'), 'utf8'));
-  const runMeta = JSON.parse(fs.readFileSync(path.join(reportsDir, 'run_meta.json'), 'utf8'));
+    const reportsDir = path.join(tmpRoot, 'reports', client);
+    const issuesJson = JSON.parse(fs.readFileSync(path.join(reportsDir, 'issues.json'), 'utf8'));
+    const summaryRows = parseCsv(fs.readFileSync(path.join(reportsDir, 'site_summary.csv'), 'utf8'));
+    const runMeta = JSON.parse(fs.readFileSync(path.join(reportsDir, 'run_meta.json'), 'utf8'));
 
-  assert.equal(runMeta.run.workers, null);
-  assert.equal(issuesJson.summary.length, summaryRows.length);
-  assert.equal(summaryRows.some((r) => r.Issue === 'Frames must have an accessible name'), false);
-  assert.equal(summaryRows.some((r) => r.Issue === 'Broken Link'), true);
-  assert.ok(summaryRows[0].CanonicalKey !== undefined);
-  assert.ok(summaryRows[0].Actionability !== undefined);
-  assert.ok(summaryRows[0].Ownership !== undefined);
-  assert.ok(summaryRows[0].JourneyScope !== undefined);
+    assert.equal(runMeta.run.workers, null);
+    assert.equal(issuesJson.summary.length, summaryRows.length);
+    assert.equal(summaryRows.some((r) => r.Issue === 'Frames must have an accessible name'), false);
+    assert.equal(summaryRows.some((r) => r.Issue === 'Broken Link'), true);
+    assert.ok(summaryRows[0].CanonicalKey !== undefined);
+    assert.ok(summaryRows[0].Actionability !== undefined);
+    assert.ok(summaryRows[0].Ownership !== undefined);
+    assert.ok(summaryRows[0].JourneyScope !== undefined);
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
 });

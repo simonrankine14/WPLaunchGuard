@@ -1,8 +1,16 @@
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8' }
+    headers: { 'content-type': 'application/json; charset=utf-8', ...extraHeaders }
   });
+}
+
+function rateLimited(message, retryAfterSeconds) {
+  return json(
+    { error: message, retry_after: retryAfterSeconds },
+    429,
+    { 'Retry-After': String(retryAfterSeconds) }
+  );
 }
 
 function unauthorized() {
@@ -19,6 +27,49 @@ function notFound() {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function resolveRequestId(request) {
+  const fromHeaders = String(
+    request?.headers?.get('x-request-id') ||
+      request?.headers?.get('cf-ray') ||
+      request?.headers?.get('cf-request-id') ||
+      ''
+  ).trim();
+  return fromHeaders || `req_${crypto.randomUUID()}`;
+}
+
+function logEvent(level, requestId, message, context = {}) {
+  const payload = {
+    ts: nowIso(),
+    level,
+    request_id: requestId,
+    message,
+    ...context
+  };
+  const line = JSON.stringify(payload);
+  if (level === 'error') {
+    console.error(line);
+    return;
+  }
+  if (level === 'warn') {
+    console.warn(line);
+    return;
+  }
+  console.log(line);
+}
+
+function withRequestId(response, requestId) {
+  if (!(response instanceof Response)) {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  headers.set('x-request-id', requestId);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
 }
 
 function getDefaultPlanId(env) {
@@ -109,13 +160,26 @@ function byteArrayToHex(bytes) {
     .join('');
 }
 
-function timingSafeEqual(left, right) {
-  const a = String(left || '');
-  const b = String(right || '');
-  if (!a || !b || a.length !== b.length) return false;
+// SEC-006: Use Web Crypto HMAC for constant-time string comparison.
+// Signing both values with a fresh random key forces constant-time native
+// code for the HMAC computation and produces fixed-length (32-byte) outputs,
+// making the final XOR comparison safe regardless of JS engine optimisations.
+async function timingSafeEqual(left, right) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.generateKey(
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const [aHmac, bHmac] = await Promise.all([
+    crypto.subtle.sign('HMAC', key, encoder.encode(String(left || ''))),
+    crypto.subtle.sign('HMAC', key, encoder.encode(String(right || '')))
+  ]);
+  const aView = new Uint8Array(aHmac);
+  const bView = new Uint8Array(bHmac);
   let mismatch = 0;
-  for (let index = 0; index < a.length; index += 1) {
-    mismatch |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  for (let i = 0; i < aView.length; i += 1) {
+    mismatch |= aView[i] ^ bView[i];
   }
   return mismatch === 0;
 }
@@ -153,7 +217,8 @@ async function verifyStripeWebhookSignature(rawBody, signatureHeader, webhookSec
 
   const payloadToSign = `${parsed.timestamp}.${rawBody}`;
   const expected = await signStripePayload(webhookSecret, payloadToSign);
-  return parsed.v1.some((candidate) => timingSafeEqual(expected, candidate));
+  const checks = await Promise.all(parsed.v1.map((candidate) => timingSafeEqual(expected, candidate)));
+  return checks.some(Boolean);
 }
 
 function unixSecondsToIso(value) {
@@ -197,13 +262,13 @@ function getConfiguredAdminToken(env) {
   return String(env.API_ADMIN_TOKEN || '').trim();
 }
 
-function hasValidAdminAuth(request, env) {
+async function hasValidAdminAuth(request, env) {
   const configured = getConfiguredAdminToken(env);
   if (!configured) return false;
   const auth = String(request.headers.get('authorization') || '').trim();
   if (!auth.toLowerCase().startsWith('bearer ')) return false;
   const token = auth.slice(7).trim();
-  return token === configured;
+  return timingSafeEqual(token, configured);
 }
 
 function extractSiteToken(request) {
@@ -818,6 +883,28 @@ async function getUsageForTenantPeriod(env, tenantId, periodKey) {
     .first();
 }
 
+// Rate-limiting helpers — query the scans table directly so no additional
+// columns or migrations are required. Both calls run in parallel in createScan.
+
+async function getHourlyScanCountForTenant(env, tenantId) {
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const result = await env.DB.prepare(
+    'SELECT COUNT(*) AS count FROM scans WHERE site_id IN (SELECT id FROM sites WHERE tenant_id = ?) AND created_at >= ?'
+  )
+    .bind(tenantId, hourAgo)
+    .first();
+  return Number(result?.count || 0);
+}
+
+async function getConcurrentScanCountForTenant(env, tenantId) {
+  const result = await env.DB.prepare(
+    "SELECT COUNT(*) AS count FROM scans WHERE site_id IN (SELECT id FROM sites WHERE tenant_id = ?) AND status IN ('queued', 'queued_local', 'dispatched', 'running')"
+  )
+    .bind(tenantId)
+    .first();
+  return Number(result?.count || 0);
+}
+
 async function getTenantUsageContext(env, tenantId, periodKey) {
   const billing = await ensureTenantBillingRow(env, tenantId);
   const planId = String(billing?.plan_id || getDefaultPlanId(env)).trim() || getDefaultPlanId(env);
@@ -846,7 +933,7 @@ async function getTenantById(env, tenantId) {
 }
 
 async function authorizeSiteRequest(request, env, siteId) {
-  if (hasValidAdminAuth(request, env)) {
+  if (await hasValidAdminAuth(request, env)) {
     return true;
   }
 
@@ -860,22 +947,15 @@ async function authorizeSiteRequest(request, env, siteId) {
     return false;
   }
   const storedTokenHash = String(site.token_hash || '').trim();
-  if (!storedTokenHash) return false;
+  // SEC-008: Only accept properly-hashed tokens (64-char hex SHA-256).
+  // The plaintext legacy fallback has been removed — any site record that
+  // still carries a raw token must be re-registered to obtain a hashed one.
+  if (storedTokenHash.length !== 64 || !/^[a-f0-9]{64}$/i.test(storedTokenHash)) {
+    return false;
+  }
 
   const hashedIncomingToken = await sha256Hex(siteToken);
-  if (storedTokenHash.length === 64 && /^[a-f0-9]{64}$/i.test(storedTokenHash)) {
-    return timingSafeEqual(storedTokenHash, hashedIncomingToken);
-  }
-
-  // Legacy fallback for pre-hash records. If it matches, migrate in-place.
-  if (timingSafeEqual(storedTokenHash, siteToken)) {
-    await env.DB.prepare('UPDATE sites SET token_hash = ? WHERE id = ?')
-      .bind(hashedIncomingToken, siteId)
-      .run();
-    return true;
-  }
-
-  return false;
+  return timingSafeEqual(storedTokenHash, hashedIncomingToken);
 }
 
 async function registerSite(request, env) {
@@ -1004,6 +1084,24 @@ async function createScan(request, env) {
     );
   }
 
+  // Hourly dispatch cap and concurrent scan cap — checked in parallel against the
+  // scans table so no schema changes are required. Limits are configurable via
+  // env vars: HOURLY_SCAN_LIMIT (default 10) and CONCURRENT_SCAN_LIMIT (default 5).
+  const HOURLY_LIMIT = Math.max(1, Number(env.HOURLY_SCAN_LIMIT || 10) || 10);
+  const CONCURRENT_LIMIT = Math.max(1, Number(env.CONCURRENT_SCAN_LIMIT || 5) || 5);
+
+  const [hourlyCount, concurrentCount] = await Promise.all([
+    getHourlyScanCountForTenant(env, site.tenant_id),
+    getConcurrentScanCountForTenant(env, site.tenant_id)
+  ]);
+
+  if (hourlyCount >= HOURLY_LIMIT) {
+    return rateLimited('hourly_scan_limit_exceeded', 3600);
+  }
+  if (concurrentCount >= CONCURRENT_LIMIT) {
+    return rateLimited('concurrent_scan_limit_exceeded', 60);
+  }
+
   const formMode = ['dry-run', 'live'].includes(String(body.form_mode || '').toLowerCase())
     ? String(body.form_mode).toLowerCase()
     : 'dry-run';
@@ -1015,6 +1113,8 @@ async function createScan(request, env) {
   const hasScanOptions = hasOwnProperty(body, 'scan_options');
   const scanOptions = normalizeScanOptions(hasScanOptions ? body.scan_options : null, DEFAULT_SCAN_OPTIONS);
   const sourceContext = normalizeSourceContext(body.source_context);
+  const serializedScanOptions = JSON.stringify(scanOptions);
+  const serializedSourceContext = JSON.stringify(sourceContext || {});
 
   const scanId = crypto.randomUUID();
   const createdAt = nowIso();
@@ -1047,8 +1147,8 @@ async function createScan(request, env) {
         payload.trigger,
         payload.sitemap_url,
         payload.target_url || null,
-        hasScanOptions ? JSON.stringify(scanOptions) : null,
-        sourceContext ? JSON.stringify(sourceContext) : null,
+        serializedScanOptions,
+        serializedSourceContext,
         createdAt,
         createdAt
       )
@@ -1949,7 +2049,7 @@ async function getScanReportAsset(request, env, scanId, assetPath, url) {
   const tokenFromReferer = extractReportTokenFromReferer(request, scanId);
   const tokenFromCookie = extractReportTokenFromCookie(request, scanId);
   const providedToken = tokenFromQuery || tokenFromReferer || tokenFromCookie;
-  if (!expectedToken || !providedToken || expectedToken !== providedToken) {
+  if (!expectedToken || !providedToken || !(await timingSafeEqual(expectedToken, providedToken))) {
     return unauthorized();
   }
 
@@ -2022,7 +2122,7 @@ async function dispatchScanToGitHub(env, scan, site) {
       client_name: clientName,
       client_label: clientLabel,
       profile: mapProfileToQaProfile(scan.profile),
-      single_url: scanTargetUrl || siteUrl || '',
+      single_url: scanTargetUrl || '',
       site_url: siteUrl,
       target_url: scanTargetUrl,
       sitemap_url: String(scan.sitemap_url || ''),
@@ -2211,7 +2311,7 @@ async function handleScanCallback(request, env) {
   }
 
   const providedToken = extractCallbackToken(request);
-  if (!providedToken || providedToken !== expectedToken) {
+  if (!providedToken || !(await timingSafeEqual(providedToken, expectedToken))) {
     return unauthorized();
   }
 
@@ -2280,94 +2380,109 @@ function extractSiteIdFromPath(pathname, suffix) {
 
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
+    const requestId = resolveRequestId(request);
+    let url;
+    try {
+      url = new URL(request.url);
+    } catch {
+      return withRequestId(badRequest('invalid_request_url'), requestId);
+    }
     const { pathname } = url;
+    const startedAt = Date.now();
 
-    if (request.method === 'GET' && pathname === '/health') {
-      return json({ ok: true, service: 'baseline-api', time: nowIso() });
-    }
+    logEvent('info', requestId, 'request_start', { method: request.method, path: pathname });
 
-    if (!env.DB) {
-      return json({ error: 'DB binding missing' }, 500);
-    }
+    try {
+      let response;
 
-    if (request.method === 'POST' && pathname === '/v1/stripe/webhook') {
-      return handleStripeWebhook(request, env);
-    }
-
-    if (request.method === 'POST' && pathname === '/v1/internal/scan-callback') {
-      return handleScanCallback(request, env);
-    }
-
-    if (request.method === 'GET' && pathname.startsWith('/v1/reports/')) {
-      const reportRequest = extractReportRequest(pathname);
-      if (!reportRequest.scanId || !reportRequest.assetPath) {
-        return notFound();
+      if (request.method === 'GET' && pathname === '/health') {
+        response = json({ ok: true, service: 'baseline-api', time: nowIso() });
+      } else if (!env.DB) {
+        response = json({ error: 'DB binding missing' }, 500);
+      } else if (request.method === 'POST' && pathname === '/v1/stripe/webhook') {
+        response = await handleStripeWebhook(request, env);
+      } else if (request.method === 'POST' && pathname === '/v1/internal/scan-callback') {
+        response = await handleScanCallback(request, env);
+      } else if (request.method === 'GET' && pathname.startsWith('/v1/reports/')) {
+        const reportRequest = extractReportRequest(pathname);
+        if (!reportRequest.scanId || !reportRequest.assetPath) {
+          response = notFound();
+        } else {
+          response = await getScanReportAsset(request, env, reportRequest.scanId, reportRequest.assetPath, url);
+        }
+      } else if (request.method === 'POST' && pathname === '/v1/sites/register') {
+        response = await registerSite(request, env);
+      } else if (request.method === 'POST' && pathname === '/v1/scans') {
+        response = await createScan(request, env);
+      } else if (request.method === 'POST' && pathname.startsWith('/v1/scans/') && pathname.endsWith('/cancel')) {
+        const scanId = extractScanIdFromActionPath(pathname, '/cancel');
+        response = scanId ? await cancelScan(request, env, scanId) : notFound();
+      } else if (request.method === 'GET' && pathname.startsWith('/v1/scans/')) {
+        const scanId = pathname.replace('/v1/scans/', '').trim();
+        response = scanId ? await getScan(request, scanId, env) : notFound();
+      } else if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/scans')) {
+        const siteId = extractSiteIdFromPath(pathname, '/scans');
+        response = siteId ? await listSiteScans(request, env, siteId, url.searchParams.get('limit')) : notFound();
+      } else if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/branding')) {
+        const siteId = extractSiteIdFromPath(pathname, '/branding');
+        response = siteId ? await getBranding(request, env, siteId) : notFound();
+      } else if (request.method === 'PUT' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/branding')) {
+        const siteId = extractSiteIdFromPath(pathname, '/branding');
+        response = siteId ? await upsertBranding(request, env, siteId) : notFound();
+      } else if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/limits')) {
+        const siteId = extractSiteIdFromPath(pathname, '/limits');
+        response = siteId ? await getPlanLimits(request, env, siteId) : notFound();
+      } else if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/billing')) {
+        const siteId = extractSiteIdFromPath(pathname, '/billing');
+        response = siteId ? await getBillingOverview(request, env, siteId) : notFound();
+      } else if (request.method === 'POST' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/billing/checkout-session')) {
+        const siteId = extractSiteIdFromPath(pathname, '/billing/checkout-session');
+        response = siteId ? await createCheckoutSession(request, env, siteId) : notFound();
+      } else {
+        response = notFound();
       }
-      return getScanReportAsset(request, env, reportRequest.scanId, reportRequest.assetPath, url);
-    }
 
-    if (request.method === 'POST' && pathname === '/v1/sites/register') {
-      return registerSite(request, env);
+      logEvent(
+        response.status >= 500 ? 'error' : response.status >= 400 ? 'warn' : 'info',
+        requestId,
+        'request_complete',
+        {
+          method: request.method,
+          path: pathname,
+          status: response.status,
+          duration_ms: Date.now() - startedAt
+        }
+      );
+      return withRequestId(response, requestId);
+    } catch (error) {
+      const errorMessage = String(error?.message || error || 'unknown_error');
+      logEvent('error', requestId, 'request_exception', {
+        method: request.method,
+        path: pathname,
+        duration_ms: Date.now() - startedAt,
+        error: errorMessage,
+        stack: String(error?.stack || '').slice(0, 2000)
+      });
+      return withRequestId(json({ error: 'internal_error', request_id: requestId }, 500), requestId);
     }
-
-    if (request.method === 'POST' && pathname === '/v1/scans') {
-      return createScan(request, env);
-    }
-
-    if (request.method === 'POST' && pathname.startsWith('/v1/scans/') && pathname.endsWith('/cancel')) {
-      const scanId = extractScanIdFromActionPath(pathname, '/cancel');
-      if (!scanId) return notFound();
-      return cancelScan(request, env, scanId);
-    }
-
-    if (request.method === 'GET' && pathname.startsWith('/v1/scans/')) {
-      const scanId = pathname.replace('/v1/scans/', '').trim();
-      if (!scanId) return notFound();
-      return getScan(request, scanId, env);
-    }
-
-    if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/scans')) {
-      const siteId = extractSiteIdFromPath(pathname, '/scans');
-      if (!siteId) return notFound();
-      return listSiteScans(request, env, siteId, url.searchParams.get('limit'));
-    }
-
-    if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/branding')) {
-      const siteId = extractSiteIdFromPath(pathname, '/branding');
-      if (!siteId) return notFound();
-      return getBranding(request, env, siteId);
-    }
-
-    if (request.method === 'PUT' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/branding')) {
-      const siteId = extractSiteIdFromPath(pathname, '/branding');
-      if (!siteId) return notFound();
-      return upsertBranding(request, env, siteId);
-    }
-
-    if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/limits')) {
-      const siteId = extractSiteIdFromPath(pathname, '/limits');
-      if (!siteId) return notFound();
-      return getPlanLimits(request, env, siteId);
-    }
-
-    if (request.method === 'GET' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/billing')) {
-      const siteId = extractSiteIdFromPath(pathname, '/billing');
-      if (!siteId) return notFound();
-      return getBillingOverview(request, env, siteId);
-    }
-
-    if (request.method === 'POST' && pathname.startsWith('/v1/sites/') && pathname.endsWith('/billing/checkout-session')) {
-      const siteId = extractSiteIdFromPath(pathname, '/billing/checkout-session');
-      if (!siteId) return notFound();
-      return createCheckoutSession(request, env, siteId);
-    }
-
-    return notFound();
   },
 
   async queue(batch, env) {
-    if (!env.DB) return;
-    await queueConsumer(batch, env);
+    const requestId = `queue_${crypto.randomUUID()}`;
+    if (!env.DB) {
+      logEvent('error', requestId, 'queue_binding_missing', {});
+      return;
+    }
+    try {
+      await queueConsumer(batch, env);
+      logEvent('info', requestId, 'queue_batch_complete', { messages: Number(batch?.messages?.length || 0) });
+    } catch (error) {
+      logEvent('error', requestId, 'queue_batch_failed', {
+        messages: Number(batch?.messages?.length || 0),
+        error: String(error?.message || error || 'unknown_error'),
+        stack: String(error?.stack || '').slice(0, 2000)
+      });
+      throw error;
+    }
   }
 };

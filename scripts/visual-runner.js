@@ -12,6 +12,7 @@ const {
   isBlankImage,
   resolveBrowserExecutable
 } = require('./lib/visual-helpers');
+const { csvEscape } = require('./lib/csv-utils');
 
 const args = process.argv.slice(2);
 const flags = args.filter((arg) => arg.startsWith('--'));
@@ -170,32 +171,38 @@ const projectConfigs = {
   }
 };
 
-function csvEscape(value) {
-  if (value === null || value === undefined) return '';
-  let str = String(value);
-  if (/^[\t\r\n ]*[=+\-@]/.test(str)) {
-    str = `'${str}`;
-  }
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+// csvEscape is imported from ./lib/csv-utils
 
 function normalizeArray(value) {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
 }
 
+// CQ-001: 30-second AbortController timeout for all sitemap fetches.
+const VISUAL_FETCH_TIMEOUT_MS = Number(process.env.VISUAL_FETCH_TIMEOUT_MS || 30_000);
+
+function fetchWithTimeout(url, init = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), VISUAL_FETCH_TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function fetchText(url) {
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch sitemap: ${res.status} ${res.statusText}`);
   }
   return res.text();
 }
 
-async function parseSitemap(url, parser, visited = new Set()) {
+// CQ-002: Depth limit prevents infinite recursion on adversarially-deep sitemap chains.
+const VISUAL_SITEMAP_MAX_DEPTH = Number(process.env.VISUAL_SITEMAP_MAX_DEPTH || 5);
+
+async function parseSitemap(url, parser, visited = new Set(), depth = 0) {
+  if (depth > VISUAL_SITEMAP_MAX_DEPTH) {
+    console.warn(`[visual-runner] Sitemap depth limit (${VISUAL_SITEMAP_MAX_DEPTH}) reached, skipping: ${url}`);
+    return [];
+  }
   if (visited.has(url)) return [];
   visited.add(url);
   const xml = await fetchText(url);
@@ -207,7 +214,7 @@ async function parseSitemap(url, parser, visited = new Set()) {
       .filter(Boolean);
     const all = [];
     for (const sitemapUrl of sitemapUrls) {
-      const nested = await parseSitemap(sitemapUrl, parser, visited);
+      const nested = await parseSitemap(sitemapUrl, parser, visited, depth + 1);
       all.push(...nested);
     }
     return all;
@@ -538,7 +545,10 @@ async function run() {
           ? { username: targetAuthUser, password: targetAuthPass }
           : undefined;
 
+    // CQ-004: Wrap browser lifecycle in try-finally so the process is never
+    // left with a dangling browser instance if an error occurs mid-scan.
     const browser = await project.browserType.launch({ headless });
+    try {
     const context = await browser.newContext({
       ...project.context,
       ignoreHTTPSErrors: true,
@@ -639,7 +649,9 @@ async function run() {
     }
 
     await context.close();
-    await browser.close();
+    } finally {
+      await browser.close();
+    }
   }
 
   ensureDir(reportsRoot);

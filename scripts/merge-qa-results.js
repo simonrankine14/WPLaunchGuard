@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const {
   resolveClientReportsDir,
   resolveRunRoot,
@@ -9,6 +10,7 @@ const {
   buildIssueSummary,
   normalizeIssueEntry
 } = require('./lib/issue-model');
+const { csvEscape } = require('./lib/csv-utils');
 
 const args = process.argv.slice(2);
 const clientArg = args.find((arg) => !arg.startsWith('--'));
@@ -41,7 +43,7 @@ const RUN_META_JSON = path.join(reportsDir, 'run_meta.json');
 const RUN_STATE_MARKER_JSON = path.join(reportsDir, '.scan_state.json');
 
 function atomicWrite(filePath, data, encoding = 'utf8') {
-  const tmpPath = `${filePath}.tmp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const tmpPath = `${filePath}.tmp-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
   fs.writeFileSync(tmpPath, data, encoding);
   fs.renameSync(tmpPath, filePath);
 }
@@ -125,17 +127,7 @@ const RESULTS_HEADERS = [
   'finalUrl'
 ];
 
-function csvEscape(value) {
-  if (value === null || value === undefined) return '';
-  let str = String(value);
-  if (/^[\t\r\n ]*[=+\-@]/.test(str)) {
-    str = `'${str}`;
-  }
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+// csvEscape is imported from ./lib/csv-utils
 
 function issueKey(entry) {
   const canonical = String(entry.canonicalKey || '').toLowerCase();

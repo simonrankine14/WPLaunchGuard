@@ -77,6 +77,7 @@ const argv = process.argv.slice(2);
 if (argv.length === 0 || argv.includes('--help') || argv.includes('-h')) exitWithHelp(0);
 
 const [command, ...rest] = argv;
+const KNOWN_COMMANDS = new Set(['install-browsers', 'init', 'run', 'html', 'report', 'pdf', 'share']);
 
 if (command === 'install-browsers') {
   spawnNpx(['playwright', 'install']);
@@ -163,14 +164,20 @@ if (command === 'share') {
   spawnNode(script, [clientName], {});
 }
 
-// Back-compat: allow `baseline <clientname> [flags...]`.
-if (!command.startsWith('-')) {
+// Back-compat: allow `baseline <clientname> [flags...]`, but only when the
+// client file exists. This avoids swallowing mistyped subcommands.
+if (!KNOWN_COMMANDS.has(command) && !command.startsWith('-')) {
   let safeClientName = command;
   try {
     safeClientName = validateClientId(command);
   } catch (error) {
     console.error(error.message);
     process.exit(1);
+  }
+  const clientFile = resolveClientDataFile(runRoot, safeClientName);
+  if (!fs.existsSync(clientFile)) {
+    console.error(`Unknown command "${command}".`);
+    exitWithHelp(1);
   }
   const argsWithSafeClient = [safeClientName, ...argv.slice(1)];
   const runner = path.join(packageRoot, 'scripts', 'qa-runner.js');

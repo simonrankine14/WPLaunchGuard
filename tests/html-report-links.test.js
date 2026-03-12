@@ -7,10 +7,11 @@ const { spawnSync } = require('child_process');
 
 test('html report wires token-safe asset links and page-failures navigation', () => {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'baseline-html-links-'));
-  const client = 'linkclient';
-  const reportsDir = path.join(tmpRoot, 'reports', client);
-  fs.mkdirSync(path.join(reportsDir, 'lighthouse'), { recursive: true });
-  fs.mkdirSync(path.join(reportsDir, 'screenshots'), { recursive: true });
+  try {
+    const client = 'linkclient';
+    const reportsDir = path.join(tmpRoot, 'reports', client);
+    fs.mkdirSync(path.join(reportsDir, 'lighthouse'), { recursive: true });
+    fs.mkdirSync(path.join(reportsDir, 'screenshots'), { recursive: true });
 
   fs.writeFileSync(
     path.join(reportsDir, 'results.csv'),
@@ -87,31 +88,34 @@ test('html report wires token-safe asset links and page-failures navigation', ()
   fs.writeFileSync(path.join(reportsDir, 'QA_Report.xlsx'), 'placeholder', 'utf8');
   fs.writeFileSync(path.join(reportsDir, 'QA_Report.pdf'), 'placeholder', 'utf8');
 
-  const script = path.join(process.cwd(), 'reporting', 'generate-html-report.js');
-  const run = spawnSync(process.execPath, [script, client], {
-    env: {
-      ...process.env,
-      BASELINE_ROOT: tmpRoot,
-      NO_AUTO_OPEN: 'true',
-      REPORT_CLIENT_LABEL: 'Example Site'
-    }
-  });
-  assert.equal(run.status, 0, run.stderr && run.stderr.toString());
+    const script = path.join(process.cwd(), 'reporting', 'generate-html-report.js');
+    const run = spawnSync(process.execPath, [script, client], {
+      env: {
+        ...process.env,
+        BASELINE_ROOT: tmpRoot,
+        NO_AUTO_OPEN: 'true',
+        REPORT_CLIENT_LABEL: 'Example Site'
+      }
+    });
+    assert.equal(run.status, 0, run.stderr && run.stderr.toString());
 
-  const htmlPath = path.join(reportsDir, 'qa_html', 'index.html');
-  const html = fs.readFileSync(htmlPath, 'utf8');
-  assert.ok(html.includes('id="exportCsvBtn"'));
-  assert.ok(html.includes('id="exportCsvBtnSticky"'));
-  assert.ok(html.includes('id="openPdfBtn"'));
-  assert.ok(html.includes('id="openPdfBtnSticky"'));
-  assert.ok(html.includes('id="openExcelBtn"'));
-  assert.ok(html.includes('id="openExcelBtnSticky"'));
-  assert.ok(html.includes('id="goToPageFailuresBtn"'));
-  assert.ok(html.includes('function withReportToken(urlValue)'));
-  assert.ok(html.includes('/^https?:\\/\\//i.test(href)'));
-  assert.ok(html.includes('wireStaticAssetButtons()'));
-  assert.ok(html.includes("rawInitialHash === 'page-failures'"));
-  assert.ok(html.includes("activateTab('pages')"));
-  assert.ok(html.includes('"clientLabel":"Example Site"'));
-  assert.ok(html.includes('Client: Example Site'));
+    const htmlPath = path.join(reportsDir, 'qa_html', 'index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    assert.ok(html.includes('id="exportCsvBtn"'));
+    assert.ok(html.includes('id="exportCsvBtnSticky"'));
+    assert.ok(html.includes('id="openPdfBtn"'));
+    assert.ok(html.includes('id="openPdfBtnSticky"'));
+    assert.ok(html.includes('id="openExcelBtn"'));
+    assert.ok(html.includes('id="openExcelBtnSticky"'));
+    assert.ok(html.includes('id="goToPageFailuresBtn"'));
+    assert.ok(html.includes('function withReportToken(urlValue)'));
+    assert.ok(html.includes('/^https?:\\/\\//i.test(href)'));
+    assert.ok(html.includes('wireStaticAssetButtons()'));
+    assert.ok(html.includes("rawInitialHash === 'page-failures'"));
+    assert.ok(html.includes("activateTab('pages')"));
+    assert.ok(html.includes('"clientLabel":"Example Site"'));
+    assert.ok(html.includes('Client: Example Site'));
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
 });

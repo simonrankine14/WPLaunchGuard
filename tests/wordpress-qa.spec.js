@@ -12,6 +12,7 @@ const {
   isLikelyContactUrl,
   isLikelyEmbeddedFormFrame
 } = require('../scripts/lib/form-detection');
+const { csvEscape } = require('../scripts/lib/csv-utils');
 
 const RUN_ROOT = process.env.BASELINE_ROOT ? path.resolve(process.env.BASELINE_ROOT) : process.cwd();
 const DEFAULT_DATA_PATH = path.join(RUN_ROOT, 'data', 'urls.json');
@@ -66,6 +67,21 @@ const MAX_RUNTIME_DUPLICATES_PER_SIGNATURE = Math.max(
   1,
   Number(process.env.MAX_RUNTIME_DUPLICATES_PER_SIGNATURE || 2)
 );
+
+function parsePercentThreshold(envKey, fallback) {
+  const raw = process.env[envKey];
+  const parsed = Number(raw ?? fallback);
+  if (!Number.isFinite(parsed)) {
+    console.warn(`[qa] Invalid ${envKey} value "${raw}". Using fallback ${fallback}.`);
+    return fallback;
+  }
+  const clamped = Math.min(100, Math.max(0, parsed));
+  if (clamped !== parsed) {
+    console.warn(`[qa] ${envKey}=${parsed} is outside 0-100. Clamped to ${clamped}.`);
+  }
+  return clamped;
+}
+
 const SKIP_LIGHTHOUSE = (process.env.SKIP_LIGHTHOUSE || '').toLowerCase() === 'true';
 const LIGHTHOUSE_QUEUE = (process.env.LIGHTHOUSE_QUEUE || 'true').toLowerCase() === 'true';
 const LIGHTHOUSE_WORKERS = Math.max(1, Number(process.env.LIGHTHOUSE_WORKERS || 1));
@@ -84,10 +100,10 @@ const FAIL_ON_H1 = (process.env.FAIL_ON_H1 || 'true').toLowerCase() === 'true';
 const FAIL_ON_BROKEN_LINKS = (process.env.FAIL_ON_BROKEN_LINKS || 'true').toLowerCase() === 'true';
 const FAIL_ON_LINK_CHECK_ERRORS = (process.env.FAIL_ON_LINK_CHECK_ERRORS || 'false').toLowerCase() === 'true';
 const FAIL_ON_FORMS = (process.env.FAIL_ON_FORMS || 'true').toLowerCase() === 'true';
-const FAIL_ON_LIGHTHOUSE_PERF = Number(process.env.FAIL_ON_LIGHTHOUSE_PERF || 60);
-const FAIL_ON_LIGHTHOUSE_SEO = Number(process.env.FAIL_ON_LIGHTHOUSE_SEO || 70);
-const FAIL_ON_LIGHTHOUSE_BEST_PRACTICES = Number(process.env.FAIL_ON_LIGHTHOUSE_BEST_PRACTICES || 70);
-const FAIL_ON_LIGHTHOUSE_ACCESSIBILITY = Number(process.env.FAIL_ON_LIGHTHOUSE_ACCESSIBILITY || 80);
+const FAIL_ON_LIGHTHOUSE_PERF = parsePercentThreshold('FAIL_ON_LIGHTHOUSE_PERF', 60);
+const FAIL_ON_LIGHTHOUSE_SEO = parsePercentThreshold('FAIL_ON_LIGHTHOUSE_SEO', 70);
+const FAIL_ON_LIGHTHOUSE_BEST_PRACTICES = parsePercentThreshold('FAIL_ON_LIGHTHOUSE_BEST_PRACTICES', 70);
+const FAIL_ON_LIGHTHOUSE_ACCESSIBILITY = parsePercentThreshold('FAIL_ON_LIGHTHOUSE_ACCESSIBILITY', 80);
 const SCREENSHOTS_MODE = (process.env.SCREENSHOTS_MODE || PROFILE_SETTINGS.screenshotsMode).toLowerCase();
 // Keep evidence lean by default; can be increased via env override.
 const SCREENSHOTS_LIMIT = Number(process.env.SCREENSHOTS_LIMIT || 2);
@@ -186,17 +202,7 @@ function loadUrls() {
   return deduped;
 }
 
-function csvEscape(value) {
-  if (value === null || value === undefined) return '';
-  let str = String(value);
-  if (/^[\t\r\n ]*[=+\-@]/.test(str)) {
-    str = `'${str}`;
-  }
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+// csvEscape is imported from ../scripts/lib/csv-utils
 
 function writeCsv(rows) {
   fs.mkdirSync(REPORTS_DIR, { recursive: true });

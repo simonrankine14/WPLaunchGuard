@@ -1,7 +1,21 @@
 # Copy this file to .dev.vars for local worker testing.
-# Do not commit real values.
+# .dev.vars is gitignored — NEVER commit the real file.
+# Wrangler injects these as environment variables during `wrangler dev`.
+# For production secrets, use: wrangler secret put SECRET_NAME
+
+# ---- Internal API auth (generate a secure random string, e.g. openssl rand -hex 32) ---
 API_ADMIN_TOKEN=replace-with-long-random-token
 SCAN_CALLBACK_TOKEN=replace-with-callback-token
-GITHUB_DISPATCH_TOKEN=replace-with-github-token
+
+# ---- GitHub Actions dispatch -----------------------------------------------
+GITHUB_DISPATCH_TOKEN=replace-with-github-pat
+# Legacy alias — kept for backward compatibility, prefer GITHUB_DISPATCH_TOKEN
+GITHUB_TOKEN=replace-with-github-pat
+
+# ---- Stripe ----------------------------------------------------------------
 STRIPE_SECRET_KEY=sk_test_replace_me
 STRIPE_WEBHOOK_SECRET=whsec_replace_me
+# Stripe Price IDs (from your Stripe dashboard > Products)
+STRIPE_PRICE_ID_STARTER=price_replace_starter
+STRIPE_PRICE_ID_GROWTH=price_replace_growth
+STRIPE_PRICE_ID_AGENCY=price_replace_agency

@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { resolveClientReportsDir, resolveRunRoot, validateClientId } = require('../scripts/lib/safe-paths');
+const { safeHtml } = require('../scripts/lib/html-utils');
+const { parseCSV, csvEscape } = require('../scripts/lib/csv-utils');
 
 const TOOL_NAME = 'Baseline';
 const BRAND_LOGO_CANDIDATES = [
@@ -13,52 +15,7 @@ const BRAND_LOGO_CANDIDATES = [
 
 const VALID_RUN_STATES = new Set(['complete', 'partial', 'interrupted', 'merge_failed']);
 
-function parseCSV(content) {
-  const rows = [];
-  let row = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < content.length; i += 1) {
-    const char = content[i];
-    const next = content[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      row.push(current);
-      current = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') i += 1;
-      row.push(current);
-      if (row.length > 1 || row[0] !== '') rows.push(row);
-      row = [];
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.length > 0 || row.length > 0) {
-    row.push(current);
-    rows.push(row);
-  }
-
-  if (rows.length === 0) return [];
-  const headers = rows[0];
-  return rows.slice(1).map((values) => {
-    const obj = {};
-    headers.forEach((header, index) => {
-      obj[header] = values[index] ?? '';
-    });
-    return obj;
-  });
-}
+// parseCSV is imported from scripts/lib/csv-utils.js
 
 function asSeverity(raw) {
   const s = String(raw || '').toLowerCase();
@@ -81,14 +38,7 @@ function categoryGroup(issue) {
   return 'Structure';
 }
 
-function safeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+// safeHtml is imported from scripts/lib/html-utils.js
 
 function sanitizeHexColor(value, fallback) {
   const raw = String(value || '').trim();
@@ -1892,7 +1842,7 @@ async function generate(clientName) {
           const node = document.createElement(tag);
           if (attrs) Object.entries(attrs).forEach(([k,v]) => {
             if (k === 'class') node.className = v;
-            else if (k === 'html') node.innerHTML = v;
+            else if (k === 'html') node.textContent = String(v || '');
             else if (k === 'href') node.setAttribute(k, withReportToken(v));
             else if (k === 'src') node.setAttribute(k, withReportToken(v));
             else node.setAttribute(k, v);
@@ -3225,9 +3175,22 @@ async function generate(clientName) {
             console.error('Render error', err);
             const root = document.querySelector('.wrap');
             if (root) {
-              root.innerHTML = '<div class=\"panel\"><div class=\"panelTitle\">Render Error</div><div class=\"muted\">' +
-                (err && err.message ? err.message : 'Unknown error') +
-                '</div><div class=\"muted\">Issues: ' + (issues ? issues.length : 0) + ' | Results: ' + (results ? results.length : 0) + '</div></div>';
+              root.innerHTML = '';
+              var panel = document.createElement('div');
+              panel.className = 'panel';
+              var panelTitle = document.createElement('div');
+              panelTitle.className = 'panelTitle';
+              panelTitle.textContent = 'Render Error';
+              var errorMessage = document.createElement('div');
+              errorMessage.className = 'muted';
+              errorMessage.textContent = (err && err.message ? err.message : 'Unknown error');
+              var errorMeta = document.createElement('div');
+              errorMeta.className = 'muted';
+              errorMeta.textContent = 'Issues: ' + (issues ? issues.length : 0) + ' | Results: ' + (results ? results.length : 0);
+              panel.appendChild(panelTitle);
+              panel.appendChild(errorMessage);
+              panel.appendChild(errorMeta);
+              root.appendChild(panel);
             }
           }
         }

@@ -2,13 +2,19 @@ const { defineConfig, devices } = require('@playwright/test');
 
 const QA_MEDIA = String(process.env.QA_MEDIA || '').toLowerCase() === '1' || String(process.env.QA_MEDIA || '').toLowerCase() === 'true';
 
+// Allow per-environment timeout overrides without code changes.
+// PW_TIMEOUT: per-test timeout ms (default 180s). Set PW_TIMEOUT=300000 for slower CI.
+const TEST_TIMEOUT = Number(process.env.PW_TIMEOUT || 180_000);
+
 module.exports = defineConfig({
   testDir: './tests',
-  timeout: 180000,
+  timeout: TEST_TIMEOUT,
   expect: {
     timeout: 15000
   },
-  retries: 0,
+  // Retry once on CI to absorb transient network/browser flakes.
+  // Never retry locally to keep the feedback loop fast.
+  retries: process.env.CI ? 1 : 0,
   workers: 5,
   fullyParallel: true,
   reporter: [

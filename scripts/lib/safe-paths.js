@@ -13,11 +13,37 @@ function validateClientId(rawValue, fieldName = 'client name') {
   return value;
 }
 
+function canonicalizePath(inputPath) {
+  const absolute = path.resolve(inputPath);
+  const missingSegments = [];
+  let cursor = absolute;
+
+  while (!fs.existsSync(cursor)) {
+    missingSegments.unshift(path.basename(cursor));
+    const parent = path.dirname(cursor);
+    if (parent === cursor) break;
+    cursor = parent;
+  }
+
+  let canonicalBase = cursor;
+  try {
+    canonicalBase = fs.realpathSync.native(cursor);
+  } catch {
+    canonicalBase = path.resolve(cursor);
+  }
+
+  return path.resolve(canonicalBase, ...missingSegments);
+}
+
 function ensureWithin(basePath, targetPath) {
-  const base = path.resolve(basePath);
-  const target = path.resolve(targetPath);
-  const baseWithSep = base.endsWith(path.sep) ? base : `${base}${path.sep}`;
-  if (target !== base && !target.startsWith(baseWithSep)) {
+  // SEC-007: Canonicalize both paths (including symlink resolution where
+  // possible) and enforce containment via path.relative() to avoid prefix
+  // bypasses and macOS /private/var alias mismatches.
+  const base = canonicalizePath(basePath);
+  const target = canonicalizePath(targetPath);
+  const relative = path.relative(base, target);
+
+  if (relative !== '' && (relative.startsWith('..') || path.isAbsolute(relative))) {
     throw new Error(`Resolved path escapes base directory. Base: ${base} Target: ${target}`);
   }
   return target;

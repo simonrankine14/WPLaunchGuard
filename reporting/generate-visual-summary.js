@@ -1,57 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { resolveClientReportsDir, resolveRunRoot, validateClientId } = require('../scripts/lib/safe-paths');
-
-function parseCSV(content) {
-  const rows = [];
-  let row = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < content.length; i += 1) {
-    const char = content[i];
-    const next = content[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      row.push(current);
-      current = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') {
-        i += 1;
-      }
-      row.push(current);
-      if (row.length > 1 || row[0] !== '') {
-        rows.push(row);
-      }
-      row = [];
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.length > 0 || row.length > 0) {
-    row.push(current);
-    rows.push(row);
-  }
-
-  if (rows.length === 0) return [];
-  const headers = rows[0];
-  return rows.slice(1).map((values) => {
-    const obj = {};
-    headers.forEach((header, index) => {
-      obj[header] = values[index] ?? '';
-    });
-    return obj;
-  });
-}
+const { parseCSV } = require('../scripts/lib/csv-utils');
 
 function groupBy(arr, keyFn) {
   return arr.reduce((acc, item) => {

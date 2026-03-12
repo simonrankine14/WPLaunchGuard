@@ -1,0 +1,55 @@
+# wrangler.toml.example
+# Copy this file to wrangler.toml and fill in the values for your environment.
+# NEVER commit real credentials or resource IDs to source control.
+#
+# See: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "baseline-api"
+main = "src/index.js"
+compatibility_date = "2026-03-04"
+workers_dev = true
+
+# account_id: Do NOT set this here. Wrangler reads it from:
+#   - The CLOUDFLARE_ACCOUNT_ID environment variable (CI/CD)
+#   - Your local `wrangler login` session (local dev)
+
+[vars]
+APP_ENV = "dev"
+DEFAULT_PLAN = "starter"
+SCAN_STALLED_TIMEOUT_SECONDS = "3600"
+PUBLIC_API_BASE = "https://YOUR_WORKER_NAME.YOUR_ACCOUNT.workers.dev"
+GITHUB_OWNER = "your-github-org"
+GITHUB_REPO = "your-scan-repo"
+GITHUB_WORKFLOW_FILE = "baseline-scan.yml"
+GITHUB_REF = "main"
+# Stripe Price IDs: set via `wrangler secret put` in production.
+# For local dev, add to .dev.vars (see .dev.vars.example).
+STRIPE_PRICE_ID_STARTER = ""
+STRIPE_PRICE_ID_GROWTH = ""
+STRIPE_PRICE_ID_AGENCY = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "your-d1-database-name"
+# Find your database_id in: Cloudflare Dashboard > Workers & Pages > D1
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+[[r2_buckets]]
+binding = "ARTIFACTS_BUCKET"
+bucket_name = "your-r2-bucket-name"
+
+[[queues.producers]]
+binding = "SCAN_QUEUE"
+queue = "your-queue-name"
+
+[[queues.consumers]]
+queue = "your-queue-name"
+max_batch_size = 5
+max_batch_timeout = 10
+
+# ---------------------------------------------------------------------------
+# Custom Domain (recommended for production — removes personal workers.dev URL)
+# ---------------------------------------------------------------------------
+# [[routes]]
+# pattern = "api.yourdomain.com/*"
+# zone_name = "yourdomain.com"

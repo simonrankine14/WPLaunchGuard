@@ -123,8 +123,18 @@ function writeResolvedUrls(urls, sourceLabel) {
   return sitemapOutput;
 }
 
+// CQ-001: All fetch calls now use a 30-second AbortController timeout so a
+// hanging server cannot stall the runner indefinitely.
+const FETCH_TIMEOUT_MS = Number(process.env.QA_FETCH_TIMEOUT_MS || 30_000);
+
+function fetchWithTimeout(url, init = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function fetchText(url) {
-  const res = await fetch(url, withAuth());
+  const res = await fetchWithTimeout(url, withAuth());
   if (!res.ok) {
     throw new Error(`Failed to fetch sitemap: ${res.status} ${res.statusText}`);
   }
@@ -136,7 +146,15 @@ function normalizeArray(value) {
   return Array.isArray(value) ? value : [value];
 }
 
-async function parseSitemap(url, parser, visited = new Set()) {
+// CQ-002: Depth limit prevents infinite recursion if a sitemap index
+// references itself or an adversarially-deep chain of sub-sitemaps.
+const SITEMAP_MAX_DEPTH = Number(process.env.QA_SITEMAP_MAX_DEPTH || 5);
+
+async function parseSitemap(url, parser, visited = new Set(), depth = 0) {
+  if (depth > SITEMAP_MAX_DEPTH) {
+    console.warn(`[qa-runner] Sitemap depth limit (${SITEMAP_MAX_DEPTH}) reached, skipping: ${url}`);
+    return [];
+  }
   if (visited.has(url)) return [];
   visited.add(url);
   const xml = await fetchText(url);
@@ -148,7 +166,7 @@ async function parseSitemap(url, parser, visited = new Set()) {
       .filter(Boolean);
     const all = [];
     for (const sitemapUrl of sitemapUrls) {
-      const nested = await parseSitemap(sitemapUrl, parser, visited);
+      const nested = await parseSitemap(sitemapUrl, parser, visited, depth + 1);
       all.push(...nested);
     }
     return all;
@@ -162,7 +180,7 @@ async function parseSitemap(url, parser, visited = new Set()) {
 }
 
 async function fetchJson(url) {
-  const res = await fetch(url, withAuth({
+  const res = await fetchWithTimeout(url, withAuth({
     method: 'GET',
     headers: { Accept: 'application/json' }
   }));
@@ -173,7 +191,7 @@ async function fetchJson(url) {
 }
 
 async function fetchJsonWithMeta(url) {
-  const res = await fetch(url, withAuth({
+  const res = await fetchWithTimeout(url, withAuth({
     method: 'GET',
     headers: { Accept: 'application/json' }
   }));
@@ -346,7 +364,7 @@ async function discoverSitemap(baseUrl) {
   ];
   for (const candidate of candidates) {
     try {
-      const res = await fetch(candidate, withAuth({ method: 'HEAD' }));
+      const res = await fetchWithTimeout(candidate, withAuth({ method: 'HEAD' }));
       if (res.ok) return candidate;
     } catch {
       // ignore and try next

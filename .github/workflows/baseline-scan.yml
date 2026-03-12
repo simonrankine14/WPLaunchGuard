@@ -175,6 +175,45 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium firefox webkit
 
+      - name: Mask sensitive secrets
+        shell: bash
+        env:
+          CALLBACK_TOKEN: ${{ secrets.BASELINE_CALLBACK_TOKEN != '' && secrets.BASELINE_CALLBACK_TOKEN || secrets.LAUNCHGUARD_CALLBACK_TOKEN }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # ::add-mask:: prevents the values from appearing in any subsequent log line.
+          if [[ -n "$CALLBACK_TOKEN" ]]; then
+            echo "::add-mask::$CALLBACK_TOKEN"
+          fi
+          if [[ -n "$CLOUDFLARE_TOKEN" ]]; then
+            echo "::add-mask::$CLOUDFLARE_TOKEN"
+          fi
+
+      - name: API health check
+        shell: bash
+        env:
+          BASELINE_API_BASE: ${{ secrets.BASELINE_API_BASE != '' && secrets.BASELINE_API_BASE || 'https://baseline-api.simonrankine4.workers.dev' }}
+          CALLBACK_SECRET_URL: ${{ secrets.BASELINE_CALLBACK_URL != '' && secrets.BASELINE_CALLBACK_URL || secrets.LAUNCHGUARD_CALLBACK_URL }}
+          INPUT_CALLBACK_URL: ${{ inputs.callback_url }}
+        run: |
+          TARGET_CALLBACK_URL="$CALLBACK_SECRET_URL"
+          if [[ -n "$INPUT_CALLBACK_URL" ]]; then
+            TARGET_CALLBACK_URL="$INPUT_CALLBACK_URL"
+          fi
+
+          API_BASE="$BASELINE_API_BASE"
+          if [[ -n "$TARGET_CALLBACK_URL" ]]; then
+            API_BASE=$(printf '%s' "$TARGET_CALLBACK_URL" | sed -E 's#^(https?://[^/]+).*$#\1#')
+          fi
+
+          echo "Checking API health at ${API_BASE}/health ..."
+          HEALTH_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "${API_BASE}/health" || echo "000")
+          if [[ "$HEALTH_CODE" != "200" ]]; then
+            echo "API health check failed (HTTP ${HEALTH_CODE}). Aborting scan."
+            exit 1
+          fi
+          echo "API health check passed."
+
       - name: Restore previous history snapshot from Cloudflare R2
         shell: bash
         env:

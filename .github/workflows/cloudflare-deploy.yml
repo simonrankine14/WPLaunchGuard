@@ -18,9 +18,89 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Mask secrets
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [[ -n "$CF_TOKEN" ]]; then
+            echo "::add-mask::$CF_TOKEN"
+          fi
+
+      - name: Build CI wrangler config
+        shell: bash
+        env:
+          D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
+          STRIPE_PRICE_ID_STARTER: ${{ secrets.STRIPE_PRICE_ID_STARTER }}
+          STRIPE_PRICE_ID_GROWTH: ${{ secrets.STRIPE_PRICE_ID_GROWTH }}
+          STRIPE_PRICE_ID_AGENCY: ${{ secrets.STRIPE_PRICE_ID_AGENCY }}
+        run: |
+          # Start from the full checked-in config so we keep required fields:
+          # name/main/bindings/queues/r2 vars. Then inject CI-specific values.
+          cp services/api-worker/wrangler.toml services/api-worker/wrangler.ci.toml
+
+          node - <<'NODE'
+          const fs = require('fs');
+
+          const required = {
+            D1_DATABASE_ID: process.env.D1_DATABASE_ID || '',
+            STRIPE_PRICE_ID_STARTER: process.env.STRIPE_PRICE_ID_STARTER || '',
+            STRIPE_PRICE_ID_GROWTH: process.env.STRIPE_PRICE_ID_GROWTH || '',
+            STRIPE_PRICE_ID_AGENCY: process.env.STRIPE_PRICE_ID_AGENCY || ''
+          };
+
+          for (const [key, value] of Object.entries(required)) {
+            if (!String(value).trim()) {
+              throw new Error(`Missing required CI secret: ${key}`);
+            }
+          }
+
+          const configPath = 'services/api-worker/wrangler.ci.toml';
+          let config = fs.readFileSync(configPath, 'utf8');
+          config = config.replace(
+            /database_id\s*=\s*"(REPLACE_WITH_YOUR_D1_DATABASE_ID|00000000-0000-0000-0000-000000000000)"/,
+            `database_id = "${required.D1_DATABASE_ID}"`
+          );
+          config = config.replace(
+            'STRIPE_PRICE_ID_STARTER = ""',
+            `STRIPE_PRICE_ID_STARTER = "${required.STRIPE_PRICE_ID_STARTER}"`
+          );
+          config = config.replace(
+            'STRIPE_PRICE_ID_GROWTH = ""',
+            `STRIPE_PRICE_ID_GROWTH = "${required.STRIPE_PRICE_ID_GROWTH}"`
+          );
+          config = config.replace(
+            'STRIPE_PRICE_ID_AGENCY = ""',
+            `STRIPE_PRICE_ID_AGENCY = "${required.STRIPE_PRICE_ID_AGENCY}"`
+          );
+
+          fs.writeFileSync(configPath, config);
+          NODE
+
+      - name: Run DB migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Apply pending migrations and fail fast if schema update fails.
+          npx wrangler d1 migrations apply baseline-db-dev --remote \
+            --config services/api-worker/wrangler.ci.toml
+
       - name: Deploy worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx wrangler deploy --config services/api-worker/wrangler.toml
+          npx wrangler deploy --config services/api-worker/wrangler.ci.toml
+
+      - name: Post-deploy health check
+        env:
+          API_BASE: ${{ secrets.BASELINE_API_BASE != '' && secrets.BASELINE_API_BASE || 'https://baseline-api.simonrankine4.workers.dev' }}
+        run: |
+          sleep 5
+          HEALTH_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "${API_BASE}/health" || echo "000")
+          if [[ "$HEALTH_CODE" != "200" ]]; then
+            echo "Post-deploy health check failed (HTTP ${HEALTH_CODE})"
+            exit 1
+          fi
+          echo "Worker deployed and healthy."

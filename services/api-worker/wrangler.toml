@@ -3,26 +3,38 @@ main = "src/index.js"
 compatibility_date = "2026-03-04"
 workers_dev = true
 
-# Replace before first deploy.
-account_id = "d47b0f5d3b937b9cd0ed40902be8c44c"
+# account_id is intentionally omitted.
+# Wrangler reads it from the CLOUDFLARE_ACCOUNT_ID environment variable (CI/CD)
+# or from your local `wrangler login` session (local dev).
+# Never commit a real account_id to source control.
 
 [vars]
 APP_ENV = "dev"
 DEFAULT_PLAN = "starter"
 SCAN_STALLED_TIMEOUT_SECONDS = "3600"
+# Set PUBLIC_API_BASE to your worker URL or custom domain once deployed.
+# For a custom domain, uncomment and populate the [[routes]] block below.
 PUBLIC_API_BASE = "https://baseline-api.simonrankine4.workers.dev"
 GITHUB_OWNER = "WpBaselineApp"
 GITHUB_REPO = "WPLaunchGuard"
 GITHUB_WORKFLOW_FILE = "baseline-scan.yml"
 GITHUB_REF = "main"
-STRIPE_PRICE_ID_STARTER = "price_1T7MycIfnuQp2OJpzQOZQMPQ"
-STRIPE_PRICE_ID_GROWTH = "price_1T7MyvIfnuQp2OJpiDtlPhvn"
-STRIPE_PRICE_ID_AGENCY = "price_1T7Mz9IfnuQp2OJpMJjFFbFK"
+# Stripe Price IDs should be injected as Wrangler secrets in production, not stored here.
+# Run: wrangler secret put STRIPE_PRICE_ID_STARTER  (and GROWTH, AGENCY)
+# For local development, add them to services/api-worker/.dev.vars (gitignored).
+# See services/api-worker/.dev.vars.example for the required format.
+STRIPE_PRICE_ID_STARTER = ""
+STRIPE_PRICE_ID_GROWTH = ""
+STRIPE_PRICE_ID_AGENCY = ""
 
 [[d1_databases]]
 binding = "DB"
 database_name = "baseline-db-dev"
-database_id = "253403b3-cc3e-4008-aaff-10e24bb9f9bc"
+# database_id is a resource binding identifier, not a secret credential, but it is
+# environment-specific. Replace this placeholder UUID with your actual D1 database ID.
+# Your database ID can be found in the Cloudflare dashboard under Workers & Pages > D1.
+# In CI, you may override this by passing --config wrangler.local.toml (gitignored).
+database_id = "00000000-0000-0000-0000-000000000000"
 
 [[r2_buckets]]
 binding = "ARTIFACTS_BUCKET"
@@ -36,3 +48,12 @@ queue = "baseline-scan-jobs-dev"
 queue = "baseline-scan-jobs-dev"
 max_batch_size = 5
 max_batch_timeout = 10
+
+# ---------------------------------------------------------------------------
+# Custom Domain (production)
+# Uncomment and replace yourdomain.com once your domain is added to Cloudflare.
+# This removes the workers.dev personal subdomain from your public API URL.
+# ---------------------------------------------------------------------------
+# [[routes]]
+# pattern = "api.yourdomain.com/*"
+# zone_name = "yourdomain.com"

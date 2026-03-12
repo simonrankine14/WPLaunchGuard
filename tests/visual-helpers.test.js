@@ -20,6 +20,10 @@ function writePng(filePath, pixels) {
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'visual-helpers-'));
 
+test.after(() => {
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
 test('sanitizeSelectors removes html/body/head and keeps others', () => {
   const input = ['body.cookie', '.chat-widget', 'html', 'div.header'];
   const { sanitized, warnings } = sanitizeSelectors(input, []);

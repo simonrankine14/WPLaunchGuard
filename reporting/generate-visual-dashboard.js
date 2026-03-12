@@ -2,62 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { resolveClientReportsDir, resolveRunRoot, validateClientId } = require('../scripts/lib/safe-paths');
-
-function parseCSV(content) {
-  const rows = [];
-  let row = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < content.length; i += 1) {
-    const char = content[i];
-    const next = content[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      row.push(current);
-      current = '';
-    } else if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') i += 1;
-      row.push(current);
-      if (row.length > 1 || row[0] !== '') rows.push(row);
-      row = [];
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  if (current.length > 0 || row.length > 0) {
-    row.push(current);
-    rows.push(row);
-  }
-
-  if (rows.length === 0) return [];
-  const headers = rows[0];
-  return rows.slice(1).map((values) => {
-    const obj = {};
-    headers.forEach((header, index) => {
-      obj[header] = values[index] ?? '';
-    });
-    return obj;
-  });
-}
-
-function safeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+const { safeHtml } = require('../scripts/lib/html-utils');
+const { parseCSV } = require('../scripts/lib/csv-utils');
 
 function readLogoBase64(customPath) {
   const candidates = customPath
@@ -309,8 +255,24 @@ function renderHTML({ client, summary, rows, logoDataUri }) {
     const cardsEl = document.getElementById('cards');
     const emptyEl = document.getElementById('empty');
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function safeAssetUrl(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      if (/^(javascript|data|vbscript):/i.test(raw)) return '';
+      return raw;
+    }
+
     function badge(text, cls) {
-      return '<span class="pill ' + cls + '">' + text + '</span>';
+      return '<span class="pill ' + escapeHtml(cls) + '">' + escapeHtml(text) + '</span>';
     }
 
     function render() {
@@ -323,35 +285,40 @@ function renderHTML({ client, summary, rows, logoDataUri }) {
       rows = rows.filter((r) => r.status && r.status !== 'BASELINE');
       if (status !== 'all') rows = rows.filter((r) => r.status === status);
       if (project !== 'all') rows = rows.filter((r) => r.project === project);
-      if (term) rows = rows.filter((r) => r.url.toLowerCase().includes(term));
+      if (term) rows = rows.filter((r) => String(r.url || '').toLowerCase().includes(term));
 
       rows.sort((a, b) => {
         const diffA = Number(a.diffPercent || 0);
         const diffB = Number(b.diffPercent || 0);
         if (sort === 'diff-desc') return diffB - diffA;
         if (sort === 'diff-asc') return diffA - diffB;
-        return a.url.localeCompare(b.url);
+        return String(a.url || '').localeCompare(String(b.url || ''));
       });
 
       cardsEl.innerHTML = rows
         .map((r) => {
           const statusClass = r.status === 'FAIL' || r.status === 'BLANK' ? 'fail' : 'pass';
           const diff = Number(r.diffPercent || 0).toFixed(3);
-          const notePill = r.note ? '<span class="pill warn">' + r.note + '</span>' : '';
-          const img = (src, label) =>
-            src
-              ? '<figure><a href="' + src + '" target="_blank" rel="noreferrer"><img src="' + src + '" loading="lazy" alt="' + label + '"></a><figcaption>' + label + '</figcaption></figure>'
-              : '<figure><figcaption>' + label + ' missing</figcaption></figure>';
+          const notePill = r.note ? '<span class="pill warn">' + escapeHtml(r.note) + '</span>' : '';
+          const img = (src, label) => {
+            const safeSrc = safeAssetUrl(src);
+            const escapedLabel = escapeHtml(label);
+            if (!safeSrc) {
+              return '<figure><figcaption>' + escapedLabel + ' missing</figcaption></figure>';
+            }
+            const escapedSrc = escapeHtml(safeSrc);
+            return '<figure><a href="' + escapedSrc + '" target="_blank" rel="noreferrer"><img src="' + escapedSrc + '" loading="lazy" alt="' + escapedLabel + '"></a><figcaption>' + escapedLabel + '</figcaption></figure>';
+          };
           return '<article class="card">' +
             '<header>' +
               '<div class="meta">' +
                 badge(r.status, statusClass) +
                 '<span class="pill warn">Diff ' + diff + '%</span>' +
                 (r.confidenceScore ? '<span class="pill">Conf ' + Number(r.confidenceScore).toFixed(1) + '</span>' : '') +
-                '<span class="project-badge">' + r.project + '</span>' +
+                '<span class="project-badge">' + escapeHtml(r.project) + '</span>' +
                 notePill +
               '</div>' +
-              '<div class="url">' + r.url + '</div>' +
+              '<div class="url">' + escapeHtml(r.url) + '</div>' +
             '</header>' +
             '<div class="imgs">' +
               img(r.baselinePath, 'Baseline') +
